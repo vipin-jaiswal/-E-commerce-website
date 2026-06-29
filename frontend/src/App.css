@@ -1,0 +1,13 @@
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white text-gray-900;
+}
+
+:root {
+  --color-primary: #ec4899;
+  --color-secondary: #f9a8d4;
+  --color-dark: #111827;
+}
