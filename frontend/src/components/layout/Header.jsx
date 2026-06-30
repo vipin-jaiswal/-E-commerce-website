@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 
 import SearchBar from "../common/SearchBar";
 import { useCart } from "../../hooks/useCart";
+import MobileMenu from "./MobileMenu";
 import { useTheme } from "../../context/ThemeContext";
 
 const NAV_LINKS = [
@@ -26,9 +27,21 @@ const NAV_LINKS = [
 
 const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { cartCount } = useCart();
   const { theme, toggleTheme } = useTheme();
+
+  const handleNavClick = (event, href) => {
+    if (href.startsWith('/#')) {
+      event.preventDefault();
+      const id = href.slice(2);
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
 
   return (
     <>
@@ -50,7 +63,7 @@ const Header = () => {
 
           {/* Left */}
           <div className="flex items-center gap-3">
-            <button className="lg:hidden">
+            <button className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
               <Menu size={24} />
             </button>
 
@@ -74,6 +87,7 @@ const Header = () => {
               <a
                 key={link.label}
                 href={link.href}
+                onClick={(e) => handleNavClick(e, link.href)}
                 className="
                   text-slate-700 dark:text-slate-200
                   hover:text-pink-500 dark:hover:text-pink-300
@@ -198,6 +212,12 @@ const Header = () => {
       <SearchBar
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
+      />
+
+      <MobileMenu
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        links={NAV_LINKS}
       />
     </>
   );

@@ -9,6 +9,22 @@ export default function MobileMenu({ open, onClose, links }) {
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
+  const handleNavClick = (event, href) => {
+    // All NAV_LINKS are hash links for the homepage
+    if (href.startsWith('/#')) {
+      event.preventDefault();
+      onClose();
+
+      // Wait for menu to close before scrolling to avoid jank
+      setTimeout(() => {
+        const id = href.slice(2);
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300); // Corresponds to the transition duration
+    }
+  };
   return (
     <>
       {/* Backdrop */}
@@ -27,7 +43,7 @@ export default function MobileMenu({ open, onClose, links }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-          <span className="font-display text-xl font-semibold text-charcoal">Lumière</span>
+          <Link to="/" onClick={onClose} className="font-display text-xl font-semibold text-charcoal">Glowify</Link>
           <button onClick={onClose} aria-label="Close menu" className="p-1 text-muted hover:text-charcoal">
             <X size={22} />
           </button>
@@ -35,16 +51,16 @@ export default function MobileMenu({ open, onClose, links }) {
 
         {/* Nav Links */}
         <nav className="flex-1 overflow-y-auto py-6 px-6 space-y-1">
-          {links.map((link) => (
-            <Link
+          {links.map((link) =>
+            <a
               key={link.href}
-              to={link.href}
-              onClick={onClose}
-              className="block py-3 text-sm font-medium text-charcoal border-b border-border/50 hover:text-accent transition-colors"
+              href={link.href}
+              onClick={(e) => handleNavClick(e, link.href)}
+              className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-pink-500 transition-colors"
             >
               {link.label}
-            </Link>
-          ))}
+            </a>
+          )}
         </nav>
 
         {/* Bottom actions */}

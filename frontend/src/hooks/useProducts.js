@@ -1,24 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../services/api';
 
-const sortProducts = (items = [], sort = 'newest') => {
-  const list = [...items];
-
-  switch (sort) {
-    case 'price_asc':
-      return list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
-    case 'price_desc':
-      return list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
-    case 'rating':
-      return list.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
-    case 'best_seller':
-      return list.sort((a, b) => Number(b.sold || 0) - Number(a.sold || 0));
-    case 'newest':
-    default:
-      return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-  }
-};
-
 const normalizeList = (payload) => {
   const data = payload?.data ?? payload;
   const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
@@ -46,8 +28,9 @@ export function useProducts(params = {}) {
     if (params.page) next.page = params.page;
     if (params.limit) next.limit = params.limit;
     if (params.bestSeller) next.bestSeller = params.bestSeller;
+    if (params.sort) next.sort = params.sort;
     return next;
-  }, [params.q, params.keyword, params.category, params.page, params.limit, params.bestSeller]);
+  }, [params.q, params.keyword, params.category, params.page, params.limit, params.bestSeller, params.sort]);
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,10 +48,8 @@ export function useProducts(params = {}) {
       try {
         const response = await api.get('/products', { params: query });
         const list = normalizeList(response);
-        const sorted = sortProducts(list, params.sort);
 
         if (!alive) return;
-        setProducts(sorted);
         setProducts(list);
         setTotal(Number(response?.data?.total ?? list.length ?? 0));
         setPages(Number(response?.data?.pages ?? 0));
@@ -88,7 +69,7 @@ export function useProducts(params = {}) {
     return () => {
       alive = false;
     };
-  }, [query, params.sort]);
+  }, [query]);
 
   return { products, loading, error, total, pages };
 }

@@ -1,69 +1,136 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Mail, Phone, MapPin } from "lucide-react";
 
-const LINKS = {
-  Shop: ['Best Sellers', 'New Arrivals', 'Skincare', 'Serums', 'Moisturisers', 'SPF'],
-  Help: ['FAQs', 'Shipping & Returns', 'Track Order', 'Contact Us'],
-  Company: ['About Us', 'Blog', 'Sustainability', 'Careers'],
+const FOOTER_LINKS = {
+  Shop: [
+    { label: "Best Sellers", href: "/products?bestSeller=true" },
+    { label: "New Arrivals", href: "/products?sort=newest" },
+    { label: "Skin Care", href: "/products?category=Skin Care" },
+    { label: "Hair Care", href: "/products?category=Hair Care" },
+    { label: "Makeup", href: "/products?category=Makeup" },
+    { label: "Offers", href: "/offers" },
+  ],
+
+  Help: [
+    { label: "FAQs", href: "/faq" },
+    { label: "Shipping & Returns", href: "/shipping-returns" },
+    { label: "Track Order", href: "/track-order" },
+    { label: "Contact Us", href: "/contact" },
+  ],
+
+  Company: [
+    { label: "About Us", href: "/about" },
+    { label: "Blog", href: "/blog" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
+    { label: "Terms & Conditions", href: "/terms" },
+  ],
 };
 
 export default function Footer() {
   return (
-    <footer className="bg-charcoal text-ivory/80 pt-16 pb-8 mt-20">
-      <div className="max-w-site mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
+    <footer className="bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 mt-20">
+      <div className="max-w-7xl mx-auto px-6 py-16">
+
+        {/* Top Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <span className="font-display text-3xl font-semibold text-ivory tracking-tight">Lumière</span>
-            <p className="mt-4 text-sm leading-relaxed text-ivory/60 max-w-xs">
-              Premium skincare rooted in science. Crafted for every skin concern.
+          <div className="text-gray-600 dark:text-gray-300">
+            <Link
+              to="/"
+              className="text-3xl font-bold text-pink-600 dark:text-pink-500"
+            >
+              Glowify
+            </Link>
+
+            <p className="mt-4 dark:text-gray-400 text-sm leading-7">
+              Premium skincare and beauty products crafted
+              for healthy, glowing skin and beautiful hair.
             </p>
-            <div className="flex gap-4 mt-6">
-              {['IG', 'X', 'FB', 'YT'].map((label) => (
-                <a
-                  key={label}
-                  href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-[11px] font-semibold text-ivory/50 hover:border-accent hover:text-accent transition-colors"
-                >
-                  {label}
-                </a>
-              ))}
+
+            {/* Contact */}
+            <div className="mt-6 space-y-3 text-sm">
+              <div className="flex items-center gap-3">
+                <Mail size={16} />
+                support@glowify.com
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Phone size={16} />
+                +91 9876543210
+              </div>
+
+              <div className="flex items-center gap-3">
+                <MapPin size={16} />
+                Bhilai, Chhattisgarh, India
+              </div>
             </div>
           </div>
 
-          {/* Link columns */}
-          {Object.entries(LINKS).map(([title, items]) => (
-            <div key={title}>
-              <h3 className="font-body font-semibold text-xs tracking-[0.18em] uppercase text-accent mb-5">
-                {title}
-              </h3>
-              <ul className="space-y-3">
-                {items.map((item) => (
-                  <li key={item}>
-                    <Link to="#" className="text-sm text-ivory/60 hover:text-ivory transition-colors">
-                      {item}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Links */}
+          {Object.entries(FOOTER_LINKS).map(
+            ([title, links]) => (
+              <div key={title}>
+                <h3 className="text-gray-900 dark:text-white font-semibold mb-5 text-lg">
+                  {title}
+                </h3>
+
+                <ul className="space-y-3">
+                  {links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        to={link.href}
+                        className="
+                          text-gray-600 dark:text-gray-400
+                          hover:text-pink-600 dark:hover:text-pink-500
+                          transition
+                        "
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          )}
         </div>
 
         {/* Newsletter */}
-        <div className="border-t border-white/10 pt-10 mb-10">
+        <div className="border-t border-gray-200 dark:border-gray-800 mt-14 pt-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <p className="font-display italic text-lg text-ivory/80">
-              Get exclusive offers & skincare tips
-            </p>
-            <div className="flex w-full md:w-auto gap-0">
+
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Subscribe to our Newsletter
+              </h2>
+
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                Get exclusive offers, discounts and beauty tips.
+              </p>
+            </div>
+
+            <div className="flex w-full md:w-auto">
               <input
                 type="email"
-                placeholder="your@email.com"
-                className="flex-1 md:w-64 bg-white/10 border border-white/20 text-ivory placeholder:text-ivory/40
-                           text-sm px-4 py-2.5 rounded-l-pill focus:outline-none focus:border-accent transition-colors"
+                placeholder="Enter your email"
+                className="
+                  bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700
+                  px-5 py-3 rounded-l-full
+                  outline-none text-gray-900 dark:text-white
+                  w-full md:w-72
+                  focus:border-pink-500 dark:focus:border-pink-500
+                "
               />
-              <button className="bg-accent hover:bg-accent-dark text-white text-sm font-medium px-5 py-2.5 rounded-r-pill transition-colors">
+
+              <button
+                className="
+                  bg-pink-500 hover:bg-pink-600
+                  px-6 py-3 text-white font-semibold
+                  rounded-r-full transition
+                "
+              >
                 Subscribe
               </button>
             </div>
@@ -71,11 +138,32 @@ export default function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ivory/40">
-          <p>© {new Date().getFullYear()} Lumière. All rights reserved.</p>
-          <div className="flex gap-5">
-            <Link to="#" className="hover:text-ivory/70 transition-colors">Privacy Policy</Link>
-            <Link to="#" className="hover:text-ivory/70 transition-colors">Terms of Service</Link>
+        <div className="
+          border-t border-gray-200 dark:border-gray-800
+          mt-10 pt-6
+          flex flex-col md:flex-row
+          items-center justify-between
+          gap-4 text-sm text-gray-500 dark:text-gray-400
+        ">
+          <p>
+            © {new Date().getFullYear()} Glowify.
+            All rights reserved.
+          </p>
+
+          <div className="flex gap-6">
+            <Link
+              to="/privacy-policy"
+              className="hover:text-pink-600 dark:hover:text-pink-500 transition"
+            >
+              Privacy Policy
+            </Link>
+
+            <Link
+              to="/terms"
+              className="hover:text-pink-600 dark:hover:text-pink-500 transition"
+            >
+              Terms & Conditions
+            </Link>
           </div>
         </div>
       </div>
