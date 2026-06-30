@@ -3,6 +3,7 @@ import { Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
 import Rating from '../common/Rating';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
+import ReviewForm from './ReviewForm';
 import toast from 'react-hot-toast';
 
 export default function ProductInfo({ product }) {
@@ -28,15 +29,16 @@ export default function ProductInfo({ product }) {
   };
 
   const price = Number(product.salePrice ?? product.price ?? 0);
-  const originalPrice = product.salePrice && product.price && product.salePrice !== product.price
-    ? Number(product.price)
-    : null;
+  const originalPrice =
+    product.salePrice && product.price && product.salePrice !== product.price
+      ? Number(product.price)
+      : null;
 
   return (
     <div className="space-y-6">
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted">
-          {product.brand || 'Lumière'}
+          {product.brand || 'Lumiere'}
         </p>
         <h1 className="font-display text-4xl font-semibold text-charcoal">
           {product.name}
@@ -52,11 +54,11 @@ export default function ProductInfo({ product }) {
 
       <div className="flex items-end gap-3">
         <span className="text-3xl font-semibold text-charcoal">
-          ₹{price.toLocaleString('en-IN')}
+          Rs. {price.toLocaleString('en-IN')}
         </span>
         {originalPrice && (
           <span className="pb-1 text-sm text-muted line-through">
-            ₹{originalPrice.toLocaleString('en-IN')}
+            Rs. {originalPrice.toLocaleString('en-IN')}
           </span>
         )}
       </div>
@@ -115,6 +117,8 @@ export default function ProductInfo({ product }) {
       <div className="text-sm text-muted">
         Stock: {Number(product.stock ?? 0)} available
       </div>
+      <ReviewForm productId={product._id || product.id} />
     </div>
+    
   );
 }

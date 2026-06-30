@@ -21,15 +21,19 @@ const sortProducts = (items = [], sort = 'newest') => {
 
 const normalizeList = (payload) => {
   const data = payload?.data ?? payload;
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.data)) return data.data;
-  return [];
+  const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+  return list.map((item) => ({
+    ...item,
+    id: item.id || item._id,
+  }));
 };
 
 const normalizeItem = (payload) => {
   const data = payload?.data ?? payload;
-  if (data?.id) return data;
-  if (data?.data?.id) return data.data;
+  if (data?.id || data?._id) return { ...data, id: data.id || data._id };
+  if (data?.data?.id || data?.data?._id) {
+    return { ...data.data, id: data.data.id || data.data._id };
+  }
   return null;
 };
 
@@ -41,8 +45,9 @@ export function useProducts(params = {}) {
     if (params.category) next.category = params.category;
     if (params.page) next.page = params.page;
     if (params.limit) next.limit = params.limit;
+    if (params.bestSeller) next.bestSeller = params.bestSeller;
     return next;
-  }, [params.q, params.keyword, params.category, params.page, params.limit]);
+  }, [params.q, params.keyword, params.category, params.page, params.limit, params.bestSeller]);
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,12 +69,15 @@ export function useProducts(params = {}) {
 
         if (!alive) return;
         setProducts(sorted);
+        setProducts(list);
         setTotal(Number(response?.data?.total ?? list.length ?? 0));
         setPages(Number(response?.data?.pages ?? 0));
       } catch (err) {
         if (!alive) return;
         setError(err);
         setProducts([]);
+        setTotal(0);
+        setPages(0);
       } finally {
         if (alive) setLoading(false);
       }

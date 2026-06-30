@@ -9,25 +9,14 @@ import { CATEGORIES } from "../../utils/constants";
 import "swiper/css";
 import "swiper/css/navigation";
 
-const CATEGORY_LABELS = {
-  skincare: "Skincare",
-  serums: "Serums",
-  moisturisers: "Moisturisers",
-  spf: "SPF",
-  masks: "Masks",
-  "eye-care": "Eye Care",
-};
-
 function CategorySlider({ category }) {
   const { products, loading } = useProducts({ category: category.key, limit: 8 });
-
-  const label = CATEGORY_LABELS[category.key] || category.key;
 
   return (
     <div key={category.key} id={category.key} className="mb-24 scroll-mt-28">
       <div className="text-center mb-8">
         <h3 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-slate-100">
-          {label}
+          {category.label}
         </h3>
 
         <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm">
@@ -95,7 +84,7 @@ function CategorySlider({ category }) {
 
       <div className="flex justify-center mt-8">
         <button className="group flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-6 py-3 rounded-full font-semibold transition duration-300 shadow-md hover:shadow-lg">
-          View All {label} Products
+          View All {category.label} Products
           <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
         </button>
       </div>
@@ -116,8 +105,8 @@ const CategorySection = () => {
         </p>
       </div>
 
-      {CATEGORIES.map((key) => (
-        <CategorySlider key={key} category={{ key }} />
+      {CATEGORIES.map((category) => (
+        <CategorySlider key={category.key} category={category} />
       ))}
 
       <div className="flex justify-center mt-10">

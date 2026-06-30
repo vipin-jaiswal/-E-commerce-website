@@ -1,4 +1,10 @@
-export const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const rawApiBase = import.meta.env.VITE_API_URL || '';
+
+export const API_BASE = rawApiBase
+  ? rawApiBase.replace(/\/$/, '').endsWith('/api')
+    ? rawApiBase.replace(/\/$/, '')
+    : `${rawApiBase.replace(/\/$/, '')}/api`
+  : '/api';
 
 export const SORT_OPTIONS = [
   { label: 'Newest',       value: 'newest' },
@@ -8,4 +14,8 @@ export const SORT_OPTIONS = [
   { label: 'Top Rated',    value: 'rating' },
 ];
 
-export const CATEGORIES = ['skincare', 'serums', 'moisturisers', 'spf', 'masks', 'eye-care'];
+export const CATEGORIES = [
+  { key: 'skin-care', label: 'Skin Care' },
+  { key: 'hair-care', label: 'Hair Care' },
+  { key: 'makeup', label: 'Makeup' },
+];

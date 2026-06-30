@@ -1,15 +1,16 @@
 import React, { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import ProductGrid from "../components/product/ProductGrid";
 import { useProducts } from "../hooks/useProducts";
 import { SORT_OPTIONS, CATEGORIES } from "../utils/constants";
 
 export default function Products() {
+  const { category: routeCategory } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const params = {
     q: searchParams.get("q") || undefined,
-    category: searchParams.get("category") || undefined,
+    category: routeCategory || searchParams.get("category") || undefined,
     sort: searchParams.get("sort") || "newest",
   };
 
@@ -34,16 +35,16 @@ export default function Products() {
       <div className="flex gap-3 mb-8 flex-wrap">
         {CATEGORIES.map((cat) => (
           <button
-            key={cat}
+            key={cat.key}
             onClick={() =>
               setParam(
                 "category",
-                params.category === cat ? "" : cat
+                params.category === cat.key ? "" : cat.key
               )
             }
             className="px-4 py-2 border rounded-lg"
           >
-            {cat}
+            {cat.label}
           </button>
         ))}
 

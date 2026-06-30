@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import ProductGallery from "../components/product/ProductGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import ProductSlider from "../components/product/ProductSlider";
+import ProductReviews from "../components/product/ProductReviews";
 import { useProduct, useProducts } from "../hooks/useProducts";
 
 export default function ProductDetails() {
@@ -48,6 +49,8 @@ export default function ProductDetails() {
           <ProductSlider products={related} />
         </div>
       )}
+
+      <ProductReviews />
     </div>
   );
 }

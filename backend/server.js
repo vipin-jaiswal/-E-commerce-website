@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const productRoutes = require("./routes/productRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 
@@ -12,5 +13,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/products", productRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 module.exports = app;
