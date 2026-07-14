@@ -4,7 +4,9 @@ import toast from 'react-hot-toast';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { adminService } from '../services/adminService';
-import { CATEGORIES, SUBCATEGORIES } from '../utils/constants';
+import { CATEGORIES, REGION_OPTIONS, SUBCATEGORIES } from '../utils/constants';
+import BannerManager from '../components/admin/BannerManager';
+import OrdersManager from '../components/admin/OrdersManager';
 
 const emptyForm = {
   name: '',
@@ -16,6 +18,7 @@ const emptyForm = {
   salePrice: '',
   stock: '',
   images: [],
+  availableRegions: REGION_OPTIONS.map((region) => region.key),
 };
 
 const formFromProduct = (product) => ({
@@ -36,6 +39,9 @@ const formFromProduct = (product) => ({
   salePrice: product?.salePrice ?? '',
   stock: product?.stock ?? '',
   images: Array.isArray(product?.images) ? product.images : [],
+  availableRegions: Array.isArray(product?.availableRegions) && product.availableRegions.length > 0
+    ? product.availableRegions
+    : REGION_OPTIONS.map((region) => region.key),
 });
 
 const isPresetCategory = (value) => CATEGORIES.some((item) => item.key === value);
@@ -56,6 +62,7 @@ const toPayload = (form, images) => ({
   salePrice: form.salePrice,
   stock: form.stock,
   images,
+  availableRegions: form.availableRegions,
 });
 
 export default function Admin() {
@@ -64,6 +71,8 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
+  const [activeSection, setActiveSection] = useState('products');
+  const [bannerSummary, setBannerSummary] = useState({ total: 0, live: 0, upcoming: 0 });
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [categoryDraft, setCategoryDraft] = useState('');
@@ -190,6 +199,15 @@ export default function Admin() {
     });
   };
 
+  const toggleRegion = (regionKey) => {
+    setForm((current) => ({
+      ...current,
+      availableRegions: current.availableRegions.includes(regionKey)
+        ? current.availableRegions.filter((item) => item !== regionKey)
+        : [...current.availableRegions, regionKey],
+    }));
+  };
+
   const addCustomSubCategory = () => {
     const value = subCategoryDraft.trim();
     if (!value) return;
@@ -229,6 +247,11 @@ export default function Admin() {
 
     if (form.categories.length === 0) {
       toast.error('Select at least one category');
+      return;
+    }
+
+    if (form.availableRegions.length === 0) {
+      toast.error('Select at least one delivery region');
       return;
     }
 
@@ -273,11 +296,18 @@ export default function Admin() {
     }
   };
 
-  const stats = [
+  const productStats = [
     { label: 'Products', value: products.length, icon: Package },
     { label: 'Featured', value: products.filter((item) => item.featured).length, icon: Sparkles },
     { label: 'Top Rated', value: products.filter((item) => Number(item.rating) >= 4.5).length, icon: Star },
   ];
+  const stats = activeSection === 'products'
+    ? productStats
+    : [
+        { label: 'Banners', value: bannerSummary.total, icon: ImagePlus },
+        { label: 'Live now', value: bannerSummary.live, icon: Sparkles },
+        { label: 'Upcoming', value: bannerSummary.upcoming, icon: RefreshCcw },
+      ];
 
   if (!user?.isAdmin) {
     return <Navigate to="/login" replace />;
@@ -292,9 +322,15 @@ export default function Admin() {
               DYVA house brand
             </div>
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.35em] text-pink-500">Admin panel</p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">Manage DYVA products in one place</h1>
+            <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
+              {activeSection === 'products' ? 'Manage DYVA products in one place' : activeSection === 'banners' ? 'Manage homepage banners' : 'Manage customer orders'}
+            </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
-              DYVA is our brand. Create new products, organize them by category, edit inventory, and keep the storefront synced with the backend.
+              {activeSection === 'products'
+                ? 'Create products, organize them by category, edit inventory, and keep the storefront synced with the backend.'
+                : activeSection === 'banners'
+                  ? 'Add a banner, edit an existing campaign, or schedule an upcoming banner for the homepage.'
+                  : 'View orders by delivery region and update fulfilment status.'}
             </p>
           </div>
 
@@ -314,6 +350,31 @@ export default function Admin() {
           </div>
         </div>
 
+        <div className="mb-8 inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-slate-900">
+          <button
+            type="button"
+            onClick={() => setActiveSection('products')}
+            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'products' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:text-pink-500 dark:text-slate-400'}`}
+          >
+            Products
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection('banners')}
+            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'banners' ? 'bg-pink-500 text-white' : 'text-slate-500 hover:text-pink-500 dark:text-slate-400'}`}
+          >
+            Banners
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection('orders')}
+            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'orders' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:text-pink-500 dark:text-slate-400'}`}
+          >
+            Orders
+          </button>
+        </div>
+
+        {activeSection === 'products' ? (
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -608,6 +669,43 @@ export default function Admin() {
                 </div>
               </div>
 
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Delivery availability</span>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      Choose the Indian regions where this product can be ordered.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm((current) => ({ ...current, availableRegions: REGION_OPTIONS.map((region) => region.key) }))}
+                    className="rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-pink-600 dark:bg-pink-500/20 dark:text-pink-300"
+                  >
+                    All India
+                  </button>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {REGION_OPTIONS.map((region) => {
+                    const active = form.availableRegions.includes(region.key);
+                    return (
+                      <button
+                        key={region.key}
+                        type="button"
+                        onClick={() => toggleRegion(region.key)}
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                          active
+                            ? 'border-pink-500 bg-pink-500 text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-pink-400 hover:text-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
+                        }`}
+                      >
+                        {region.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <label className="space-y-2 block">
                 <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Description</span>
                 <textarea
@@ -683,6 +781,18 @@ export default function Admin() {
             </form>
           </section>
         </div>
+        ) : activeSection === 'banners' ? (
+          <BannerManager onBannersChange={(banners) => {
+            const now = Date.now();
+            setBannerSummary({
+              total: banners.length,
+              live: banners.filter((banner) => banner.isActive && (!banner.startsAt || new Date(banner.startsAt).getTime() <= now) && (!banner.endsAt || new Date(banner.endsAt).getTime() >= now)).length,
+              upcoming: banners.filter((banner) => banner.isActive && banner.startsAt && new Date(banner.startsAt).getTime() > now).length,
+            });
+          }} />
+        ) : (
+          <OrdersManager />
+        )}
       </div>
     </div>
   );

@@ -67,7 +67,7 @@ function CategorySlider({ category }) {
             delay: 3500,
             disableOnInteraction: false,
           }}
-          loop={true}
+          loop={products.length > 5}
           speed={700}
           spaceBetween={12}
           breakpoints={{

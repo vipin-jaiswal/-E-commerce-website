@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, XCircle, CheckCircle } from "lucide-react";
 import PageLoader from "../components/common/Loader";
 import { orderService } from "../services/orderService";
+import toast from "react-hot-toast";
 
 export default function OrderDetails() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -47,6 +49,21 @@ export default function OrderDetails() {
     );
   }
 
+  const canCancel = ["ordered", "confirmed"].includes(order.status);
+  const cancelOrder = async () => {
+    if (!window.confirm(`Cancel order #${order.id}?`)) return;
+    setCancelling(true);
+    try {
+      const cancelled = await orderService.cancel(order.id);
+      setOrder(cancelled);
+      toast.success("Order cancelled and stock restored");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Unable to cancel order");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   return (
     <div className="max-w-[1500px] mx-auto px-6 py-10">
       <div className="flex items-center justify-between gap-4 mb-8">
@@ -54,11 +71,50 @@ export default function OrderDetails() {
           <p className="text-sm text-muted">Order #{order.id}</p>
           <h1 className="font-display text-3xl font-semibold text-charcoal">Order details</h1>
         </div>
-        <Link to="/orders" className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent-dark">
-          <ArrowLeft size={16} />
-          Back
-        </Link>
+        <div className="flex items-center gap-3">
+          {canCancel && (
+            <button
+              type="button"
+              onClick={cancelOrder}
+              disabled={cancelling}
+              className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:opacity-60"
+            >
+              <XCircle size={16} /> {cancelling ? "Cancelling..." : "Cancel order"}
+            </button>
+          )}
+          <Link to="/orders" className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent-dark">
+            <ArrowLeft size={16} />
+            Back
+          </Link>
+        </div>
       </div>
+
+      <div className={`mb-6 rounded-2xl px-4 py-3 text-sm font-semibold ${order.status === 'cancelled' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'}`}>
+        Order status: {String(order.status || 'ordered').replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())}
+      </div>
+
+      {order.status !== 'cancelled' && (
+        <div className="mb-6 rounded-2xl bg-white p-5 shadow-card">
+          <h2 className="mb-4 font-semibold text-charcoal">Track order</h2>
+          <div className="flex items-start gap-0">
+            {['Ordered', 'Confirmed', 'Dispatched', 'Out for delivery', 'Delivered'].map((label, index, steps) => {
+              const current = { pending: 0, ordered: 0, confirmed: 1, dispatched: 2, out_for_delivery: 3, delivered: 4 }[order.status] ?? 0;
+              const done = index <= current;
+              return (
+                <React.Fragment key={label}>
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <div className={`flex h-7 w-7 items-center justify-center rounded-full ${done ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+                      {done && <CheckCircle size={15} className="text-white" />}
+                    </div>
+                    <span className={`text-xs font-medium ${done ? 'text-emerald-700' : 'text-slate-400'}`}>{label}</span>
+                  </div>
+                  {index < steps.length - 1 && <div className={`mt-3 h-0.5 flex-1 ${index < current ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
@@ -76,7 +132,9 @@ export default function OrderDetails() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-charcoal line-clamp-1">{item.name}</p>
-                    <p className="text-sm text-muted">Qty: {item.quantity}</p>
+                    <p className="text-sm text-muted">
+                      Qty: {item.quantity} · ₹{Number(item.price ?? 0).toLocaleString("en-IN")} each
+                    </p>
                   </div>
                   <p className="font-semibold text-charcoal">
                     ₹{Number(item.price * item.quantity).toLocaleString("en-IN")}
@@ -113,6 +171,10 @@ export default function OrderDetails() {
           <div className="bg-white rounded-2xl shadow-card p-6">
             <h2 className="font-semibold text-charcoal mb-4">Delivery</h2>
             <p className="text-sm text-muted leading-6">
+              <span className="font-semibold text-charcoal">{order.shippingAddress?.name}</span>
+              <br />
+              Phone: {order.shippingAddress?.phone}
+              <br />
               {order.shippingAddress?.street}
               <br />
               {order.shippingAddress?.city}, {order.shippingAddress?.state}
@@ -123,6 +185,18 @@ export default function OrderDetails() {
             </p>
             <p className="text-sm text-muted mt-4">
               Payment method: <span className="text-charcoal font-medium capitalize">{order.paymentMethod}</span>
+            </p>
+            <p className="text-sm text-muted mt-2">
+              Delivery region: <span className="text-charcoal font-medium capitalize">{String(order.deliveryRegion || 'Not available').replace('-', ' ')}</span>
+            </p>
+            <p className="text-sm text-muted mt-2">
+              Payment status: <span className="text-charcoal font-medium capitalize">
+                {order.paymentMethod === 'cod' && ['pending', 'unpaid'].includes(order.paymentStatus)
+                  ? 'To be paid on delivery'
+                  : order.paymentStatus === 'unpaid'
+                    ? 'Unpaid'
+                    : (order.paymentStatus || 'pending')}
+              </span>
             </p>
           </div>
         </aside>

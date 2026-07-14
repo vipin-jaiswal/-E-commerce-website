@@ -1,91 +1,94 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import {
+  createAddress,
+  deleteAddress,
+  getAddresses,
+  setDefault,
+  updateAddress,
+} from '../services/addressService';
 import { useAuth } from '../hooks/useAuth';
-import * as addressService from '../services/addressService';
 
 const AddressContext = createContext(null);
 
 export function AddressProvider({ children }) {
   const { user } = useAuth();
   const [addresses, setAddresses] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchAddresses = useCallback(async () => {
+  const defaultAddress = addresses.find((a) => a.isDefault);
+
+  const loadAddresses = useCallback(async () => {
     if (!user) {
       setAddresses([]);
+      setLoading(false);
       return;
     }
     setLoading(true);
-    setError(null);
     try {
-      const data = await addressService.getAddresses();
-      setAddresses(data);
+      const data = await getAddresses();
+      setAddresses(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message);
+      if (err.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.assign('/login');
+        return;
+      }
+      toast.error(err.response?.data?.message || err.message || 'Failed to load addresses');
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    fetchAddresses();
-  }, [fetchAddresses]);
+    loadAddresses();
+  }, [loadAddresses]);
 
-  const addAddress = useCallback(async (payload) => {
-    const created = await addressService.createAddress(payload);
-    setAddresses((prev) => {
-      const next = created.isDefault ? prev.map((a) => ({ ...a, isDefault: false })) : prev;
-      return [created, ...next];
-    });
-    toast.success('Address saved');
-    return created;
-  }, []);
+  const addAddress = async (payload) => {
+    const saved = await createAddress(payload);
+    setAddresses((prev) => [saved, ...prev]);
+    toast.success('Address saved!');
+    return saved;
+  };
 
-  const editAddress = useCallback(async (id, payload) => {
-    const updated = await addressService.updateAddress(id, payload);
-    setAddresses((prev) =>
-      prev.map((a) => {
-        if (a._id === id) return updated;
-        return updated.isDefault ? { ...a, isDefault: false } : a;
-      })
-    );
-    toast.success('Address updated');
-    return updated;
-  }, []);
+  const editAddress = async (id, payload) => {
+    const saved = await updateAddress(id, payload);
+    setAddresses((prev) => prev.map((a) => (a._id === id ? saved : a)));
+    toast.success('Address updated!');
+    return saved;
+  };
 
-  const removeAddress = useCallback(async (id) => {
-    await addressService.deleteAddress(id);
+  const removeAddress = async (id) => {
+    await deleteAddress(id);
     setAddresses((prev) => prev.filter((a) => a._id !== id));
-    toast.success('Address deleted');
-  }, []);
+    toast.success('Address removed.');
+  };
 
-  const makeDefault = useCallback(async (id) => {
-    const updated = await addressService.setDefault(id);
-    setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a._id === id ? true : false })).map((a) => (a._id === id ? updated : a)));
-    toast.success('Default address updated');
-    return updated;
-  }, []);
+  const makeDefault = async (id) => {
+    const saved = await setDefault(id);
+    setAddresses((prev) => prev.map((a) => (a._id === id ? saved : { ...a, isDefault: false })));
+    toast.success('Default address updated.');
+  };
 
   const value = {
     addresses,
     loading,
-    error,
-    refresh: fetchAddresses,
+    defaultAddress,
+    loadAddresses,
     addAddress,
     editAddress,
     removeAddress,
     makeDefault,
-    defaultAddress: addresses.find((a) => a.isDefault) || addresses[0] || null,
   };
 
   return <AddressContext.Provider value={value}>{children}</AddressContext.Provider>;
 }
 
 export function useAddress() {
-  const ctx = useContext(AddressContext);
-  if (!ctx) {
+  const context = useContext(AddressContext);
+  if (!context) {
     throw new Error('useAddress must be used within an AddressProvider');
   }
-  return ctx;
+  return context;
 }

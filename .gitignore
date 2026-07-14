@@ -17,6 +17,8 @@ frontend/node_modules/
 # ==========================
 AI-models/
 models/
+!backend/models/
+!backend/models/Banner.js
 *.keras
 *.h5
 *.hdf5

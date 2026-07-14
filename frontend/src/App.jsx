@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AddressProvider } from './context/AddressContext';
 
 // Layout components
 import Header from './components/layout/Header';
@@ -48,27 +49,29 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
-            <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/phone-auth" element={<PhoneAuth />} />
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/products/category/:category" element={<Products />} />
-                <Route path="/products/:id" element={<ProductDetails />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/orders/:id" element={<OrderDetails />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/concerns" element={<AllConcernsPage />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/face-scan" element={<FaceScan />} />
-              </Route>
-            </Routes>
+            <AddressProvider>
+              <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/phone-auth" element={<PhoneAuth />} />
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/category/:category" element={<Products />} />
+                  <Route path="/products/:id" element={<ProductDetails />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/orders/:id" element={<OrderDetails />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/concerns" element={<AllConcernsPage />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/face-scan" element={<FaceScan />} />
+                </Route>
+              </Routes>
+            </AddressProvider>
           </WishlistProvider>
         </CartProvider>
       </AuthProvider>

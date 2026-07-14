@@ -33,8 +33,8 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="max-w-[1500px] mx-auto px-6 py-10 bg-gray-50 dark:bg-gray-900">
-      <div className="grid md:grid-cols-2 gap-10">
+    <div className="mx-auto max-w-[1400px] bg-gray-50 px-4 py-6 dark:bg-gray-900 sm:px-6 lg:py-8">
+      <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-10">
         <ProductGallery images={product.images} />
 
         <ProductInfo product={product} />

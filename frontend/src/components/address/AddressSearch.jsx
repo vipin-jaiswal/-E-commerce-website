@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Loader2, Search } from 'lucide-react';
 import { searchAddress } from '../../utils/geocoding';
 
-export default function AddressSearch({ onSelect }) {
+export default function AddressSearch({ onSelect, city, state }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function AddressSearch({ onSelect }) {
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const items = await searchAddress(query);
+        const items = await searchAddress(query, { city, state });
         setResults(items);
         setOpen(items.length > 0);
       } catch {
@@ -33,7 +33,7 @@ export default function AddressSearch({ onSelect }) {
     }, 300);
 
     return () => clearTimeout(debounceRef.current);
-  }, [query]);
+  }, [query, city, state]);
 
   useEffect(() => {
     function handleClickOutside(e) {

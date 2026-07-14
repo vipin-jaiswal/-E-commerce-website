@@ -245,6 +245,7 @@ router.post("/", async (req, res) => {
       images: Array.isArray(payload.images) ? payload.images : [],
       featured: Boolean(payload.featured),
       bestSeller: Boolean(payload.bestSeller),
+      availableRegions: normalizeStringList(payload.availableRegions),
     });
 
     return res.status(201).json(normalize(product.toObject()));
@@ -276,6 +277,7 @@ router.put("/:id", async (req, res) => {
           images: Array.isArray(payload.images) ? payload.images : [],
           featured: Boolean(payload.featured),
           bestSeller: Boolean(payload.bestSeller),
+          availableRegions: normalizeStringList(payload.availableRegions),
         },
       },
       { new: true, runValidators: true }

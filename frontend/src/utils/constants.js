@@ -58,3 +58,12 @@ export const SUBCATEGORIES = {
     { key: 'shower-gel', label: 'Shower Gel' },
   ],
 };
+
+export const REGION_OPTIONS = [
+  { key: 'north', label: 'North' },
+  { key: 'south', label: 'South' },
+  { key: 'east', label: 'East' },
+  { key: 'west', label: 'West' },
+  { key: 'central', label: 'Central' },
+  { key: 'north-east', label: 'North East' },
+];

@@ -17,7 +17,7 @@ const upload = multer({
   storage,
   fileFilter: imageFileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 10 * 1024 * 1024,
   },
 });
 
@@ -39,7 +39,10 @@ const getSafeFilename = (file) => {
 router.post('/images', (req, res) => {
   upload.array('images', 12)(req, res, (error) => {
     if (error) {
-      return res.status(400).json({ message: error.message });
+      const message = error.code === 'LIMIT_FILE_SIZE'
+        ? 'Image is too large. Please upload an image smaller than 10MB.'
+        : error.message;
+      return res.status(400).json({ message });
     }
 
     try {

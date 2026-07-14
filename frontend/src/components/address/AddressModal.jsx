@@ -28,6 +28,11 @@ export default function AddressModal({ address, onClose, onSaved }) {
 
   const isEdit = Boolean(address?._id);
 
+  const handleLocationPicked = (location) => {
+    // Merge the selected location details into the form data
+    setData((prev) => ({ ...prev, ...location }));
+  };
+
   const handleSubmit = async (sanitized) => {
     setSubmitting(true);
     try {
@@ -60,6 +65,7 @@ export default function AddressModal({ address, onClose, onSaved }) {
           data={data}
           onChange={setData}
           onSubmit={handleSubmit}
+          onLocationPicked={handleLocationPicked} // This was already here, but now it will be passed to AddressForm
           submitting={submitting}
           submitLabel={isEdit ? 'Update Address' : 'Save Address'}
         />

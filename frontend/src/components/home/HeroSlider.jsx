@@ -1,16 +1,24 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
-import { banners } from "../../utils/banners";
+import { bannerService } from '../../services/bannerService';
 
 import "swiper/css";
 import "swiper/css/navigation";
 
 const HeroSlider = () => {
   const navigate = useNavigate();
+  const [banners, setBanners] = useState([]);
+
+  useEffect(() => {
+    bannerService.listLive().then((items) => setBanners(Array.isArray(items) ? items : [])).catch(() => setBanners([]));
+  }, []);
+
+  if (banners.length === 0) return null;
 
   return (
-    <section className="max-w-[1500px] mx-auto px-4 -mt-4">
+    <section className="mx-auto max-w-[1500px] px-4 -mt-4">
       <Swiper
         modules={[Navigation, Autoplay]}
         navigation
@@ -19,20 +27,18 @@ const HeroSlider = () => {
           disableOnInteraction: false,
           pauseOnMouseEnter: true,
         }}
-        loop={true}
-        className="rounded-3xl overflow-hidden shadow-lg"
+        loop={banners.length > 1}
+        className="aspect-[2/1] overflow-hidden rounded-3xl shadow-lg sm:aspect-[3/1] lg:aspect-[4/1] bg-card"
       >
         {banners.map((banner) => (
-          <SwiperSlide key={banner.id}>
+          <SwiperSlide key={banner.id} className="h-full">
             <img
               src={banner.image}
-              alt={`Banner ${banner.id}`}
-              onClick={() => navigate(banner.link)}
+              alt={banner.title || 'Promotion banner'}
+              onClick={() => banner.link && navigate(banner.link)}
               className="
                 w-full
-                h-[220px]
-                md:h-[350px]
-                lg:h-[450px]
+                h-full
                 object-cover
                 cursor-pointer
               "

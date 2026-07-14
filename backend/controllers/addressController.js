@@ -13,7 +13,7 @@ exports.getAddresses = async (req, res) => {
       isDefault: -1,
       updatedAt: -1,
     });
-    res.status(200).json({ success: true, data: addresses });
+   res.status(200).json(addresses);
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to fetch addresses', error: err.message });
   }
@@ -26,7 +26,7 @@ exports.getAddressById = async (req, res) => {
     if (!address) {
       return res.status(404).json({ success: false, message: 'Address not found' });
     }
-    res.status(200).json({ success: true, data: address });
+    res.status(200).json(address);
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to fetch address', error: err.message });
   }
@@ -60,7 +60,7 @@ exports.createAddress = async (req, res) => {
       isVerified,
     });
 
-    res.status(201).json({ success: true, data: address });
+    res.status(201).json(address);
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).json({ success: false, message: 'Validation failed', error: err.message });
@@ -84,10 +84,18 @@ exports.updateAddress = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Address not found' });
     }
 
-    Object.assign(address, payload);
+    // An edited address must be verified again; do not keep a stale
+    // verification result from the previous address details.
+    let isVerified = Boolean(payload.latitude && payload.longitude);
+    if (!isVerified) {
+      const result = await verifyAddressExists(payload);
+      isVerified = result.verified;
+    }
+
+    Object.assign(address, { ...payload, isVerified });
     await address.save(); // pre-save hook re-enforces single default
 
-    res.status(200).json({ success: true, data: address });
+    res.status(200).json(address);
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).json({ success: false, message: 'Validation failed', error: err.message });
@@ -131,7 +139,7 @@ exports.setDefaultAddress = async (req, res) => {
     address.isDefault = true;
     await address.save(); // pre-save hook unsets isDefault on all others
 
-    res.status(200).json({ success: true, data: address });
+    res.status(200).json(address);
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to set default address', error: err.message });
   }

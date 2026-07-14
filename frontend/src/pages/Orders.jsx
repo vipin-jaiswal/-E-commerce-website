@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Package, ChevronRight, Truck, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Package, ChevronRight, Truck, CheckCircle, Clock, XCircle, MapPin } from "lucide-react";
 import { orderService } from "../services/orderService";
 import PageLoader from "../components/common/Loader";
+import toast from "react-hot-toast";
 
 const STATUS_CONFIG = {
-  pending: { label: "Pending", icon: Clock, color: "text-gold bg-gold-light" },
+  ordered: { label: "Ordered", icon: Clock, color: "text-gold bg-gold-light" },
+  pending: { label: "Ordered", icon: Clock, color: "text-gold bg-gold-light" },
+  confirmed: { label: "Confirmed", icon: CheckCircle, color: "text-blue-500 bg-blue-50" },
   processing: { label: "Processing", icon: Clock, color: "text-blue-500 bg-blue-50" },
+  dispatched: { label: "Dispatched", icon: Truck, color: "text-accent bg-accent/10" },
   shipped: { label: "Shipped", icon: Truck, color: "text-accent bg-accent/10" },
+  out_for_delivery: { label: "Out for delivery", icon: Truck, color: "text-purple-600 bg-purple-50" },
   delivered: { label: "Delivered", icon: CheckCircle, color: "text-sage bg-sage/10" },
   cancelled: { label: "Cancelled", icon: XCircle, color: "text-red-400 bg-red-50" },
 };
@@ -26,6 +31,7 @@ function StatusBadge({ status }) {
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState("");
 
   useEffect(() => {
     orderService
@@ -36,6 +42,20 @@ export default function Orders() {
   }, []);
 
   if (loading) return <PageLoader />;
+
+  const cancelOrder = async (order) => {
+    if (!window.confirm(`Cancel order #${order.id}?`)) return;
+    setCancellingId(order.id);
+    try {
+      const cancelled = await orderService.cancel(order.id);
+      setOrders((current) => current.map((item) => item.id === order.id ? cancelled : item));
+      toast.success("Order cancelled and stock restored");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to cancel order");
+    } finally {
+      setCancellingId("");
+    }
+  };
 
   return (
     <div className="max-w-site mx-auto px-6 py-10">
@@ -90,20 +110,33 @@ export default function Orders() {
                       +{order.items.length - 3}
                     </div>
                   )}
-                  <Link
-                    to={`/orders/${order.id}`}
-                    className="ml-2 flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-dark transition-colors"
-                  >
-                    Details <ChevronRight size={14} />
-                  </Link>
                 </div>
               </div>
 
-              {["shipped", "delivered"].includes(order.status) && (
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+                <Link to={`/orders/${order.id}`} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-dark transition-colors">
+                  Details <ChevronRight size={14} />
+                </Link>
+                <Link to={`/orders/${order.id}`} className="inline-flex items-center gap-1 rounded-full bg-pink-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-pink-600">
+                  <MapPin size={13} /> Track order
+                </Link>
+                {["ordered", "confirmed"].includes(order.status) && (
+                    <button
+                      type="button"
+                      disabled={cancellingId === order.id}
+                      onClick={() => cancelOrder(order)}
+                      className="ml-2 rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 transition hover:bg-red-50 disabled:opacity-60"
+                    >
+                      {cancellingId === order.id ? "Cancelling..." : "Cancel order"}
+                    </button>
+                  )}
+              </div>
+
+              {order.status !== "cancelled" && (
                 <div className="mt-5 pt-4 border-t border-border">
                   <div className="flex items-center gap-0">
-                    {["Order Placed", "Processing", "Shipped", "Delivered"].map((label, index, arr) => {
-                      const stepMap = { pending: 0, processing: 1, shipped: 2, delivered: 3 };
+                    {["Ordered", "Confirmed", "Dispatched", "Out for delivery", "Delivered"].map((label, index, arr) => {
+                      const stepMap = { pending: 0, ordered: 0, confirmed: 1, dispatched: 2, out_for_delivery: 3, delivered: 4 };
                       const current = stepMap[order.status] ?? 0;
                       const done = index <= current;
 

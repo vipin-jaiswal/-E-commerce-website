@@ -24,7 +24,7 @@ export default function AddressCard({
       onClick={selectable ? onSelect : undefined}
       className={`relative rounded-2xl border-2 p-5 transition-all ${
         selectable ? 'cursor-pointer' : ''
-      } ${selected ? 'border-accent bg-accent/5' : 'border-border bg-white hover:border-charcoal/20'}`}
+      } ${selected ? 'border-emerald-500 bg-emerald-50 shadow-sm dark:bg-emerald-500/10' : 'border-border bg-white hover:border-charcoal/20'}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -34,6 +34,11 @@ export default function AddressCard({
           {address.isDefault && (
             <span className="rounded-full bg-sage/15 px-3 py-1 text-xs font-semibold text-sage">
               Default
+            </span>
+          )}
+          {selected && (
+            <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white">
+              Selected for delivery
             </span>
           )}
           {!address.isVerified && (
@@ -46,7 +51,7 @@ export default function AddressCard({
         {selectable && (
           <div
             className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 ${
-              selected ? 'border-accent bg-accent' : 'border-gray-300'
+              selected ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'
             }`}
           >
             {selected && <CheckCircle2 size={14} className="text-white" />}

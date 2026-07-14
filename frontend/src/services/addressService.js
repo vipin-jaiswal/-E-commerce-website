@@ -1,6 +1,7 @@
-// Adjust API_BASE_URL to match your existing environment variable
-// (e.g. import.meta.env.VITE_API_URL) if your project already defines one.
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { API_BASE } from '../utils/constants';
+
+// Keep address requests on the same /api base path as the rest of the client.
+const API_BASE_URL = API_BASE;
 
 function getToken() {
   // Adjust this if your auth token is stored under a different key
@@ -39,29 +40,25 @@ async function request(path, options = {}) {
 }
 
 export async function getAddresses() {
-  const res = await request('/address');
-  return res.data;
+  return request('/address');
 }
 
 export async function getAddressById(id) {
-  const res = await request(`/address/${id}`);
-  return res.data;
+  return request(`/address/${id}`);
 }
 
 export async function createAddress(payload) {
-  const res = await request('/address', {
+  return request('/address', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
-  return res.data;
 }
 
 export async function updateAddress(id, payload) {
-  const res = await request(`/address/${id}`, {
+  return request(`/address/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
-  return res.data;
 }
 
 export async function deleteAddress(id) {
@@ -69,8 +66,7 @@ export async function deleteAddress(id) {
 }
 
 export async function setDefault(id) {
-  const res = await request(`/address/default/${id}`, { method: 'PATCH' });
-  return res.data;
+  return request(`/address/default/${id}`, { method: 'PATCH' });
 }
 
 export async function verifyAddress(payload) {

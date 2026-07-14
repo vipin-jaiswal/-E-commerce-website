@@ -1,46 +1,43 @@
-import React, { useState } from 'react';
-import { MapPin, Loader2 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { getCurrentPosition, reverseGeocode } from '../../utils/geocoding';
+import React, { useState } from "react";
+import { MapPin, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { getCurrentPosition, reverseGeocode } from "../../utils/geocoding";
 
 export default function LocationButton({ onLocate }) {
-  const [status, setStatus] = useState('idle'); // idle | locating | resolving
+  const [loading, setLoading] = useState(false);
 
-  const handleClick = async () => {
-    try {
-      setStatus('locating');
-      const coords = await getCurrentPosition();
-
-      setStatus('resolving');
-      const resolved = await reverseGeocode(coords.latitude, coords.longitude);
-
-      onLocate(resolved);
-      toast.success('Location detected');
-    } catch (err) {
-      const message = err?.message || 'Could not detect your location';
-      toast.error(message);
-    } finally {
-      setStatus('idle');
-    }
+  const detectCurrentLocation = () => {
+    setLoading(true);
+    getCurrentPosition()
+      .then((coords) => reverseGeocode(coords.latitude, coords.longitude))
+      .then((address) => {
+        onLocate(address);
+        toast.success("Location detected!");
+      })
+      .catch((err) => {
+        console.error("Location detection failed:", err);
+        toast.error(err.message || "Could not get your location.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
-
-  const isBusy = status !== 'idle';
 
   return (
     <button
       type="button"
-      onClick={handleClick}
-      disabled={isBusy}
-      className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-accent/40 bg-accent/5 px-4 py-3 text-sm font-semibold text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-70"
+      onClick={detectCurrentLocation}
+      disabled={loading}
+      className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-pink-300 bg-pink-50 px-4 py-3 text-sm font-semibold text-pink-600 transition hover:bg-pink-100 disabled:cursor-not-allowed disabled:opacity-70"
     >
-      {isBusy ? (
+      {loading ? (
         <>
-          <Loader2 size={16} className="animate-spin" />
-          {status === 'locating' ? 'Getting your location…' : 'Finding your address…'}
+          <Loader2 size={18} className="animate-spin" />
+          Detecting Location...
         </>
       ) : (
         <>
-          <MapPin size={16} />
+          <MapPin size={18} />
           Use Current Location
         </>
       )}

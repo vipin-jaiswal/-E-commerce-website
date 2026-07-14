@@ -10,7 +10,17 @@ function mapNominatimAddress(item) {
   const a = item.address || {};
   return {
     address1: [a.house_number, a.road].filter(Boolean).join(' ') || item.display_name?.split(',')[0] || '',
-    area: a.suburb || a.neighbourhood || a.residential || '',
+    area:
+      a.hamlet ||
+      a.suburb ||
+      a.neighbourhood ||
+      a.residential ||
+      a.quarter ||
+      a.city_district ||
+      a.village ||
+      a.town ||
+      a.municipality ||
+      '',
     city: a.city || a.town || a.village || a.county || '',
     state: a.state || '',
     country: a.country || 'India',
@@ -22,11 +32,14 @@ function mapNominatimAddress(item) {
 }
 
 /** Forward search — used by the "Search Address" typeahead (Feature 3). */
-export async function searchAddress(query, { limit = 5 } = {}) {
+export async function searchAddress(query, { limit = 5, city = '', state = '' } = {}) {
   if (!query || query.trim().length < 3) return [];
 
+  // Construct a more specific query if city/state are available
+  const fullQuery = [query, city, state].filter(Boolean).join(', ');
+
   const url = `${NOMINATIM_BASE}/search?format=jsonv2&addressdetails=1&limit=${limit}&countrycodes=in&q=${encodeURIComponent(
-    query
+    fullQuery
   )}`;
 
   const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -71,7 +84,25 @@ export function getCurrentPosition() {
           reject({ code: 'UNKNOWN', message: 'Could not fetch your location.' });
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
     );
   });
+}
+
+/** Pincode lookup — used to auto-fill city/state (Feature 8). */
+export async function lookupPincode(pincode) {
+  const cleaned = String(pincode || '').replace(/\D/g, '');
+  if (cleaned.length !== 6) return null;
+
+  // Using OpenStreetMap directly for pincode lookup.
+  const url = `${NOMINATIM_BASE}/search?format=jsonv2&addressdetails=1&limit=1&countrycodes=in&postalcode=${cleaned}`;
+
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) throw new Error('Pincode lookup failed');
+
+  const results = await res.json();
+  if (!results || results.length === 0) return null;
+
+  // Return the first result, mapped to our address structure
+  return mapNominatimAddress(results[0]);
 }

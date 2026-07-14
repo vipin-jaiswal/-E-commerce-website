@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 import LocationButton from './LocationButton';
 import AddressSearch from './AddressSearch';
 import { validateAddressForm, sanitizeAddressData } from '../../utils/addressValidation';
-import { verifyAddress as verifyAddressApi } from '../../services/addressService';
+import { lookupPincode } from '../../utils/geocoding';
+import { verifyAddress } from '../../services/addressService';
 
 const TYPES = [
   { id: 'Home', label: 'Home', icon: Home },
@@ -46,48 +47,53 @@ function Field({ label, name, value, onChange, error, autoComplete, type = 'text
  *    (and, for fully manual entries, passes the verify-address check)
  *  - submitting: disables the submit button while a save is in flight
  *  - submitLabel: text for the submit button
+ *  - onLocationPicked: callback to merge location data from a picker
  */
-export default function AddressForm({ data, onChange, onSubmit, submitting = false, submitLabel = 'Save Address' }) {
+export default function AddressForm({
+  data,
+  onChange,
+  onSubmit,
+  submitting = false,
+  submitLabel = 'Save Address',
+  onLocationPicked,
+}) {
   const [errors, setErrors] = useState({});
   const [verifying, setVerifying] = useState(false);
-  const [verifyWarning, setVerifyWarning] = useState('');
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
     let next = value;
+
     if (name === 'phone') next = value.replace(/\D/g, '').slice(0, 10);
-    if (name === 'pincode') next = value.replace(/\D/g, '').slice(0, 6);
-    onChange({ ...data, [name]: next });
-    setVerifyWarning('');
+    if (name === 'pincode') {
+      next = value.replace(/\D/g, '').slice(0, 6);
+    }
+
+    const updatedData = { ...data, [name]: next };
+    onChange(updatedData);
+
+    if (name === 'pincode' && next.length === 6) {
+      const resolved = await lookupPincode(next);
+      if (resolved) {
+        onChange((current) => ({
+          ...current,
+          city: resolved.city || current.city,
+          state: resolved.state || current.state,
+          area: current.area || resolved.area,
+        }));
+      }
+    }
   };
 
   const applyLocation = (resolved) => {
-    onChange({
-      ...data,
-      address1: resolved.address1 || data.address1,
-      area: resolved.area || data.area,
-      city: resolved.city || data.city,
-      state: resolved.state || data.state,
-      country: resolved.country || data.country || 'India',
-      pincode: resolved.pincode || data.pincode,
-      latitude: resolved.latitude,
-      longitude: resolved.longitude,
-    });
-    setVerifyWarning('');
+    // If the form is inside a modal that handles location picking, use its logic.
+    // Otherwise, update the state directly.
+    onLocationPicked ? onLocationPicked(resolved) : onChange((prev) => ({ ...prev, ...resolved }));
   };
 
   const applySearchResult = (resolved) => {
-    onChange({
-      ...data,
-      area: resolved.area || data.area,
-      city: resolved.city || data.city,
-      state: resolved.state || data.state,
-      country: resolved.country || data.country || 'India',
-      pincode: resolved.pincode || data.pincode,
-      latitude: resolved.latitude,
-      longitude: resolved.longitude,
-    });
-    setVerifyWarning('');
+    const merged = { ...data, ...resolved };
+    onLocationPicked ? onLocationPicked(merged) : onChange(merged);
   };
 
   const handleSubmit = async (e) => {
@@ -101,37 +107,27 @@ export default function AddressForm({ data, onChange, onSubmit, submitting = fal
 
     const sanitized = sanitizeAddressData(data);
 
-    // Coordinates already present (picked via search or GPS) — skip
-    // re-verification, it's already a resolved real place (Feature 4).
-    if (sanitized.latitude && sanitized.longitude) {
-      onSubmit(sanitized);
-      return;
-    }
-
-    // Fully manual entry — verify it resolves to a real place before saving.
-    try {
+    // For manually entered addresses, try to verify them first.
+    if (!sanitized.latitude && !sanitized.longitude) {
       setVerifying(true);
-      const { verified } = await verifyAddressApi({
-        address1: sanitized.address1,
-        city: sanitized.city,
-        state: sanitized.state,
-        pincode: sanitized.pincode,
-        country: sanitized.country,
-      });
-
-      if (!verified) {
-        setVerifyWarning("Address couldn't be verified. Please check your address or choose one of the suggestions.");
-        return;
+      try {
+        const { verified } = await verifyAddress(sanitized);
+        if (!verified) {
+          toast.error('We couldn\'t verify this address. Please check for typos or use the search/location features.');
+          setVerifying(false);
+          return;
+        }
+      } catch (err) {
+        // If the verification service fails, don't block submission.
+        // The user can still save the address as unverified.
+        console.error("Address verification failed:", err);
+        // We will proceed to save it as unverified.
+      } finally {
+        setVerifying(false);
       }
-
-      onSubmit(sanitized);
-    } catch {
-      // Verification service unreachable — don't block the user from
-      // saving a manually-entered address, just proceed unverified.
-      onSubmit(sanitized);
-    } finally {
-      setVerifying(false);
     }
+
+    onSubmit(sanitized);
   };
 
   return (
@@ -158,7 +154,7 @@ export default function AddressForm({ data, onChange, onSubmit, submitting = fal
         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
           Search Address
         </label>
-        <AddressSearch onSelect={applySearchResult} />
+      <AddressSearch onSelect={applySearchResult} city={data.city} state={data.state} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -192,19 +188,13 @@ export default function AddressForm({ data, onChange, onSubmit, submitting = fal
         <Field label="Country" name="country" value={data.country || 'India'} onChange={handleChange} autoComplete="country-name" />
       </div>
 
-      {verifyWarning && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          {verifyWarning}
-        </div>
-      )}
-
       <button
         type="submit"
         disabled={submitting || verifying}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-charcoal py-4 text-sm font-semibold text-white transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-70"
       >
         {(submitting || verifying) && <Loader2 size={16} className="animate-spin" />}
-        {verifying ? 'Verifying address…' : submitting ? 'Saving…' : submitLabel}
+        {submitting ? 'Saving…' : submitLabel}
       </button>
     </form>
   );

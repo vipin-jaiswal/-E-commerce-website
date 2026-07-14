@@ -1,60 +1,46 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
-import AddressForm from "../components/address/AddressForm";
+import AddressSelector from "../components/address/AddressSelector";
 import PaymentMethod from "../components/checkout/PaymentMethod";
 import OrderSummary from "../components/checkout/OrderSummary";
 import { useCart } from "../hooks/useCart";
 import { orderService } from "../services/orderService";
+import { useAuth } from "../hooks/useAuth";
+import { useAddress } from "../context/AddressContext";
 
-const STEPS = ["Delivery", "Payment", "Review"];
-
-const toShippingAddress = (address) => ({
-  street: address.address1 || "",
-  city: address.city || "",
-  state: address.state || "",
-  zip: address.pincode || "",
-  country: address.country || "India",
-});
+const STEPS = ["Delivery", "Payment"];
 
 export default function Checkout() {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
-  const [address, setAddress] = useState({});
   const [payment, setPayment] = useState("card");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
 
   const { items, cartTotal, clearCart } = useCart();
+  const { addresses, defaultAddress } = useAddress();
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const validateAddress = () => {
-    const required = [
-      "firstName",
-      "lastName",
-      "email",
-      "phone",
-      "address1",
-      "city",
-      "pincode",
-      "state",
-    ];
+  // If user is not logged in, redirect them to the login page
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
-    const newErrors = {};
+  const getAddressId = (address) => String(address?._id || address?.id || '');
+  const activeAddressId = selectedAddressId || getAddressId(defaultAddress);
+  const selectedAddress = addresses.find((address) => getAddressId(address) === String(activeAddressId));
 
-    required.forEach((field) => {
-      if (!address[field]) {
-        newErrors[field] = "Required";
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleSelectAddress = (id) => {
+    setSelectedAddressId(id);
   };
 
-  const next = () => {
-    if (step === 0 && !validateAddress()) return;
+  const next = (addressToUse = selectedAddress) => {
+    if (step === 0 && !addressToUse) {
+      toast.error("Please select a delivery address.");
+      return;
+    }
     setStep((prev) => Math.min(prev + 1, STEPS.length - 1));
   };
 
@@ -63,20 +49,26 @@ export default function Checkout() {
       toast.error("Your cart is empty.");
       return;
     }
-
     setLoading(true);
 
     try {
-      await orderService.create({
-        shippingAddress: toShippingAddress(address),
+      const createdOrder = await orderService.create({
+        addressId: getAddressId(selectedAddress),
         paymentMethod: payment,
+        items,
       });
 
-      await clearCart();
-
-      toast.success("Order placed successfully!");
-      navigate("/orders");
+      if (payment === 'cod') {
+        await clearCart();
+        toast.success("Order placed successfully!");
+        navigate("/orders");
+      } else {
+        // For other payment methods, redirect to a payment page
+        // In a real app, this would be the payment gateway
+        navigate(`/payment/${createdOrder.id}`, { state: { order: createdOrder } });
+      }
     } catch (err) {
+      console.error("Order placement error:", err);
       toast.error(err.response?.data?.message || "Something went wrong.");
     } finally {
       setLoading(false);
@@ -127,48 +119,13 @@ export default function Checkout() {
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             {step === 0 && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 mb-6">Delivery Address</h2>
-                <AddressForm data={address} onChange={setAddress} errors={errors} />
-              </div>
+              <AddressSelector selectedId={activeAddressId} onSelectAddress={handleSelectAddress} onSaveAndContinue={(address) => next(address)} />
             )}
 
             {step === 1 && (
               <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 mb-6">Payment Method</h2>
                 <PaymentMethod selected={payment} onSelect={setPayment} />
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 mb-6">Review Order</h2>
-
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm uppercase tracking-wider text-pink-500 font-semibold mb-2">
-                      Delivery Address
-                    </h3>
-
-                    <p className="text-gray-700 dark:text-slate-300 leading-7">
-                      {address.firstName} {address.lastName}
-                      <br />
-                      {address.address1}
-                      <br />
-                      {address.city} - {address.pincode}
-                      <br />
-                      {address.state}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm uppercase tracking-wider text-pink-500 font-semibold mb-2">
-                      Payment Method
-                    </h3>
-
-                    <p className="text-gray-700 dark:text-slate-300 capitalize">{payment}</p>
-                  </div>
-                </div>
               </div>
             )}
 

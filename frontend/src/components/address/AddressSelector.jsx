@@ -11,13 +11,14 @@ import { AddressListSkeleton, AddressEmptyState } from './AddressStates';
  * Shows saved addresses when the user has any, falls back to prompting
  * "Add New Address" when they don't.
  */
-export default function AddressSelector({ selectedId, onSelectAddress }) {
+export default function AddressSelector({ selectedId, onSelectAddress, onSaveAndContinue }) {
   const { addresses, loading, removeAddress, makeDefault, defaultAddress } = useAddress();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [busyId, setBusyId] = useState(null);
 
-  const activeId = selectedId || defaultAddress?._id;
+  const getAddressId = (address) => String(address?._id || address?.id || '');
+  const activeId = selectedId || getAddressId(defaultAddress);
 
   const openAdd = () => {
     setEditingAddress(null);
@@ -63,7 +64,10 @@ export default function AddressSelector({ selectedId, onSelectAddress }) {
           <AddressModal
             address={editingAddress}
             onClose={() => setModalOpen(false)}
-            onSaved={(saved) => onSelectAddress(saved._id)}
+            onSaved={(saved) => {
+              onSelectAddress(getAddressId(saved));
+              onSaveAndContinue?.(saved);
+            }}
           />
         )}
       </>
@@ -86,11 +90,11 @@ export default function AddressSelector({ selectedId, onSelectAddress }) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {addresses.map((address) => (
           <AddressCard
-            key={address._id}
+            key={getAddressId(address)}
             address={address}
             selectable
-            selected={activeId === address._id}
-            onSelect={() => onSelectAddress(address._id)}
+            selected={String(activeId) === getAddressId(address)}
+            onSelect={() => onSelectAddress(getAddressId(address))}
             onEdit={openEdit}
             onDelete={handleDelete}
             onSetDefault={handleSetDefault}
@@ -103,7 +107,10 @@ export default function AddressSelector({ selectedId, onSelectAddress }) {
         <AddressModal
           address={editingAddress}
           onClose={() => setModalOpen(false)}
-          onSaved={(saved) => onSelectAddress(saved._id)}
+          onSaved={(saved) => {
+              onSelectAddress(getAddressId(saved));
+              onSaveAndContinue?.(saved);
+          }}
         />
       )}
     </div>
