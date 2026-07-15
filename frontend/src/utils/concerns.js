@@ -1,35 +1,43 @@
+
+import pigmentationImage from "../data/concerns/Pigmentation/pigmentation.jpg";
+import acneImage from "../data/concerns/Acne/acne.jpg";
+import dryskinimage from "../data/concerns/Dry Skin/dry skin.jpg";
+import darkcirclesImage from "../data/concerns/Dark Circles/dark circle.jpg";
+import SunburnImage from "../data/concerns/sun burn/Sunburn_Treatment_Practices.jpg";
+import hairfallImage from "../data/concerns/Hair Fall/Hair fall.webp";
+
 export const CONCERNS_DATA = {
   skin: [
     {
       name: "Acne",
-      image: "/concerns/acne.jpg",
+      image: acneImage,
       query: "acne",
     },
     {
       name: "Pigmentation",
-      image: "/concerns/pigmentation.jpg",
+      image: pigmentationImage,
       query: "pigmentation",
     },
     {
       name: "Dry Skin",
-      image: "/concerns/dryskin.jpg",
+      image: dryskinimage,
       query: "dry skin",
     },
     {
       name: "Dark Circles",
-      image: "/concerns/darkcircles.jpg",
+      image: darkcirclesImage,
       query: "dark circles",
     },
     {
-      name: "Anti Aging",
-      image: "/concerns/antiaging.jpg",
-      query: "anti-aging",
+      name: "Sun Burn",
+      image: SunburnImage,
+      query: "sunscreen",
     },
   ],
   hair: [
     {
       name: "Hair Fall",
-      image: "/concerns/hairfall.jpg",
+      image: hairfallImage,
       query: "hair fall",
     },
   ],

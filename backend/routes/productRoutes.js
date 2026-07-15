@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
+const Review = require("../models/Review");
 const mongoose = require("mongoose");
 
 const normalize = (product) => ({
@@ -195,9 +196,32 @@ router.get("/", async (req, res) => {
     }
 
     const products = await Product.aggregate(pipeline);
+    const productIds = products.map((product) => product._id);
+    const reviewStats = productIds.length
+      ? await Review.aggregate([
+          { $match: { product: { $in: productIds } } },
+          {
+            $group: {
+              _id: "$product",
+              averageRating: { $avg: "$rating" },
+              reviewCount: { $sum: 1 },
+            },
+          },
+        ])
+      : [];
+    const reviewStatsByProductId = new Map(
+      reviewStats.map((stats) => [String(stats._id), stats])
+    );
 
     res.json({
-      data: products.map(normalize),
+      data: products.map((product) => {
+        const stats = reviewStatsByProductId.get(String(product._id));
+        return normalize({
+          ...product,
+          rating: stats ? Number(stats.averageRating.toFixed(1)) : product.rating,
+          numReviews: stats ? stats.reviewCount : product.numReviews,
+        });
+      }),
       total,
       page,
       pages,

@@ -60,6 +60,22 @@ router.post("/", async (req, res) => {
       comment,
     });
 
+    const [reviewStats] = await Review.aggregate([
+      { $match: { product: product._id } },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    await Product.findByIdAndUpdate(product._id, {
+      rating: Number((reviewStats?.averageRating || 0).toFixed(1)),
+      numReviews: reviewStats?.reviewCount || 0,
+    });
+
     const populated = await Review.findById(review._id)
       .populate("product", "name images brand category")
       .lean();

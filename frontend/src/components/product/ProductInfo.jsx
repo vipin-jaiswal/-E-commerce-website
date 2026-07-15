@@ -7,7 +7,7 @@ import { useWishlist } from '../../hooks/useWishlist';
 import ReviewForm from './ReviewForm';
 import toast from 'react-hot-toast';
 
-export default function ProductInfo({ product }) {
+export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
@@ -46,6 +46,8 @@ export default function ProductInfo({ product }) {
     product.salePrice && product.price && product.salePrice !== product.price
       ? Number(product.price)
       : null;
+  const reviewCount = reviewSummary?.count ?? product.numReviews ?? product.reviewCount ?? 0;
+  const reviewRating = reviewSummary?.average ?? product.rating ?? 0;
 
   return (
     <div className="space-y-6">
@@ -59,7 +61,14 @@ export default function ProductInfo({ product }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Rating value={product.rating} count={product.numReviews ?? product.reviewCount} />
+        <div className="flex items-center gap-2" aria-label={`${reviewRating.toFixed(1)} out of 5 stars from ${reviewCount} reviews`}>
+          <Rating value={reviewRating} count={reviewCount} />
+          {reviewCount > 0 && (
+            <span className="text-sm font-medium text-charcoal dark:text-slate-200">
+              {reviewRating.toFixed(1)} / 5
+            </span>
+          )}
+        </div>
         <span className="text-sm text-muted dark:text-slate-400">
           {product.category || 'Skincare'}
         </span>
@@ -151,7 +160,13 @@ export default function ProductInfo({ product }) {
                 <X size={20} />
               </button>
             </div>
-            <ReviewForm productId={product._id || product.id} onReviewAdded={() => setIsReviewFormOpen(false)} />
+            <ReviewForm
+              productId={product._id || product.id}
+              onReviewAdded={(review) => {
+                setIsReviewFormOpen(false);
+                onReviewAdded?.(review);
+              }}
+            />
           </div>
         ) : (
           <button

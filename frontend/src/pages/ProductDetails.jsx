@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import ProductGallery from "../components/product/ProductGallery";
 import ProductInfo from "../components/product/ProductInfo";
@@ -8,6 +8,8 @@ import { useProduct, useProducts } from "../hooks/useProducts";
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const [reviewSummary, setReviewSummary] = useState(null);
+  const [reviewVersion, setReviewVersion] = useState(0);
 
   const { product, loading } = useProduct(id);
 
@@ -37,7 +39,11 @@ export default function ProductDetails() {
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-10">
         <ProductGallery images={product.images} />
 
-        <ProductInfo product={product} />
+        <ProductInfo
+          product={product}
+          reviewSummary={reviewSummary}
+          onReviewAdded={() => setReviewVersion((version) => version + 1)}
+        />
       </div>
 
       {related.length > 0 && (
@@ -50,7 +56,11 @@ export default function ProductDetails() {
         </div>
       )}
 
-      <ProductReviews />
+      <ProductReviews
+        productId={product.id || product._id}
+        onSummaryChange={setReviewSummary}
+        refreshKey={reviewVersion}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Star } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "../../services/api";
+import Rating from "../common/Rating";
 
 const normalizeReview = (review) => ({
   ...review,
@@ -8,7 +9,7 @@ const normalizeReview = (review) => ({
   product: review.product && typeof review.product === "object" ? review.product : null,
 });
 
-export default function ProductReviews() {
+export default function ProductReviews({ productId, onSummaryChange, refreshKey = 0 }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,14 +20,25 @@ export default function ProductReviews() {
       setLoading(true);
 
       try {
-        const response = await api.get("/reviews");
+        const response = await api.get("/reviews", {
+          params: productId ? { productId } : undefined,
+        });
         const list = Array.isArray(response.data) ? response.data : response.data?.data || [];
 
         if (!alive) return;
-        setReviews(list.map(normalizeReview));
+        const normalizedReviews = list.map(normalizeReview);
+        setReviews(normalizedReviews);
+        onSummaryChange?.({
+          count: normalizedReviews.length,
+          average: normalizedReviews.length
+            ? normalizedReviews.reduce((total, review) => total + Number(review.rating || 0), 0) /
+              normalizedReviews.length
+            : 0,
+        });
       } catch {
         if (!alive) return;
         setReviews([]);
+        onSummaryChange?.({ count: 0, average: 0 });
       } finally {
         if (alive) setLoading(false);
       }
@@ -37,14 +49,16 @@ export default function ProductReviews() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [productId, onSummaryChange, refreshKey]);
 
   return (
     <section className="mt-16">
       <div className="flex items-end justify-between mb-6">
         <div>
           <h2 className="text-3xl font-bold dark:text-slate-100">Customer Reviews</h2>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Fetched from MongoDB reviews collection.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+            Reviews from verified product customers.
+          </p>
         </div>
         <span className="text-sm text-gray-500 dark:text-slate-400">{reviews.length} reviews</span>
       </div>
@@ -63,6 +77,7 @@ export default function ProductReviews() {
         <div className="grid gap-4 md:grid-cols-2">
           {reviews.map((review) => {
             const product = review.product || {};
+            const linkedProductId = product.id || product._id || review.productId;
 
             return (
               <article key={review.id} className="rounded-2xl bg-white dark:bg-slate-800 p-5 shadow-sm border border-gray-100 dark:border-slate-700">
@@ -74,42 +89,44 @@ export default function ProductReviews() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <Star
-                        key={index}
-                        size={16}
-                        className={index < Math.round(review.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}
-                      />
-                    ))}
-                  </div>
+                  <Rating value={review.rating} size={16} showCount={false} />
                 </div>
 
                 <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">{review.comment}</p>
 
-                <div className="flex items-center gap-3">
-                  {Array.isArray(product.images) && product.images[0] ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.name || "product"}
-                      className="w-12 h-12 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-slate-700" />
-                  )}
+                {linkedProductId ? (
+                  <Link
+                    to={`/products/${linkedProductId}`}
+                    className="flex items-center gap-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    aria-label={`View ${product.name || "product"}`}
+                  >
+                    {Array.isArray(product.images) && product.images[0] ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.name || "product"}
+                        className="h-12 w-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-slate-700" />
+                    )}
 
-                  <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-slate-200">{product.name || "Product"}</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-400">{product.brand || product.category || ""}</p>
-                  </div>
-                </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 hover:text-pink-500 dark:text-slate-200">
+                        {product.name || "View product"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400">
+                        {product.brand || product.category || "View product"}
+                      </p>
+                    </div>
+                  </Link>
+                ) : null}
               </article>
             );
           })}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-center text-gray-500 dark:text-slate-400">
-          No stored reviews found.
+          No reviews have been added for this product yet.
         </div>
       )}
     </section>

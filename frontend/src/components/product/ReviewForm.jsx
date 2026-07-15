@@ -27,6 +27,7 @@ export default function ReviewForm({ productId, onReviewAdded }) {
       });
 
       toast.success("Review submitted successfully");
+      window.dispatchEvent(new Event("reviews:updated"));
 
       setUserName("");
       setRating(5);

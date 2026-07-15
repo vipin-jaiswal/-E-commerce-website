@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "../../services/api";
+import Rating from "../common/Rating";
 
 const normalizeReview = (review) => ({
   ...review,
@@ -35,9 +37,11 @@ const CustomerReview = () => {
     };
 
     loadReviews();
+    window.addEventListener("reviews:updated", loadReviews);
 
     return () => {
       alive = false;
+      window.removeEventListener("reviews:updated", loadReviews);
     };
   }, []);
 
@@ -122,19 +126,22 @@ const CustomerReview = () => {
                             </span>
                           </div>
 
-                          <div className="flex gap-1 mb-3">
-                            {Array.from({ length: 5 }).map((_, index) => (
-                              <Star
-                                key={index}
-                                size={16}
-                                className={index < Math.round(review.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}
-                              />
-                            ))}
+                          <div className="mb-3">
+                            <Rating value={review.rating} size={16} showCount={false} />
                           </div>
 
-                          <h3 className="text-base font-semibold mb-2 dark:text-white">
-                            {product.name || "Product review"}
-                          </h3>
+                          {review.productId ? (
+                            <Link
+                              to={`/products/${review.productId}`}
+                              className="mb-2 block text-base font-semibold hover:text-pink-500 dark:text-white"
+                            >
+                              {product.name || "Product review"}
+                            </Link>
+                          ) : (
+                            <h3 className="mb-2 text-base font-semibold dark:text-white">
+                              {product.name || "Product review"}
+                            </h3>
+                          )}
 
                           <p className="text-sm text-gray-600 dark:text-slate-300 mb-4 line-clamp-4">
                             {review.comment}
