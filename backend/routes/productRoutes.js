@@ -269,6 +269,7 @@ router.post("/", async (req, res) => {
       images: Array.isArray(payload.images) ? payload.images : [],
       featured: Boolean(payload.featured),
       bestSeller: Boolean(payload.bestSeller),
+      comingSoon: Boolean(payload.comingSoon),
       availableRegions: normalizeStringList(payload.availableRegions),
     });
 
@@ -301,6 +302,7 @@ router.put("/:id", async (req, res) => {
           images: Array.isArray(payload.images) ? payload.images : [],
           featured: Boolean(payload.featured),
           bestSeller: Boolean(payload.bestSeller),
+          comingSoon: Boolean(payload.comingSoon),
           availableRegions: normalizeStringList(payload.availableRegions),
         },
       },

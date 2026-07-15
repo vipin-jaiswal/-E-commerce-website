@@ -58,6 +58,10 @@ export const CartProvider = ({ children }) => {
   }, [items]);
 
   const addToCart = async (product) => {
+    if (product?.comingSoon) {
+      throw new Error('This product is coming soon and cannot be added to the cart yet.');
+    }
+
     setItems((prevItems) => {
       const existing = prevItems.find((item) => item.id === product.id);
 

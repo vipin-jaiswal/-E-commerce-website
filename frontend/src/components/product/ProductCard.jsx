@@ -4,12 +4,14 @@ import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import Rating from "../common/Rating";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../hooks/useWishlist";
+import { useAuth } from "../../hooks/useAuth";
 import toast from "react-hot-toast";
 
 export default function ProductCard({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
+  const { user } = useAuth();
 
   if (!product) return null;
 
@@ -22,10 +24,16 @@ export default function ProductCard({ product }) {
     product.salePrice !== null && product.salePrice !== undefined && product.salePrice !== product.price
       ? Number(product.price ?? 0)
       : null;
+  const isComingSoon = Boolean(product.comingSoon);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (user?.isAdmin) {
+      toast.error("Admins do not have a cart.");
+      return;
+    }
 
     addToCart({
       ...product,
@@ -113,6 +121,12 @@ export default function ProductCard({ product }) {
             SALE
           </span>
         )}
+
+        {isComingSoon && (
+          <span className="absolute top-12 left-3 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white">
+            COMING SOON
+          </span>
+        )}
       </div>
 
       <div className="p-4">
@@ -148,9 +162,10 @@ export default function ProductCard({ product }) {
 
         <button
           onClick={handleAddToCart}
-          className="w-full mt-4 bg-gray-900 dark:bg-slate-700 hover:bg-pink-500 dark:hover:bg-pink-500 text-white py-2.5 rounded-full font-medium transition duration-300"
+          disabled={isComingSoon}
+          className="mt-4 w-full rounded-full bg-gray-900 py-2.5 font-medium text-white transition duration-300 hover:bg-pink-500 disabled:cursor-not-allowed disabled:bg-amber-500 disabled:hover:bg-amber-500 dark:bg-slate-700"
         >
-          Add To Cart
+          {isComingSoon ? "Coming Soon" : "Add To Cart"}
         </button>
       </div>
     </article>

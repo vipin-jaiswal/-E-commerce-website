@@ -17,6 +17,7 @@ const emptyForm = {
   price: '',
   salePrice: '',
   stock: '',
+  comingSoon: false,
   images: [],
   availableRegions: REGION_OPTIONS.map((region) => region.key),
 };
@@ -38,6 +39,7 @@ const formFromProduct = (product) => ({
   price: product?.price ?? '',
   salePrice: product?.salePrice ?? '',
   stock: product?.stock ?? '',
+  comingSoon: Boolean(product?.comingSoon),
   images: Array.isArray(product?.images) ? product.images : [],
   availableRegions: Array.isArray(product?.availableRegions) && product.availableRegions.length > 0
     ? product.availableRegions
@@ -61,6 +63,7 @@ const toPayload = (form, images) => ({
   price: form.price,
   salePrice: form.salePrice,
   stock: form.stock,
+  comingSoon: form.comingSoon,
   images,
   availableRegions: form.availableRegions,
 });
@@ -516,6 +519,21 @@ export default function Admin() {
                   </label>
                 ))}
               </div>
+
+              <label className="flex cursor-pointer items-center justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Coming soon</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    Show this product on the website but prevent customers from buying it.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={form.comingSoon}
+                  onChange={(event) => setForm((current) => ({ ...current, comingSoon: event.target.checked }))}
+                  className="h-5 w-5 accent-pink-500"
+                />
+              </label>
 
               <div className="rounded-3xl border border-pink-200 bg-pink-50 px-4 py-4 dark:border-pink-500/30 dark:bg-pink-500/10">
                 <span className="text-xs font-semibold uppercase tracking-[0.3em] text-pink-600 dark:text-pink-300">Brand</span>

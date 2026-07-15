@@ -16,7 +16,7 @@ export default function Wishlist() {
       toggleWishlist(product);
       toast.success(`${product.name} moved to cart`);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Could not move item to cart');
+      toast.error(error.response?.data?.message || error.message || 'Could not move item to cart');
     }
   };
 
@@ -80,10 +80,11 @@ export default function Wishlist() {
                 <span className="font-semibold text-charcoal text-sm">₹{product.price?.toLocaleString()}</span>
                 <button
                   onClick={() => moveToCart(product)}
+                  disabled={product.comingSoon}
                   className="flex items-center gap-1.5 text-xs font-semibold text-charcoal bg-ivory-dark
-                    hover:bg-charcoal hover:text-ivory px-3 py-1.5 rounded-pill transition-all"
+                    hover:bg-charcoal hover:text-ivory px-3 py-1.5 rounded-pill transition-all disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <ShoppingBag size={13} /> Add
+                  <ShoppingBag size={13} /> {product.comingSoon ? 'Coming Soon' : 'Add'}
                 </button>
               </div>
             </div>

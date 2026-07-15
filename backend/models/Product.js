@@ -18,6 +18,7 @@ const productSchema = new mongoose.Schema(
     images: [String],
     featured: Boolean,
     bestSeller: Boolean,
+    comingSoon: { type: Boolean, default: false },
     // Empty means the product can be delivered throughout India.
     availableRegions: { type: [String], default: [] },
   },

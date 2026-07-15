@@ -4,6 +4,7 @@ import { Heart, ShoppingBag, ShieldCheck, MessageSquare, X } from 'lucide-react'
 import Rating from '../common/Rating';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
+import { useAuth } from '../../hooks/useAuth';
 import ReviewForm from './ReviewForm';
 import toast from 'react-hot-toast';
 
@@ -11,6 +12,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
+  const { user } = useAuth();
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   
   if (!product) return null;
@@ -85,6 +87,12 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
         )}
       </div>
 
+      {product.comingSoon && (
+        <p className="inline-flex w-fit rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
+          Coming soon — this product is not available to purchase yet.
+        </p>
+      )}
+
       <p className="max-w-2xl leading-7 text-muted dark:text-slate-400">
         {product.description}
       </p>
@@ -114,41 +122,48 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          className="inline-flex items-center gap-2 rounded-pill bg-charcoal px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-500"
-        >
-          <ShoppingBag size={16} />
-          Add to cart
-        </button>
-        <button
-          type="button"
-          onClick={handleBuyNow}
-          className="inline-flex items-center gap-2 rounded-pill bg-pink-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-600"
-        >
-          <ShoppingBag size={16} />
-          Buy Now
-        </button>
-        <button
-          type="button"
-          onClick={handleWishlist}
-          className={`inline-flex items-center gap-2 rounded-pill border px-5 py-3 text-sm font-semibold transition-colors ${
-            wishlisted
-              ? 'border-accent bg-accent/10 text-accent'
-              : 'border-border bg-white text-charcoal hover:border-charcoal dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-100'
-          }`}
-        >
-          <Heart size={16} className={wishlisted ? 'fill-current' : ''} />
-          {wishlisted ? 'Saved' : 'Save for later'}
-        </button>
+        {!user?.isAdmin && !product.comingSoon && (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="inline-flex items-center gap-2 rounded-pill bg-pink-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-600"
+          >
+            <ShoppingBag size={16} />
+            Add to cart
+          </button>
+        )}
+        {!user?.isAdmin && !product.comingSoon && (
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            className="inline-flex items-center gap-2 rounded-pill bg-pink-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-600"
+          >
+            <ShoppingBag size={16} />
+            Buy Now
+          </button>
+        )}
+        {!user?.isAdmin && (
+          <button
+            type="button"
+            onClick={handleWishlist}
+            className={`inline-flex items-center gap-2 rounded-pill border px-5 py-3 text-sm font-semibold transition-colors ${
+              wishlisted
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-border bg-white text-charcoal hover:border-charcoal dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-100'
+            }`}
+          >
+            <Heart size={16} className={wishlisted ? 'fill-current' : ''} />
+            {wishlisted ? 'Saved' : 'Save for later'}
+          </button>
+        )}
       </div>
 
       <div className="text-sm text-muted dark:text-slate-400">
         Stock: {Number(product.stock ?? 0)} available
       </div>
 
-      <div className="border-t border-border dark:border-slate-700 pt-6">
+      {!user?.isAdmin && (
+        <div className="border-t border-border dark:border-slate-700 pt-6">
         {isReviewFormOpen ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -178,7 +193,8 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
             Write a review
           </button>
         )}
-      </div>
+        </div>
+      )}
     </div>
     
   );
