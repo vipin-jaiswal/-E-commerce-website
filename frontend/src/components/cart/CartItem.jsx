@@ -39,6 +39,8 @@ export default function CartItem({ item }) {
           </h3>
         </Link>
 
+        {item.weight && <p className="mt-1 text-xs text-muted dark:text-slate-400">Weight: {item.weight}</p>}
+
         <p className="text-sm font-semibold text-charcoal dark:text-slate-100 mt-1">
           ₹{price.toLocaleString("en-IN")}
         </p>

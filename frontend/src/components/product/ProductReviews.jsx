@@ -52,7 +52,7 @@ export default function ProductReviews({ productId, onSummaryChange, refreshKey 
   }, [productId, onSummaryChange, refreshKey]);
 
   return (
-    <section className="mt-16">
+    <section className="mt-16 max-w-[1500px] mx-auto px-4">
       <div className="flex items-end justify-between mb-6">
         <div>
           <h2 className="text-3xl font-bold dark:text-slate-100">Customer Reviews</h2>
@@ -76,50 +76,20 @@ export default function ProductReviews({ productId, onSummaryChange, refreshKey 
       ) : reviews.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {reviews.map((review) => {
-            const product = review.product || {};
-            const linkedProductId = product.id || product._id || review.productId;
-
             return (
               <article key={review.id} className="rounded-2xl bg-white dark:bg-slate-800 p-5 shadow-sm border border-gray-100 dark:border-slate-700">
-                <div className="flex items-center justify-between mb-3 text-sm">
-                  <div>
-                    <p className="font-semibold text-gray-800 dark:text-slate-200">{review.userName}</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-400">
-                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ""}
-                    </p>
-                  </div>
-
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                  <span className="font-semibold text-gray-700 dark:text-slate-300">{review.userName}</span>
+                  <span className="dark:text-slate-400">
+                    {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}
+                  </span>
+                </div>
+                <div className="mb-3">
                   <Rating value={review.rating} size={16} showCount={false} />
                 </div>
-
-                <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">{review.comment}</p>
-
-                {linkedProductId ? (
-                  <Link
-                    to={`/products/${linkedProductId}`}
-                    className="flex items-center gap-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    aria-label={`View ${product.name || "product"}`}
-                  >
-                    {Array.isArray(product.images) && product.images[0] ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.name || "product"}
-                        className="h-12 w-12 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-slate-700" />
-                    )}
-
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 hover:text-pink-500 dark:text-slate-200">
-                        {product.name || "View product"}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400">
-                        {product.brand || product.category || "View product"}
-                      </p>
-                    </div>
-                  </Link>
-                ) : null}
+                <p className="text-sm text-gray-600 dark:text-slate-300 mb-4 line-clamp-4">
+                  {review.comment}
+                </p>
               </article>
             );
           })}

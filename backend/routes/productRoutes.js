@@ -39,6 +39,13 @@ const getPrimaryValue = (value, fallbackList = []) => {
   return fallbackList[0] || "";
 };
 
+const WEIGHT_OPTIONS = ["50 gm", "100 gm", "150 gm"];
+
+const normalizeWeights = (value) => {
+  const weights = normalizeStringList(value);
+  return weights.length > 0 ? weights : WEIGHT_OPTIONS;
+};
+
 const buildCategoryFilter = (value = "") => {
   const categoryPattern = buildFlexibleCategoryPattern(value);
   if (!categoryPattern) return null;
@@ -263,6 +270,7 @@ router.post("/", async (req, res) => {
       price: Number(payload.price) || 0,
       salePrice: payload.salePrice === "" || payload.salePrice == null ? null : Number(payload.salePrice),
       stock: Number(payload.stock) || 0,
+      weights: normalizeWeights(payload.weights),
       rating: Number(payload.rating) || 0,
       numReviews: Number(payload.numReviews) || 0,
       sold: Number(payload.sold) || 0,
@@ -296,6 +304,7 @@ router.put("/:id", async (req, res) => {
           price: payload.price === "" || payload.price == null ? 0 : Number(payload.price),
           salePrice: payload.salePrice === "" || payload.salePrice == null ? null : Number(payload.salePrice),
           stock: payload.stock === "" || payload.stock == null ? 0 : Number(payload.stock),
+          weights: normalizeWeights(payload.weights),
           rating: payload.rating === "" || payload.rating == null ? 0 : Number(payload.rating),
           numReviews: payload.numReviews === "" || payload.numReviews == null ? 0 : Number(payload.numReviews),
           sold: payload.sold === "" || payload.sold == null ? 0 : Number(payload.sold),
@@ -346,3 +355,4 @@ router.delete("/:id", async (req, res) => {
 });
 
 module.exports = router;
+     

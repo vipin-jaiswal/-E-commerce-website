@@ -17,6 +17,7 @@ const emptyForm = {
   price: '',
   salePrice: '',
   stock: '',
+  weights: ['50 gm', '100 gm', '150 gm'],
   comingSoon: false,
   images: [],
   availableRegions: REGION_OPTIONS.map((region) => region.key),
@@ -39,6 +40,9 @@ const formFromProduct = (product) => ({
   price: product?.price ?? '',
   salePrice: product?.salePrice ?? '',
   stock: product?.stock ?? '',
+  weights: Array.isArray(product?.weights) && product.weights.length > 0
+    ? product.weights
+    : ['50 gm', '100 gm', '150 gm'],
   comingSoon: Boolean(product?.comingSoon),
   images: Array.isArray(product?.images) ? product.images : [],
   availableRegions: Array.isArray(product?.availableRegions) && product.availableRegions.length > 0
@@ -63,6 +67,7 @@ const toPayload = (form, images) => ({
   price: form.price,
   salePrice: form.salePrice,
   stock: form.stock,
+  weights: form.weights,
   comingSoon: form.comingSoon,
   images,
   availableRegions: form.availableRegions,
@@ -208,6 +213,15 @@ export default function Admin() {
       availableRegions: current.availableRegions.includes(regionKey)
         ? current.availableRegions.filter((item) => item !== regionKey)
         : [...current.availableRegions, regionKey],
+    }));
+  };
+
+  const toggleWeight = (weight) => {
+    setForm((current) => ({
+      ...current,
+      weights: current.weights.includes(weight)
+        ? current.weights.filter((item) => item !== weight)
+        : [...current.weights, weight],
     }));
   };
 
@@ -518,6 +532,32 @@ export default function Admin() {
                     />
                   </label>
                 ))}
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Available weights</span>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Select the pack sizes customers can choose for this product.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {['50 gm', '100 gm', '150 gm'].map((weight) => {
+                    const active = form.weights.includes(weight);
+                    return (
+                      <button
+                        key={weight}
+                        type="button"
+                        onClick={() => toggleWeight(weight)}
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                          active
+                            ? 'border-pink-500 bg-pink-500 text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-pink-400 hover:text-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
+                        }`}
+                      >
+                        {weight}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <label className="flex cursor-pointer items-center justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">

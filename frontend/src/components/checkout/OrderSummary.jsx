@@ -31,6 +31,7 @@ export default function OrderSummary({ discount = 0 }) {
                 <p className="text-xs font-medium text-charcoal line-clamp-1">
                   {item.name}
                 </p>
+                {item.weight && <p className="text-xs text-muted">{item.weight}</p>}
                 <p className="text-xs text-muted">Qty: {qty}</p>
               </div>
               <p className="text-xs font-semibold text-charcoal flex-shrink-0">

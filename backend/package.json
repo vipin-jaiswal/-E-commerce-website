@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "db:seed": "node seedProducts.js"
+    "db:seed": "node seedProducts.js",
+    "db:add-default-weights": "node scripts/addDefaultProductWeights.js"
   },
   "keywords": [],
   "author": "",

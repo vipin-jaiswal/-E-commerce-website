@@ -12,6 +12,11 @@ const productSchema = new mongoose.Schema(
     price: Number,
     salePrice: Number,
     stock: Number,
+    weights: {
+      type: [String],
+      enum: ["50 gm", "100 gm", "150 gm"],
+      default: ["50 gm", "100 gm", "150 gm"],
+    },
     rating: Number,
     numReviews: Number,
     sold: Number,

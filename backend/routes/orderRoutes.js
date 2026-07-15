@@ -38,6 +38,7 @@ router.post('/', protect, async (req, res) => {
 
     const requestedItems = items.map((item) => ({
       productId: String(item.productId || item.id || ''),
+      weight: String(item.weight || '').trim(),
       quantity: Number(item.quantity ?? item.qty ?? 0),
     }));
 
@@ -47,6 +48,16 @@ router.post('/', protect, async (req, res) => {
 
     const products = await Promise.all(requestedItems.map((item) => Product.findById(item.productId).lean().catch(() => null)));
     if (products.some((product) => !product)) return res.status(400).json({ message: 'One or more products are no longer available' });
+
+    const invalidWeightItem = requestedItems.find((item, index) => {
+      const availableWeights = products[index].weights?.length
+        ? products[index].weights
+        : ['50 gm', '100 gm', '150 gm'];
+      return !item.weight || !availableWeights.includes(item.weight);
+    });
+    if (invalidWeightItem) {
+      return res.status(400).json({ message: 'One or more selected product weights are unavailable' });
+    }
 
     const deliveryRegion = getRegionForState(shippingAddress.state);
     if (!deliveryRegion) {
@@ -71,6 +82,7 @@ router.post('/', protect, async (req, res) => {
         name: product.name,
         image: product.images?.[0] || '',
         price: Number(product.salePrice ?? product.price ?? 0),
+        weight: item.weight,
         quantity: item.quantity,
       };
     });

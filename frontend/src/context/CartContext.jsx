@@ -35,18 +35,21 @@ const normalizeItem = (item) => {
       item?.salePrice === null || item?.salePrice === undefined
         ? product.salePrice ?? null
         : Number(item.salePrice),
+    weight: item?.weight ?? product.weight ?? '',
     images: Array.isArray(product.images) ? product.images : item?.images ?? [],
   };
 };
 
-const asLocalCartItem = (product, quantity = 1) => ({
+const asLocalCartItem = (product, quantity = 1, weight = '') => ({
   ...product,
   id: product.id,
   productId: product.id,
+  cartItemId: `${product.id}::${weight}`,
   quantity,
   qty: quantity,
   price: Number(product.price ?? 0),
   salePrice: product.salePrice ?? null,
+  weight,
   images: Array.isArray(product.images) ? product.images : [],
 });
 
@@ -57,17 +60,17 @@ export const CartProvider = ({ children }) => {
     writeLocalCart(items);
   }, [items]);
 
-  const addToCart = async (product) => {
+  const addToCart = async (product, weight = '') => {
     if (product?.comingSoon) {
       throw new Error('This product is coming soon and cannot be added to the cart yet.');
     }
 
     setItems((prevItems) => {
-      const existing = prevItems.find((item) => item.id === product.id);
+      const existing = prevItems.find((item) => item.id === product.id && item.weight === weight);
 
       if (existing) {
         return prevItems.map((item) =>
-          item.id === product.id
+          item.id === product.id && item.weight === weight
             ? {
                 ...item,
                 quantity: Number(item.quantity ?? item.qty ?? 1) + 1,
@@ -77,12 +80,12 @@ export const CartProvider = ({ children }) => {
         );
       }
 
-      return [...prevItems, asLocalCartItem(product, 1)];
+      return [...prevItems, asLocalCartItem(product, 1, weight)];
     });
   };
 
   const removeFromCart = async (id) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setItems((prevItems) => prevItems.filter((item) => (item.cartItemId || item.id) !== id));
   };
 
   const updateQty = async (id, quantity) => {
@@ -91,7 +94,7 @@ export const CartProvider = ({ children }) => {
     }
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id ? { ...item, quantity, qty: quantity } : item
+        (item.cartItemId || item.id) === id ? { ...item, quantity, qty: quantity } : item
       )
     );
   };

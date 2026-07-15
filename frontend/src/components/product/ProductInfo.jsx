@@ -14,14 +14,16 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
   const { toggleWishlist, isWishlisted } = useWishlist();
   const { user } = useAuth();
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
-  
+  const availableWeights = product?.weights?.length ? product.weights : ['50 gm', '100 gm', '150 gm'];
+  const [selectedWeight, setSelectedWeight] = useState(availableWeights[0]);
+
   if (!product) return null;
 
   const wishlisted = isWishlisted(product.id);
 
   const handleAddToCart = async () => {
     try {
-      await addToCart(product);
+      await addToCart(product, selectedWeight);
       toast.success('Added to cart');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not add item');
@@ -30,7 +32,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
 
   const handleBuyNow = async () => {
     try {
-      await addToCart(product);
+      await addToCart(product, selectedWeight);
       toast.success('Added to cart');
       navigate('/checkout');
     } catch (error) {
@@ -96,6 +98,26 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
       <p className="max-w-2xl leading-7 text-muted dark:text-slate-400">
         {product.description}
       </p>
+
+      <div>
+        <p className="mb-3 text-sm font-semibold text-charcoal dark:text-slate-100">Select weight</p>
+        <div className="flex flex-wrap gap-2">
+          {availableWeights.map((weight) => (
+            <button
+              key={weight}
+              type="button"
+              onClick={() => setSelectedWeight(weight)}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                selectedWeight === weight
+                  ? 'border-pink-500 bg-pink-500 text-white'
+                  : 'border-border bg-white text-charcoal hover:border-pink-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+              }`}
+            >
+              {weight}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="grid gap-3 rounded-3xl border border-border dark:border-slate-700 bg-white dark:bg-slate-800 p-5 sm:grid-cols-3">
         <div className="flex items-center gap-3">

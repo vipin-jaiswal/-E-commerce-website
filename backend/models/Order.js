@@ -6,6 +6,7 @@ const orderItemSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     image: { type: String, default: '' },
     price: { type: Number, required: true, min: 0 },
+    weight: { type: String, default: '' },
     quantity: { type: Number, required: true, min: 1 },
   },
   { _id: false }
