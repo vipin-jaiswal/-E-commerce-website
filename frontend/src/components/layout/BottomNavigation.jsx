@@ -17,7 +17,7 @@ export default function BottomNavigation() {
   const { cartCount } = useCart();
   const { user } = useAuth();
   const navItems = user?.isAdmin
-    ? NAV.filter((item) => !['Search', 'Cart', 'Wishlist'].includes(item.label))
+    ? NAV.filter((item) => !['Search', 'Cart', 'Wishlist', 'Account'].includes(item.label))
     : NAV;
 
   return (

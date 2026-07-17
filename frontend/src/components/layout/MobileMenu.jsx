@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { X, Heart, ShoppingBag, User, Camera } from 'lucide-react';
+import { X, ShoppingBag, Camera } from 'lucide-react';
 
 export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
   // Lock body scroll when open
@@ -36,8 +36,8 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
 
       {/* Drawer */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-72 bg-white shadow-xl flex flex-col transition-transform duration-300 ease-smooth ${
-          open ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-xl flex flex-col transition-transform duration-300 ease-smooth ${
+          open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
@@ -78,21 +78,13 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
         </nav>
 
         {/* Bottom actions */}
-        <div className="px-6 py-5 border-t border-border flex gap-4">
-          <Link to="/profile" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
-            <User size={18} /> Account
-          </Link>
-          {!isAdmin && (
-            <>
-              <Link to="/wishlist" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
-                <Heart size={18} /> Wishlist
-              </Link>
-              <Link to="/cart" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
-                <ShoppingBag size={18} /> Cart
-              </Link>
-            </>
-          )}
-        </div>
+        {!isAdmin && (
+          <div className="px-6 py-5 border-t border-border">
+            <Link to="/cart" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
+              <ShoppingBag size={18} /> Cart
+            </Link>
+          </div>
+        )}
       </aside>
     </>
   );

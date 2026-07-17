@@ -81,6 +81,7 @@ export default function Admin() {
   const [search, setSearch] = useState('');
   const [activeSection, setActiveSection] = useState('products');
   const [bannerSummary, setBannerSummary] = useState({ total: 0, live: 0, upcoming: 0 });
+  const [orderSummary, setOrderSummary] = useState({ total: 0, inProgress: 0, delivered: 0 });
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [categoryDraft, setCategoryDraft] = useState('');
@@ -113,6 +114,21 @@ export default function Admin() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (activeSection !== 'orders') return;
+
+    adminService.listOrders()
+      .then((orders) => {
+        const list = Array.isArray(orders) ? orders : [];
+        setOrderSummary({
+          total: list.length,
+          inProgress: list.filter((order) => ['ordered', 'confirmed', 'dispatched', 'out_for_delivery'].includes(order.status)).length,
+          delivered: list.filter((order) => order.status === 'delivered').length,
+        });
+      })
+      .catch(() => setOrderSummary({ total: 0, inProgress: 0, delivered: 0 }));
+  }, [activeSection]);
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -320,10 +336,16 @@ export default function Admin() {
   ];
   const stats = activeSection === 'products'
     ? productStats
-    : [
+    : activeSection === 'banners'
+      ? [
         { label: 'Banners', value: bannerSummary.total, icon: ImagePlus },
         { label: 'Live now', value: bannerSummary.live, icon: Sparkles },
         { label: 'Upcoming', value: bannerSummary.upcoming, icon: RefreshCcw },
+      ]
+      : [
+        { label: 'Orders', value: orderSummary.total, icon: Package },
+        { label: 'In progress', value: orderSummary.inProgress, icon: RefreshCcw },
+        { label: 'Delivered', value: orderSummary.delivered, icon: Sparkles },
       ];
 
   if (!user?.isAdmin) {

@@ -26,9 +26,8 @@ const Home = () => {
       <HeroSlider />
 
       <BestSellerSection />
-      <ShopByConcern />
-
       <CategorySection />
+     <ShopByConcern />
       <CustomerReview />
     </main>
   );

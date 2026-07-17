@@ -101,13 +101,6 @@ const Header = () => {
         >
           {/* Left */}
           <div className="flex items-center gap-3">
-            <button
-              className="lg:hidden"
-              onClick={() => setMobileMenuOpen(true)}
-            >
-              <Menu size={24} />
-            </button>
-
             <Link
               to="/"
               className="
@@ -227,6 +220,7 @@ const Header = () => {
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 className="
+                  hidden lg:flex
                   text-slate-700 dark:text-slate-200
                   hover:text-pink-500 dark:hover:text-pink-300
                   transition
@@ -244,6 +238,7 @@ const Header = () => {
               <Link
                 to="/wishlist"
                 className="
+                  hidden lg:flex
                   text-slate-700 dark:text-slate-200
                   hover:text-pink-500 dark:hover:text-pink-300
                   transition
@@ -260,6 +255,7 @@ const Header = () => {
             <Link
               to="/profile"
               className="
+                hidden lg:flex
                 text-slate-700 dark:text-slate-200
                 hover:text-pink-500 dark:hover:text-pink-300
                 transition
@@ -311,6 +307,15 @@ const Header = () => {
                 )}
               </Link>
             )}
+
+            <button
+              type="button"
+              className="inline-flex lg:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={24} />
+            </button>
           </div>
         </div>
       </header>
