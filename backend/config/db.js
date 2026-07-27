@@ -20,7 +20,9 @@ dns.setDefaultResultOrder('ipv4first');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      dbName: process.env.MONGO_DB_NAME || 'DYVA',
+    });
 
     console.log("MongoDB Server:", conn.connection.host);
     console.log("Database Name:", conn.connection.name);

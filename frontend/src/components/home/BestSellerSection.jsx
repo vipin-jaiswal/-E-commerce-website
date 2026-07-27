@@ -15,8 +15,7 @@ import "swiper/css/navigation";
 const BestSellerSection = () => {
   const { products, loading } = useProducts({
     limit: 8,
-    bestSeller: true,
-    sort: "best_seller",
+    sort: "newest",
   });
 
   const [swiper, setSwiper] = useState(null);
@@ -29,16 +28,15 @@ const BestSellerSection = () => {
       {/* Header */}
       <div className="text-center mb-8">
         <p className="text-pink-500 uppercase tracking-[3px] text-xs font-semibold mb-1">
-          Customer Favorites
+          From MongoDB
         </p>
 
         <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-slate-100">
-          Best Sellers
+          Products
         </h2>
 
         <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm max-w-xl mx-auto">
-          Discover our most loved products chosen by thousands of happy
-          customers.
+          Showing live products from the database.
         </p>
       </div>
 
@@ -132,7 +130,7 @@ const BestSellerSection = () => {
       {/* View All Button */}
       <div className="flex justify-center mt-8">
         <Link
-          to="/products?sort=best_seller"
+          to="/products"
           className="
             group flex items-center gap-2
             bg-pink-500 hover:bg-pink-600
