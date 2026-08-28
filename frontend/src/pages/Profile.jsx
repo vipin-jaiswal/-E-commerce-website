@@ -115,7 +115,7 @@ export default function Profile() {
           }}
           maxLength={name === 'phone' ? 10 : undefined}
           placeholder={`Enter ${label}`}
-          className="border border-gray-300 dark:border-dark-border dark:bg-dark-card dark:text-dark-text rounded-xl px-4 py-3 text-sm outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all"
+          className="border border-gray-300 dark:border-dark-border dark:bg-dark-card dark:text-dark-text rounded-xl px-4 py-3 text-sm outline-none focus:border-black focus:ring-2 focus:ring-gray-200 transition-all"
         />
       ) : (
         <p className="text-sm text-gray-700 dark:text-dark-text py-3">
@@ -139,7 +139,7 @@ export default function Profile() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-gray-100 dark:border-slate-700 p-8 text-center">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">My Account</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-6">Please sign in to view your profile, orders, and saved items.</p>
-            <Link to="/login" className="inline-flex items-center justify-center rounded-full bg-pink-500 px-6 py-3 text-sm font-semibold text-white hover:bg-pink-600 transition">
+            <Link to="/login" className="inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white hover:bg-black transition">
               Sign In
             </Link>
           </div>
@@ -158,7 +158,7 @@ export default function Profile() {
               onClick={() => setActiveView(tab.id)}
               className={`flex items-center gap-2 px-6 py-3 font-semibold text-lg transition-colors duration-300 ${
                 activeView === tab.id
-                  ? 'border-b-2 border-pink-500 text-pink-500'
+                  ? 'border-b-2 border-black text-black'
                   : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
@@ -173,7 +173,7 @@ export default function Profile() {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Your Orders</h2>
-                <Link to="/orders" className="text-sm font-semibold text-pink-500 hover:underline">View All</Link>
+                <Link to="/orders" className="text-sm font-semibold text-black hover:underline">View All</Link>
               </div>
 
               {ordersLoading ? (
@@ -200,7 +200,7 @@ export default function Profile() {
                     <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 flex justify-end">
                       <Link
                         to={`/orders/${order.id}`}
-                        className="bg-pink-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-pink-600 transition"
+                        className="bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-black transition"
                       >
                         Track Order
                       </Link>
@@ -225,7 +225,7 @@ export default function Profile() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-800 dark:text-white">Personal Information</h2>
                   {!editing ? (
-                    <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-sm font-semibold text-pink-500 hover:underline">
+                    <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-sm font-semibold text-black hover:underline">
                       <Edit2 size={14} /> Edit
                     </button>
                   ) : (

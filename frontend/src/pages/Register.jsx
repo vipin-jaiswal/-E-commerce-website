@@ -22,7 +22,7 @@ export default function Register() {
         transition={{ duration: 1, ease: 'easeOut' }}
       >
         <div className="text-center">
-          <Link to="/" className="font-display text-3xl font-bold tracking-tight text-pink-600 hover:text-pink-400">
+          <Link to="/" className="font-display text-3xl font-bold tracking-tight text-black hover:text-gray-700">
             DYVA
           </Link>
           <h1 className="font-display text-3xl font-semibold text-charcoal dark:text-slate-100">
@@ -30,7 +30,7 @@ export default function Register() {
           </h1>
           <p className="text-sm text-muted dark:text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-accent hover:text-accent-dark hover:underline text-pink-400 hover:text-pink-300">
+            <Link to="/login" className="font-medium text-accent hover:text-accent-dark hover:underline text-gray-700 hover:text-gray-400">
               Sign in
             </Link>
           </p>
@@ -40,11 +40,11 @@ export default function Register() {
 
         <p className="px-2 text-center text-xs leading-6 text-muted dark:text-slate-400">
           By registering you agree to our{' '}
-          <Link to="#" className="font-medium text-accent text-sm hover:text-accent-dark hover:underline text-pink-400 hover:text-pink-300">
+          <Link to="#" className="font-medium text-accent text-sm hover:text-accent-dark hover:underline text-gray-700 hover:text-gray-400">
             Terms
           </Link>{' '}
           and{' '}
-          <Link to="#" className="font-medium text-sm text-accent hover:text-accent-dark hover:underline text-pink-400 hover:text-pink-300">
+          <Link to="#" className="font-medium text-sm text-accent hover:text-accent-dark hover:underline text-gray-700 hover:text-gray-400">
             Privacy Policy
           </Link>
           .

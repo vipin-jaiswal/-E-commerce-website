@@ -78,7 +78,7 @@ export default function ProductCard({ product }) {
               className="w-full h-60 object-contain bg-white transition duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-56 flex items-center justify-center bg-gradient-to-br from-pink-50 to-slate-100 text-xs uppercase tracking-[0.25em] text-slate-400">
+            <div className="w-full h-56 flex items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 text-xs uppercase tracking-[0.25em] text-slate-400">
               No Image
             </div>
           )}
@@ -90,7 +90,7 @@ export default function ProductCard({ product }) {
               type="button"
               onClick={handlePrevImage}
               aria-label="Previous product image"
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-slate-700/95 shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:bg-pink-50 hover:text-pink-500 dark:hover:bg-slate-600 transition"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-slate-700/95 shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:bg-gray-50 hover:text-black dark:hover:bg-slate-600 transition"
             >
               <ChevronLeft size={20} />
             </button>
@@ -99,7 +99,7 @@ export default function ProductCard({ product }) {
               type="button"
               onClick={handleNextImage}
               aria-label="Next product image"
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-slate-700/95 shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:bg-pink-50 hover:text-pink-500 dark:hover:bg-slate-600 transition"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-slate-700/95 shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:bg-gray-50 hover:text-black dark:hover:bg-slate-600 transition"
             >
               <ChevronRight size={20} />
             </button>
@@ -108,16 +108,16 @@ export default function ProductCard({ product }) {
 
         <button
           onClick={handleWishlist}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center hover:bg-pink-50 transition"
+          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white dark:bg-slate-700 shadow-md flex items-center justify-center hover:bg-gray-50 transition"
         >
           <Heart
             size={18}
-            className={wishlisted ? "fill-pink-500 text-pink-500" : "text-gray-500 dark:text-slate-400"}
+            className={wishlisted ? "fill-black text-black" : "text-gray-500 dark:text-slate-400"}
           />
         </button>
 
         {product.salePrice && product.salePrice < product.price && (
-          <span className="absolute top-3 left-3 bg-pink-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+          <span className="absolute top-3 left-3 bg-black text-white text-xs font-semibold px-3 py-1 rounded-full">
             SALE
           </span>
         )}
@@ -135,7 +135,7 @@ export default function ProductCard({ product }) {
         </p>
 
         <Link to={`/products/${productId}`}>
-          <h3 className="mt-2 text-sm font-semibold text-gray-800 dark:text-slate-100 line-clamp-2 min-h-[42px] hover:text-pink-500 dark:hover:text-pink-400 transition">
+          <h3 className="mt-2 text-sm font-semibold text-gray-800 dark:text-slate-100 line-clamp-2 min-h-[42px] hover:text-black dark:hover:text-gray-700 transition">
             {product.name}
           </h3>
         </Link>
@@ -149,7 +149,7 @@ export default function ProductCard({ product }) {
         </div>
 
         <div className="flex items-center gap-2 mt-3">
-          <span className="text-lg font-bold text-pink-600">
+          <span className="text-lg font-bold text-black">
             Rs. {price.toLocaleString("en-IN")}
           </span>
 
@@ -163,7 +163,7 @@ export default function ProductCard({ product }) {
         <button
           onClick={handleAddToCart}
           disabled={isComingSoon}
-          className="mt-4 w-full rounded-full bg-gray-900 py-2.5 font-medium text-white transition duration-300 hover:bg-pink-500 disabled:cursor-not-allowed disabled:bg-amber-500 disabled:hover:bg-amber-500 dark:bg-slate-700"
+          className="mt-4 w-full rounded-full bg-gray-900 py-2.5 font-medium text-white transition duration-300 hover:bg-black disabled:cursor-not-allowed disabled:bg-amber-500 disabled:hover:bg-amber-500 dark:bg-slate-700"
         >
           {isComingSoon ? "Coming Soon" : "Add To Cart"}
         </button>

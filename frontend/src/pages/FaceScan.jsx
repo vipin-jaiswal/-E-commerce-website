@@ -278,8 +278,8 @@ export default function FaceScan() {
           onClick={() => switchMode("camera")}
           className={`flex items-center gap-2 px-5 py-2 rounded-full transition ${
             mode === "camera"
-              ? "bg-pink-600 text-white"
-              : "text-slate-600 hover:text-pink-600"
+              ? "bg-black text-white"
+              : "text-slate-600 hover:text-black"
           }`}
         >
           <Camera size={18} />
@@ -290,8 +290,8 @@ export default function FaceScan() {
           onClick={() => switchMode("upload")}
           className={`flex items-center gap-2 px-5 py-2 rounded-full transition ${
             mode === "upload"
-              ? "bg-pink-600 text-white"
-              : "text-slate-600 hover:text-pink-600"
+              ? "bg-black text-white"
+              : "text-slate-600 hover:text-black"
           }`}
         >
           <UploadCloud size={18} />
@@ -347,7 +347,7 @@ export default function FaceScan() {
 
                   <p className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-sm font-medium drop-shadow text-white">
                     {isAligned
-                      ? "Face aligned ✓"
+                      ? "Face aligned Ã¢Å“â€œ"
                       : "Align your face within the frame"}
                   </p>
                 </>
@@ -357,7 +357,7 @@ export default function FaceScan() {
             <button
               onClick={capture}
               disabled={!!cameraError}
-              className="mt-6 w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl flex justify-center items-center gap-2"
+              className="mt-6 w-full bg-black hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl flex justify-center items-center gap-2"
             >
               <Camera size={20} />
               Capture Face
@@ -372,21 +372,21 @@ export default function FaceScan() {
               className="
                 w-[700px]
                 h-[400px]
-                border-2 border-dashed border-pink-300
+                border-2 border-dashed border-gray-400
                 rounded-xl
                 flex flex-col items-center justify-center
                 gap-3
                 cursor-pointer
-                hover:border-pink-500 hover:bg-pink-50
+                hover:border-black hover:bg-gray-50
                 transition
               "
             >
-              <UploadCloud size={48} className="text-pink-500" />
+              <UploadCloud size={48} className="text-black" />
               <p className="text-slate-600 font-medium">
                 Click to browse or drag &amp; drop an image here
               </p>
               <p className="text-slate-400 text-sm">
-                JPG, PNG — clear front-facing photo works best
+                JPG, PNG Ã¢â‚¬â€ clear front-facing photo works best
               </p>
             </div>
 
@@ -433,7 +433,7 @@ export default function FaceScan() {
 
           <button
             onClick={resetScan}
-            className="mt-4 flex items-center gap-2 text-pink-600 hover:text-pink-700 font-medium"
+            className="mt-4 flex items-center gap-2 text-black hover:text-gray-800 font-medium"
           >
             <RefreshCw size={16} />
             Try Again

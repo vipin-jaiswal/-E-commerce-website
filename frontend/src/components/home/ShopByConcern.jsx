@@ -11,7 +11,7 @@ const ShopByConcern = () => {
 
       {/* Heading */}
       <div className="text-center mb-12">
-        <p className="text-pink-500 uppercase tracking-[4px] text-sm font-semibold mb-2">
+        <p className="text-black uppercase tracking-[4px] text-sm font-semibold mb-2">
           Find Products For
         </p>
 
@@ -43,8 +43,8 @@ const ShopByConcern = () => {
               rounded-full
               overflow-hidden
               shadow-md
-              border-4 border-pink-100
-              group-hover:border-pink-400
+              border-4 border-gray-100
+              group-hover:border-gray-700
               transition
               duration-300
             ">
@@ -66,7 +66,7 @@ const ShopByConcern = () => {
               mt-4
               font-semibold
               text-gray-700 dark:text-slate-300
-              group-hover:text-pink-500 dark:group-hover:text-pink-400
+              group-hover:text-black dark:group-hover:text-gray-700
               transition
             ">
               {concern.name}
@@ -81,8 +81,8 @@ const ShopByConcern = () => {
         <button
           onClick={() => navigate("/concerns")}
           className="
-            bg-pink-500
-            hover:bg-pink-600
+            bg-black
+            hover:bg-black
             text-white
             px-6 py-2 sm:px-8 sm:py-3 text-sm sm:text-base
             rounded-full

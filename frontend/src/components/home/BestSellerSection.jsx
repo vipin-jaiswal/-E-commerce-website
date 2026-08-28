@@ -27,7 +27,7 @@ const BestSellerSection = () => {
     >
       {/* Header */}
       <div className="text-center mb-8">
-        <p className="text-pink-500 uppercase tracking-[3px] text-xs font-semibold mb-1">
+        <p className="text-black uppercase tracking-[3px] text-xs font-semibold mb-1">
           From MongoDB
         </p>
 
@@ -54,7 +54,7 @@ const BestSellerSection = () => {
             z-20 hidden lg:flex items-center justify-center
             w-11 h-11 rounded-full 
             bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 dark:text-slate-300
-            hover:bg-pink-500 hover:text-white dark:hover:text-white
+            hover:bg-black hover:text-white dark:hover:text-white
             transition duration-300
           "
         >
@@ -69,7 +69,7 @@ const BestSellerSection = () => {
             z-20 hidden lg:flex items-center justify-center
             w-11 h-11 rounded-full
             bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 dark:text-slate-300
-            hover:bg-pink-500 hover:text-white dark:hover:text-white
+            hover:bg-black hover:text-white dark:hover:text-white
             transition duration-300
           "
         >
@@ -133,7 +133,7 @@ const BestSellerSection = () => {
           to="/products"
           className="
             group flex items-center gap-2
-            bg-pink-500 hover:bg-pink-600
+            bg-black hover:bg-black
             text-white
             px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base
             rounded-full

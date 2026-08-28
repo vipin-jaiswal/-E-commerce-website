@@ -10,7 +10,7 @@ const FeatureBar = () => {
     {
       icon: <Truck size={30} />,
       title: "Free Shipping",
-      desc: "Orders above ₹499"
+      desc: "Orders above Ã¢â€šÂ¹499"
     },
     {
       icon: <ShieldCheck size={30} />,
@@ -37,7 +37,7 @@ const FeatureBar = () => {
             key={index}
             className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl p-6 text-center hover:shadow-md transition"
           >
-            <div className="flex justify-center text-pink-500">
+            <div className="flex justify-center text-black">
               {item.icon}
             </div>
 

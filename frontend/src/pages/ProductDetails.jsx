@@ -27,7 +27,7 @@ export default function ProductDetails() {
       <div className="text-center py-20 bg-gray-50 dark:bg-gray-900">
         <h2 className="text-2xl font-semibold dark:text-white">Product not found</h2>
 
-        <Link to="/products" className="text-pink-500 hover:underline mt-4 inline-block">
+        <Link to="/products" className="text-black hover:underline mt-4 inline-block">
           Browse Products
         </Link>
       </div>

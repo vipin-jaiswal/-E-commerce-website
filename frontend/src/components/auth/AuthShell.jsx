@@ -69,7 +69,7 @@ const floatingBlobs = [
     delay: 0,
   },
   {
-    className: 'right-10 top-24 h-24 w-24 bg-pink-400/20',
+    className: 'right-10 top-24 h-24 w-24 bg-gray-700/20',
     delay: 0.2,
   },
   {
@@ -110,10 +110,10 @@ export default function AuthShell({
       exit={reduceMotion ? undefined : 'exit'}
     >
       {/* Top Border */}
-      <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-black via-pink-500 to-black" />
+      <div className="absolute top-0 left-0 h-2 w-full bg-gradient-to-r from-black via-black to-black" />
 
       {/* Bottom Border */}
-      <div className="absolute bottom-0 left-0 h-2 w-full bg-gradient-to-r from-pink-500 via-black to-pink-500" />
+      <div className="absolute bottom-0 left-0 h-2 w-full bg-gradient-to-r from-black via-black to-black" />
 
       {/* Floating blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -170,7 +170,7 @@ export default function AuthShell({
 
             {/* Pink Panel */}
             <motion.aside
-              className={`relative flex h-full flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-pink-500 via-pink-500 to-pink-400 px-6 py-10 text-white sm:px-10 lg:px-12 ${panelRounded}`}
+              className={`relative flex h-full flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-black via-black to-gray-700 px-6 py-10 text-white sm:px-10 lg:px-12 ${panelRounded}`}
               variants={reduceMotion ? undefined : columnVariants}
               custom={panelDirection}
               initial={reduceMotion ? false : 'initial'}
@@ -210,7 +210,7 @@ export default function AuthShell({
     ease-[cubic-bezier(0.22,1,0.36,1)]
     hover:-translate-y-1
     hover:bg-white
-    hover:text-pink-500
+    hover:text-black
     active:scale-95
   "
 >

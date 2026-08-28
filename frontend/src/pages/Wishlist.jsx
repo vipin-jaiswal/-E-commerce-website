@@ -69,7 +69,7 @@ export default function Wishlist() {
             <div className="card-gold-line" />
 
             <div className="p-4">
-              <p className="text-[11px] text-muted font-medium tracking-widest uppercase mb-1">{product.brand || 'Lumière'}</p>
+              <p className="text-[11px] text-muted font-medium tracking-widest uppercase mb-1">{product.brand || 'LumiÃƒÂ¨re'}</p>
               <Link to={`/products/${product.id}`}>
                 <h3 className="font-semibold text-sm text-charcoal hover:text-accent transition-colors line-clamp-1 mb-1">
                   {product.name}
@@ -77,7 +77,7 @@ export default function Wishlist() {
               </Link>
               <Rating value={product.rating} count={product.reviewCount} size={12} />
               <div className="flex items-center justify-between mt-3">
-                <span className="font-semibold text-charcoal text-sm">₹{product.price?.toLocaleString()}</span>
+                <span className="font-semibold text-charcoal text-sm">Ã¢â€šÂ¹{product.price?.toLocaleString()}</span>
                 <button
                   onClick={() => moveToCart(product)}
                   disabled={product.comingSoon}

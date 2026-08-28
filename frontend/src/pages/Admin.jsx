@@ -357,10 +357,10 @@ export default function Admin() {
       <div className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/80 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-pink-200 bg-pink-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-pink-600 dark:border-pink-500/30 dark:bg-pink-500/10 dark:text-pink-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-black dark:border-black/30 dark:bg-black/10 dark:text-gray-400">
               DYVA house brand
             </div>
-            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.35em] text-pink-500">Admin panel</p>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.35em] text-black">Admin panel</p>
             <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">
               {activeSection === 'products' ? 'Manage DYVA products in one place' : activeSection === 'banners' ? 'Manage homepage banners' : 'Manage customer orders'}
             </h1>
@@ -393,21 +393,21 @@ export default function Admin() {
           <button
             type="button"
             onClick={() => setActiveSection('products')}
-            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'products' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:text-pink-500 dark:text-slate-400'}`}
+            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'products' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:text-black dark:text-slate-400'}`}
           >
             Products
           </button>
           <button
             type="button"
             onClick={() => setActiveSection('banners')}
-            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'banners' ? 'bg-pink-500 text-white' : 'text-slate-500 hover:text-pink-500 dark:text-slate-400'}`}
+            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'banners' ? 'bg-black text-white' : 'text-slate-500 hover:text-black dark:text-slate-400'}`}
           >
             Banners
           </button>
           <button
             type="button"
             onClick={() => setActiveSection('orders')}
-            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'orders' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:text-pink-500 dark:text-slate-400'}`}
+            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${activeSection === 'orders' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950' : 'text-slate-500 hover:text-black dark:text-slate-400'}`}
           >
             Orders
           </button>
@@ -429,14 +429,14 @@ export default function Admin() {
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search products"
-                    className="w-56 rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+                    className="w-56 rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-black dark:border-white/10 dark:bg-slate-950 dark:text-white"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={loadProducts}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-pink-500 hover:text-pink-500 dark:border-white/10 dark:text-slate-200"
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-black hover:text-black dark:border-white/10 dark:text-slate-200"
                 >
                   <RefreshCcw size={16} /> Refresh
                 </button>
@@ -464,19 +464,19 @@ export default function Admin() {
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-semibold text-slate-900 dark:text-white">{product.name}</h3>
                             {product.featured && (
-                              <span className="rounded-full bg-pink-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-pink-600 dark:bg-pink-500/20 dark:text-pink-300">
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-black dark:bg-black/20 dark:text-gray-400">
                                 Featured
                               </span>
                             )}
                           </div>
                           <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {product.brand || 'No brand'} · {product.category || 'No category'}
+                            {product.brand || 'No brand'} Ã‚Â· {product.category || 'No category'}
                           </p>
                           <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                            ₹{Number(product.salePrice ?? product.price ?? 0).toLocaleString('en-IN')}
+                            Ã¢â€šÂ¹{Number(product.salePrice ?? product.price ?? 0).toLocaleString('en-IN')}
                             {product.salePrice ? (
                               <span className="ml-2 text-xs font-medium text-slate-400 line-through">
-                                ₹{Number(product.price ?? 0).toLocaleString('en-IN')}
+                                Ã¢â€šÂ¹{Number(product.price ?? 0).toLocaleString('en-IN')}
                               </span>
                             ) : null}
                           </p>
@@ -486,7 +486,7 @@ export default function Admin() {
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
                           to={`/products/${product.id}`}
-                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-pink-500 hover:text-pink-500 dark:border-white/10 dark:text-slate-200"
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-black hover:text-black dark:border-white/10 dark:text-slate-200"
                         >
                           View
                         </Link>
@@ -500,7 +500,7 @@ export default function Admin() {
                         <button
                           type="button"
                           onClick={() => handleDelete(product)}
-                          className="inline-flex items-center gap-2 rounded-full bg-rose-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-600"
+                          className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-black"
                         >
                           <Trash2 size={14} /> Delete
                         </button>
@@ -526,7 +526,7 @@ export default function Admin() {
               <button
                 type="button"
                 onClick={startCreate}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-pink-500 hover:text-pink-500 dark:border-white/10 dark:text-slate-200"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-black hover:text-black dark:border-white/10 dark:text-slate-200"
               >
                 <Plus size={16} /> New
               </button>
@@ -550,7 +550,7 @@ export default function Admin() {
                       min={field === 'name' ? undefined : '0'}
                       step={field === 'name' ? undefined : '1'}
                       placeholder={field === 'name' ? 'Product name' : undefined}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-black dark:border-white/10 dark:bg-slate-950 dark:text-white"
                     />
                   </label>
                 ))}
@@ -571,8 +571,8 @@ export default function Admin() {
                         onClick={() => toggleWeight(weight)}
                         className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                           active
-                            ? 'border-pink-500 bg-pink-500 text-white'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-pink-400 hover:text-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
+                            ? 'border-black bg-black text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-gray-700 hover:text-black dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
                         }`}
                       >
                         {weight}
@@ -593,17 +593,17 @@ export default function Admin() {
                   type="checkbox"
                   checked={form.comingSoon}
                   onChange={(event) => setForm((current) => ({ ...current, comingSoon: event.target.checked }))}
-                  className="h-5 w-5 accent-pink-500"
+                  className="h-5 w-5 accent-black"
                 />
               </label>
 
-              <div className="rounded-3xl border border-pink-200 bg-pink-50 px-4 py-4 dark:border-pink-500/30 dark:bg-pink-500/10">
-                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-pink-600 dark:text-pink-300">Brand</span>
+              <div className="rounded-3xl border border-gray-200 bg-gray-50 px-4 py-4 dark:border-black/30 dark:bg-black/10">
+                <span className="text-xs font-semibold uppercase tracking-[0.3em] text-black dark:text-gray-400">Brand</span>
                 <div className="mt-2 flex items-center justify-between gap-4">
                   <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                     Brand is locked to DYVA for every product saved from this panel.
                   </p>
-                  <div className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-pink-600 shadow-sm dark:bg-slate-950 dark:text-pink-300">
+                  <div className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black shadow-sm dark:bg-slate-950 dark:text-gray-400">
                     DYVA
                   </div>
                 </div>
@@ -618,7 +618,7 @@ export default function Admin() {
                         Select one or more categories for the same product.
                       </p>
                     </div>
-                    <span className="rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-pink-600 dark:bg-pink-500/20 dark:text-pink-300">
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-black dark:bg-black/20 dark:text-gray-400">
                       {form.categories.length} selected
                     </span>
                   </div>
@@ -633,8 +633,8 @@ export default function Admin() {
                           onClick={() => toggleCategory(item.key)}
                           className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                             active
-                              ? 'border-pink-500 bg-pink-500 text-white'
-                              : 'border-slate-200 bg-white text-slate-700 hover:border-pink-400 hover:text-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
+                              ? 'border-black bg-black text-white'
+                              : 'border-slate-200 bg-white text-slate-700 hover:border-gray-700 hover:text-black dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
                           }`}
                         >
                           {item.label}
@@ -648,7 +648,7 @@ export default function Admin() {
                       value={categoryDraft}
                       onChange={(event) => setCategoryDraft(event.target.value)}
                       placeholder="Add custom category"
-                      className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+                      className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-black dark:border-white/10 dark:bg-slate-950 dark:text-white"
                     />
                     <button
                       type="button"
@@ -684,7 +684,7 @@ export default function Admin() {
                         Choose subcategories that belong to the selected categories.
                       </p>
                     </div>
-                    <span className="rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-pink-600 dark:bg-pink-500/20 dark:text-pink-300">
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-black dark:bg-black/20 dark:text-gray-400">
                       {form.subCategories.length} selected
                     </span>
                   </div>
@@ -700,8 +700,8 @@ export default function Admin() {
                             onClick={() => toggleSubCategory(item.key)}
                             className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                               active
-                                ? 'border-pink-500 bg-pink-500 text-white'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-pink-400 hover:text-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
+                                ? 'border-black bg-black text-white'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-gray-700 hover:text-black dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
                             }`}
                           >
                             {item.label}
@@ -720,7 +720,7 @@ export default function Admin() {
                       value={subCategoryDraft}
                       onChange={(event) => setSubCategoryDraft(event.target.value)}
                       placeholder="Add custom subcategory"
-                      className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+                      className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-black dark:border-white/10 dark:bg-slate-950 dark:text-white"
                     />
                     <button
                       type="button"
@@ -760,7 +760,7 @@ export default function Admin() {
                   <button
                     type="button"
                     onClick={() => setForm((current) => ({ ...current, availableRegions: REGION_OPTIONS.map((region) => region.key) }))}
-                    className="rounded-full bg-pink-100 px-3 py-1 text-xs font-semibold text-pink-600 dark:bg-pink-500/20 dark:text-pink-300"
+                    className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-black dark:bg-black/20 dark:text-gray-400"
                   >
                     All India
                   </button>
@@ -775,8 +775,8 @@ export default function Admin() {
                         onClick={() => toggleRegion(region.key)}
                         className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                           active
-                            ? 'border-pink-500 bg-pink-500 text-white'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-pink-400 hover:text-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
+                            ? 'border-black bg-black text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-gray-700 hover:text-black dark:border-white/10 dark:bg-slate-950 dark:text-slate-200'
                         }`}
                       >
                         {region.label}
@@ -793,12 +793,12 @@ export default function Admin() {
                   value={form.description}
                   onChange={handleChange}
                   rows={5}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-pink-500 dark:border-white/10 dark:bg-slate-950 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-black dark:border-white/10 dark:bg-slate-950 dark:text-white"
                 />
               </label>
 
               <div className="space-y-3">
-                <label className="block rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/80 px-5 py-6 transition hover:border-pink-400 hover:bg-pink-50/60 dark:border-white/10 dark:bg-white/5 dark:hover:border-pink-400/80">
+                <label className="block rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/80 px-5 py-6 transition hover:border-gray-700 hover:bg-gray-50/60 dark:border-white/10 dark:bg-white/5 dark:hover:border-gray-700/80">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -809,7 +809,7 @@ export default function Admin() {
                   />
                   <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:text-left">
                     <div className="rounded-2xl bg-white p-3 shadow-sm dark:bg-slate-900">
-                      <ImagePlus size={22} className="text-pink-500" />
+                      <ImagePlus size={22} className="text-black" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">Store product images</p>
@@ -827,7 +827,7 @@ export default function Admin() {
                         <img src={imageUrl} alt="Current product" className="h-36 w-full object-cover" />
                         <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
                           <span>Current image</span>
-                          <button type="button" onClick={() => removeExistingImage(imageUrl)} className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-1 text-white">
+                          <button type="button" onClick={() => removeExistingImage(imageUrl)} className="inline-flex items-center gap-1 rounded-full bg-black px-2 py-1 text-white">
                             <X size={12} /> Remove
                           </button>
                         </div>
@@ -839,7 +839,7 @@ export default function Admin() {
                         <img src={preview} alt={file.name} className="h-36 w-full object-cover" />
                         <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
                           <span className="truncate">{file.name}</span>
-                          <button type="button" onClick={() => removeSelectedFile(index)} className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-1 text-white">
+                          <button type="button" onClick={() => removeSelectedFile(index)} className="inline-flex items-center gap-1 rounded-full bg-black px-2 py-1 text-white">
                             <X size={12} /> Remove
                           </button>
                         </div>
@@ -853,7 +853,7 @@ export default function Admin() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-black to-black px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving ? 'Saving...' : editingId ? 'Update product' : 'Create product'}
                 </button>

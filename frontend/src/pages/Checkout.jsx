@@ -76,7 +76,7 @@ export default function Checkout() {
   };
 
   return (
-    <div className="bg-pink-50 dark:bg-gray-950 min-h-screen py-10">
+    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen py-10">
       <div className="max-w-[1500px] mx-auto px-6">
         <h1 className="text-4xl font-bold text-gray-800 dark:text-slate-100 mb-10">Checkout</h1>
 
@@ -87,9 +87,9 @@ export default function Checkout() {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
                     index < step
-                      ? "bg-pink-500 text-white"
+                      ? "bg-black text-white"
                       : index === step
-                      ? "bg-pink-100 text-pink-600 border-2 border-pink-500"
+                      ? "bg-gray-100 text-black border-2 border-black"
                       : "bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400"
                   }`}
                 >
@@ -98,7 +98,7 @@ export default function Checkout() {
 
                 <span
                   className={`mt-2 text-sm font-medium dark:text-slate-400 ${
-                    index === step ? "text-pink-600" : "text-gray-500"
+                    index === step ? "text-black" : "text-gray-500"
                   }`}
                 >
                   {item}
@@ -108,7 +108,7 @@ export default function Checkout() {
               {index < STEPS.length - 1 && (
                 <div
                   className={`flex-1 h-1 rounded-full dark:bg-slate-700 ${
-                    index < step ? "bg-pink-500" : "bg-gray-300"
+                    index < step ? "bg-black" : "bg-gray-300"
                   }`}
                 />
               )}
@@ -144,7 +144,7 @@ export default function Checkout() {
               {step < STEPS.length - 1 ? (
                 <button
                   onClick={next}
-                  className="px-8 py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 transition-all duration-300 shadow-lg"
+                  className="px-8 py-3 rounded-xl bg-black text-white font-semibold hover:bg-black transition-all duration-300 shadow-lg"
                 >
                   Continue
                 </button>
@@ -152,7 +152,7 @@ export default function Checkout() {
                 <button
                   onClick={placeOrder}
                   disabled={loading}
-                  className="px-8 py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg"
+                  className="px-8 py-3 rounded-xl bg-black text-white font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg"
                 >
                   {loading ? "Placing Order..." : "Place Order"}
                 </button>

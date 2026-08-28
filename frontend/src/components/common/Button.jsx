@@ -17,7 +17,7 @@ export default function Button({
   children,
   variant = 'primary',
   size = 'md',
-  className = ' text-pink-600 hover:text-pink-400',
+  className = ' text-black hover:text-gray-700',
   loading = false,
   ...props
 }) {

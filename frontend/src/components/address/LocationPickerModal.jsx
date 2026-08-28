@@ -90,7 +90,7 @@ export default function LocationPickerModal({
 
                 <MapPin
                   size={20}
-                  className="text-pink-600"
+                  className="text-black"
                 />
 
                 <h3 className="font-semibold">
@@ -133,7 +133,7 @@ export default function LocationPickerModal({
             type="button"
             disabled={!selectedLocation}
             onClick={() => onConfirm(selectedLocation)}
-            className="flex items-center gap-2 rounded-xl bg-pink-600 px-8 py-3 text-white transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-black px-8 py-3 text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <CheckCircle size={18} />
             Use This Address

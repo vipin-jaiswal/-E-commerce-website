@@ -47,13 +47,13 @@ export default function Login() {
         transition={{ duration: 1, ease: 'easeOut' }}
       >
         <div className="text-center">
-          <Link to="/" className="font-display text-3xl font-bold tracking-tight text-pink-600 hover:text-pink-400">
+          <Link to="/" className="font-display text-3xl font-bold tracking-tight text-black hover:text-gray-700">
             DYVA
           </Link>
           <h1 className="mt-6 font-display text-3xl font-semibold text-charcoal dark:text-slate-100">Sign In</h1>
           <p className="mt-2 text-sm text-muted dark:text-slate-400">
             Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-accent hover:text-accent-dark hover:underline text-pink-400 hover:text-pink-300">
+            <Link to="/register" className="font-medium text-accent hover:text-accent-dark hover:underline text-gray-700 hover:text-gray-400">
               Register
             </Link>
           </p>
@@ -114,7 +114,7 @@ export default function Login() {
               type="submit"
               loading={loading}
               size="lg"
-              className="mt-8 w-full justify-center rounded-full border border-white/1000 hover:border-gray-100 bg-white/5 px-6 py-2.5 text-[15px] text-black hover:text-pink-600 hover:bg-pink-200 font-bold uppercase tracking-[0.22em] text-pink-600 shadow-[0_8px_24px_rgba(26,26,46,0.18)] transition-all duration-300 hover:-translate-y-0.5"
+              className="mt-8 w-full justify-center rounded-full border border-white/1000 hover:border-gray-100 bg-white/5 px-6 py-2.5 text-[15px] text-black hover:text-black hover:bg-gray-200 font-bold uppercase tracking-[0.22em] text-black shadow-[0_8px_24px_rgba(26,26,46,0.18)] transition-all duration-300 hover:-translate-y-0.5"
             >
               Admin Sign In
             </Button>
@@ -124,7 +124,7 @@ export default function Login() {
         <button
           type="button"
           onClick={() => setAdminMode((value) => !value)}
-          className="mx-auto block text-sm font-medium text-pink-500 hover:text-pink-600 hover:underline"
+          className="mx-auto block text-sm font-medium text-black hover:text-black hover:underline"
         >
           {adminMode ? 'Use email OTP instead' : 'Admin sign in'}
         </button>

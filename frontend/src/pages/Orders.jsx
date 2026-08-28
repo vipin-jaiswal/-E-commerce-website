@@ -91,7 +91,7 @@ export default function Orders() {
                     })}
                   </p>
                   <p className="text-xs text-muted mt-0.5">
-                    {order.items?.length || 0} item(s) · ₹{Number(order.totalPrice ?? 0).toLocaleString("en-IN")}
+                    {order.items?.length || 0} item(s) Ã‚Â· Ã¢â€šÂ¹{Number(order.totalPrice ?? 0).toLocaleString("en-IN")}
                   </p>
                 </div>
 
@@ -117,7 +117,7 @@ export default function Orders() {
                 <Link to={`/orders/${order.id}`} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:text-accent-dark transition-colors">
                   Details <ChevronRight size={14} />
                 </Link>
-                <Link to={`/orders/${order.id}`} className="inline-flex items-center gap-1 rounded-full bg-pink-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-pink-600">
+                <Link to={`/orders/${order.id}`} className="inline-flex items-center gap-1 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-black">
                   <MapPin size={13} /> Track order
                 </Link>
                 {["ordered", "confirmed"].includes(order.status) && (

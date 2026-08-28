@@ -19,10 +19,10 @@ export default function Cart() {
       <div className="min-h-[80vh] flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
         <div className="bg-white dark:bg-slate-900 shadow-xl dark:shadow-none rounded-3xl p-10 text-center max-w-md w-full border border-slate-100 dark:border-white/10 transition-colors duration-300">
 
-          <div className="w-24 h-24 bg-pink-100 dark:bg-pink-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-24 h-24 bg-gray-100 dark:bg-black/15 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShoppingBag
               size={50}
-              className="text-pink-500 dark:text-pink-300"
+              className="text-black dark:text-gray-400"
             />
           </div>
 
@@ -40,8 +40,8 @@ export default function Cart() {
               inline-flex
               items-center
               gap-2
-              bg-pink-500
-              hover:bg-pink-600
+              bg-black
+              hover:bg-black
               text-white
               px-8
               py-3
@@ -128,7 +128,7 @@ export default function Cart() {
               shadow-lg dark:shadow-none
               p-6
               border
-              border-pink-100 dark:border-white/10
+              border-gray-100 dark:border-white/10
             ">
               <CartSummary />
             </div>

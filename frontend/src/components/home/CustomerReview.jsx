@@ -133,7 +133,7 @@ const CustomerReview = () => {
                           {review.productId ? (
                             <Link
                               to={`/products/${review.productId}`}
-                              className="mb-2 block text-base font-semibold hover:text-pink-500 dark:text-white"
+                              className="mb-2 block text-base font-semibold hover:text-black dark:text-white"
                             >
                               {product.name || "Product review"}
                             </Link>
@@ -155,7 +155,7 @@ const CustomerReview = () => {
                                 className="w-12 h-12 object-cover rounded-lg bg-gray-100"
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-pink-50 to-slate-100" />
+                              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-50 to-slate-100" />
                             )}
 
                             <div>

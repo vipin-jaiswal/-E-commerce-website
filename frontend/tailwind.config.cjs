@@ -5,11 +5,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#ec4899",
-        secondary: "#f9a8d4",
-        dark: "#111827",
-        gold: "#E6A500",
-        border: "#EAE5E0",
+        primary: "#000000",
+        secondary: "#FFFFFF",
+        dark: "#000000",
+        gold: "#333333",
+        border: "#CCCCCC",
       },
       animation: {
         marquee: "marquee 14s linear infinite",

@@ -103,11 +103,11 @@ const detectLocation = async () => {
       justify-center
       gap-2
       rounded-xl
-      bg-pink-600
+      bg-black
       py-3
       text-white
       font-medium
-      hover:bg-pink-700
+      hover:bg-gray-800
       transition
       disabled:opacity-60
       "

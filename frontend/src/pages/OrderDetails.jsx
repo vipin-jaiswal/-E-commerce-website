@@ -133,11 +133,11 @@ export default function OrderDetails() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-charcoal line-clamp-1">{item.name}</p>
                     <p className="text-sm text-muted">
-                      Qty: {item.quantity} · ₹{Number(item.price ?? 0).toLocaleString("en-IN")} each
+                      Qty: {item.quantity} Ã‚Â· Ã¢â€šÂ¹{Number(item.price ?? 0).toLocaleString("en-IN")} each
                     </p>
                   </div>
                   <p className="font-semibold text-charcoal">
-                    ₹{Number(item.price * item.quantity).toLocaleString("en-IN")}
+                    Ã¢â€šÂ¹{Number(item.price * item.quantity).toLocaleString("en-IN")}
                   </p>
                 </div>
               ))}
@@ -151,19 +151,19 @@ export default function OrderDetails() {
             <div className="space-y-2 text-sm text-muted">
               <div className="flex justify-between">
                 <span>Items</span>
-                <span>₹{Number(order.itemsPrice ?? 0).toLocaleString("en-IN")}</span>
+                <span>Ã¢â€šÂ¹{Number(order.itemsPrice ?? 0).toLocaleString("en-IN")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>₹{Number(order.shippingPrice ?? 0).toLocaleString("en-IN")}</span>
+                <span>Ã¢â€šÂ¹{Number(order.shippingPrice ?? 0).toLocaleString("en-IN")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax</span>
-                <span>₹{Number(order.taxPrice ?? 0).toLocaleString("en-IN")}</span>
+                <span>Ã¢â€šÂ¹{Number(order.taxPrice ?? 0).toLocaleString("en-IN")}</span>
               </div>
               <div className="border-t border-border pt-2 flex justify-between font-semibold text-charcoal">
                 <span>Total</span>
-                <span>₹{Number(order.totalPrice ?? 0).toLocaleString("en-IN")}</span>
+                <span>Ã¢â€šÂ¹{Number(order.totalPrice ?? 0).toLocaleString("en-IN")}</span>
               </div>
             </div>
           </div>

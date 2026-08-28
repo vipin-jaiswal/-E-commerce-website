@@ -53,19 +53,19 @@ export default function ReviewForm({ productId, onReviewAdded }) {
         placeholder="Your Name"
         value={userName}
         onChange={(e) => setUserName(e.target.value)}
-        className="w-full border rounded-xl p-3 outline-none focus:border-pink-500"
+        className="w-full border rounded-xl p-3 outline-none focus:border-black"
       />
 
       <select
         value={rating}
         onChange={(e) => setRating(Number(e.target.value))}
-        className="w-full border rounded-xl p-3 outline-none focus:border-pink-500"
+        className="w-full border rounded-xl p-3 outline-none focus:border-black"
       >
-        <option value={5}>⭐⭐⭐⭐⭐ 5 Stars</option>
-        <option value={4}>⭐⭐⭐⭐ 4 Stars</option>
-        <option value={3}>⭐⭐⭐ 3 Stars</option>
-        <option value={2}>⭐⭐ 2 Stars</option>
-        <option value={1}>⭐ 1 Star</option>
+        <option value={5}>Ã¢Â­ÂÃ¢Â­ÂÃ¢Â­ÂÃ¢Â­ÂÃ¢Â­Â 5 Stars</option>
+        <option value={4}>Ã¢Â­ÂÃ¢Â­ÂÃ¢Â­ÂÃ¢Â­Â 4 Stars</option>
+        <option value={3}>Ã¢Â­ÂÃ¢Â­ÂÃ¢Â­Â 3 Stars</option>
+        <option value={2}>Ã¢Â­ÂÃ¢Â­Â 2 Stars</option>
+        <option value={1}>Ã¢Â­Â 1 Star</option>
       </select>
 
       <textarea
@@ -73,13 +73,13 @@ export default function ReviewForm({ productId, onReviewAdded }) {
         placeholder="Write your review..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        className="w-full border rounded-xl p-3 outline-none focus:border-pink-500"
+        className="w-full border rounded-xl p-3 outline-none focus:border-black"
       />
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-xl font-semibold transition"
+        className="w-full bg-black hover:bg-black text-white py-3 rounded-xl font-semibold transition"
       >
         {loading ? "Submitting..." : "Submit Review"}
       </button>

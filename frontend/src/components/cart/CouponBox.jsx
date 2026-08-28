@@ -16,7 +16,7 @@ export default function CouponBox({ onApply }) {
     if (coupon) {
       setApplied({ code: code.toUpperCase(), ...coupon });
       onApply?.(coupon.discount);
-      toast.success(`Coupon applied — ${coupon.label}!`);
+      toast.success(`Coupon applied Ã¢â‚¬â€ ${coupon.label}!`);
     } else {
       toast.error('Invalid coupon code');
     }
@@ -33,7 +33,7 @@ export default function CouponBox({ onApply }) {
       <div className="flex items-center justify-between bg-sage/10 border border-sage/30 rounded-xl px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-sage font-medium">
           <CheckCircle size={16} />
-          {applied.code} — {applied.label}
+          {applied.code} Ã¢â‚¬â€ {applied.label}
         </div>
         <button onClick={remove} className="text-xs text-muted hover:text-red-400 transition-colors underline">
           Remove

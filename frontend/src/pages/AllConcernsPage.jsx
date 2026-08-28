@@ -9,14 +9,14 @@ const ConcernCard = ({ concern }) => {
       onClick={() => navigate(`/products?q=${concern.query}`)}
       className="cursor-pointer group text-center"
     >
-      <div className="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-md border-4 border-pink-100 group-hover:border-pink-400 transition duration-300">
+      <div className="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-md border-4 border-gray-100 group-hover:border-gray-700 transition duration-300">
         <img
           src={concern.image}
           alt={concern.name}
           className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
         />
       </div>
-      <h3 className="mt-4 font-semibold text-gray-700 dark:text-gray-300 group-hover:text-pink-500 dark:group-hover:text-pink-400 transition">
+      <h3 className="mt-4 font-semibold text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-gray-700 transition">
         {concern.name}
       </h3>
     </div>
@@ -64,7 +64,7 @@ const AllConcernsPage = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-6 py-3 font-semibold text-lg transition-colors duration-300 ${
               activeTab === tab.id
-                ? "border-b-2 border-pink-500 text-pink-500"
+                ? "border-b-2 border-black text-black"
                 : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
             }`}
           >

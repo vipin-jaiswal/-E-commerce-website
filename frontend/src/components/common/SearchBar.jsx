@@ -121,7 +121,7 @@ export default function SearchBar({ open, onClose }) {
             <button
               type="button"
               onClick={() => setShowPopular((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-ivory px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-charcoal transition-all duration-300 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-pink-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-ivory px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-charcoal transition-all duration-300 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-gray-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             >
               <Sparkles size={14} />
               Popular Searches
@@ -149,7 +149,7 @@ export default function SearchBar({ open, onClose }) {
                       text-charcoal
                       border border-border
                       hover:bg-accent
-                      hover:text-pink-400
+                      hover:text-gray-700
                       hover:scale-105
                       hover:shadow-lg
                       transition-all
@@ -181,7 +181,7 @@ export default function SearchBar({ open, onClose }) {
                 <button
                   key={item}
                   onClick={() => handleSearch(item)}
-                  className="rounded-full border border-border bg-white px-4 py-2 text-sm text-charcoal transition-all duration-300 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-pink-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  className="rounded-full border border-border bg-white px-4 py-2 text-sm text-charcoal transition-all duration-300 hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-gray-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                 >
                   {item}
                 </button>

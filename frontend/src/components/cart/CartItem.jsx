@@ -42,7 +42,7 @@ export default function CartItem({ item }) {
         {item.weight && <p className="mt-1 text-xs text-muted dark:text-slate-400">Weight: {item.weight}</p>}
 
         <p className="text-sm font-semibold text-charcoal dark:text-slate-100 mt-1">
-          ₹{price.toLocaleString("en-IN")}
+          Ã¢â€šÂ¹{price.toLocaleString("en-IN")}
         </p>
 
         <div className="flex items-center gap-4 mt-3">
@@ -79,7 +79,7 @@ export default function CartItem({ item }) {
 
       <div className="flex-shrink-0 text-right">
         <p className="text-sm font-semibold text-charcoal dark:text-slate-100">
-          ₹{(price * qty).toLocaleString("en-IN")}
+          Ã¢â€šÂ¹{(price * qty).toLocaleString("en-IN")}
         </p>
       </div>
     </div>

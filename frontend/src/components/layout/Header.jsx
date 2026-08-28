@@ -106,8 +106,8 @@ const Header = () => {
               className="
                 text-2xl
                 font-bold
-                text-pink-600 dark:text-pink-400
-                hover:text-pink-400 dark:hover:text-pink-200
+                text-black dark:text-gray-700
+                hover:text-gray-700 dark:hover:text-gray-200
                 transition
               "
             >
@@ -125,7 +125,7 @@ const Header = () => {
                     onClick={() => setFaceScanMenuOpen((prev) => !prev)}
                     className="
                       text-slate-700 dark:text-slate-200
-                      hover:text-pink-500 dark:hover:text-pink-300
+                      hover:text-black dark:hover:text-gray-400
                       transition
                       duration-300
                       flex items-center gap-1
@@ -154,7 +154,7 @@ const Header = () => {
                       <button
                         type="button"
                         onClick={() => goToFaceScan("camera")}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-pink-50 dark:hover:bg-white/10 hover:text-pink-500 dark:hover:text-pink-300 transition"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-black dark:hover:text-gray-400 transition"
                       >
                         <Camera size={18} />
                         Open Camera
@@ -163,7 +163,7 @@ const Header = () => {
                       <button
                         type="button"
                         onClick={() => goToFaceScan("upload")}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-pink-50 dark:hover:bg-white/10 hover:text-pink-500 dark:hover:text-pink-300 transition border-t border-slate-100 dark:border-white/10"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-black dark:hover:text-gray-400 transition border-t border-slate-100 dark:border-white/10"
                       >
                         <ImageIcon size={18} />
                         Upload Image
@@ -172,11 +172,11 @@ const Header = () => {
                   )}
                 </div>
               ) : link.to ? (
-                <Link key={link.label} to={link.to} className="text-slate-700 dark:text-slate-200 hover:text-pink-500 dark:hover:text-pink-300 transition duration-300">
+                <Link key={link.label} to={link.to} className="text-slate-700 dark:text-slate-200 hover:text-black dark:hover:text-gray-400 transition duration-300">
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.label} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-slate-700 dark:text-slate-200 hover:text-pink-500 dark:hover:text-pink-300 transition duration-300">
+                <a key={link.label} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-slate-700 dark:text-slate-200 hover:text-black dark:hover:text-gray-400 transition duration-300">
                   {link.label}
                 </a>
               )
@@ -203,12 +203,12 @@ const Header = () => {
                 border
                 border-slate-200
                 text-slate-700
-                hover:border-pink-500
-                hover:text-pink-500
+                hover:border-black
+                hover:text-black
                 dark:border-white/10
                 dark:text-slate-200
-                dark:hover:border-pink-400
-                dark:hover:text-pink-300
+                dark:hover:border-gray-700
+                dark:hover:text-gray-400
               "
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
@@ -222,7 +222,7 @@ const Header = () => {
                 className="
                   hidden lg:flex
                   text-slate-700 dark:text-slate-200
-                  hover:text-pink-500 dark:hover:text-pink-300
+                  hover:text-black dark:hover:text-gray-400
                   transition
                   duration-300
                   flex items-center gap-2
@@ -240,7 +240,7 @@ const Header = () => {
                 className="
                   hidden lg:flex
                   text-slate-700 dark:text-slate-200
-                  hover:text-pink-500 dark:hover:text-pink-300
+                  hover:text-black dark:hover:text-gray-400
                   transition
                   duration-300
                   flex items-center gap-2
@@ -257,7 +257,7 @@ const Header = () => {
               className="
                 hidden lg:flex
                 text-slate-700 dark:text-slate-200
-                hover:text-pink-500 dark:hover:text-pink-300
+                hover:text-black dark:hover:text-gray-400
                 transition
                 duration-300
                 flex items-center gap-2
@@ -274,7 +274,7 @@ const Header = () => {
                 className="
                   relative
                   text-slate-700 dark:text-slate-200
-                  hover:text-pink-500 dark:hover:text-pink-300
+                  hover:text-black dark:hover:text-gray-400
                   transition
                   duration-300
                   flex items-center gap-2
@@ -289,7 +289,7 @@ const Header = () => {
                       absolute
                       -top-2
                       -right-2
-                      bg-pink-500
+                      bg-black
                       text-white
                       text-[10px]
                       font-semibold

@@ -56,7 +56,7 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
                 key={link.label}
                 to={link.to}
                 onClick={onClose}
-                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-pink-500 transition-colors"
+                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-black transition-colors"
               >
                 {link.label}
               </Link>
@@ -65,13 +65,13 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-pink-500 transition-colors"
+                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-black transition-colors"
               >
                 {link.label}
               </a>
             )
           )}
-          <Link to="/face-scan" onClick={onClose} className="flex items-center gap-3 py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-pink-500 transition-colors">
+          <Link to="/face-scan" onClick={onClose} className="flex items-center gap-3 py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-black transition-colors">
             <Camera size={18} />
             <span>AI Face Scan</span>
           </Link>

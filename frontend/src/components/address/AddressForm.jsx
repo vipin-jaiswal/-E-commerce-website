@@ -28,7 +28,7 @@ function Field({ label, name, value, onChange, error, autoComplete, type = 'text
         maxLength={maxLength}
         placeholder={label}
         className={`w-full rounded-xl border p-4 outline-none transition ${
-          error ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-100'
+          error ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-100'
         }`}
       />
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
@@ -194,7 +194,7 @@ export default function AddressForm({
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-charcoal py-4 text-sm font-semibold text-white transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-70"
       >
         {(submitting || verifying) && <Loader2 size={16} className="animate-spin" />}
-        {submitting ? 'Saving…' : submitLabel}
+        {submitting ? 'SavingÃ¢â‚¬Â¦' : submitLabel}
       </button>
     </form>
   );

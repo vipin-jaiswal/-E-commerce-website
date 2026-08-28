@@ -167,9 +167,9 @@ export default function Account() {
           px-4 py-3
           text-sm
           outline-none
-          focus:border-pink-500
+          focus:border-black
           focus:ring-2
-          focus:ring-pink-200
+          focus:ring-gray-200
           transition-all
         "
         />

@@ -35,7 +35,7 @@ export default function BottomNavigation() {
               <Icon size={21} strokeWidth={active ? 2 : 1.5} />
               <span className="text-[10px] font-medium">{label}</span>
               {label === 'Cart' && cartCount > 0 && (
-                <span className="absolute top-0 right-1.5 w-4 h-4 bg-charcoal text-ivory dark:bg-pink-500 dark:text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-0 right-1.5 w-4 h-4 bg-charcoal text-ivory dark:bg-black dark:text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {cartCount}
                 </span>
               )}

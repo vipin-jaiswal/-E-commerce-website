@@ -11,7 +11,7 @@ export default function NearbyAddressList({
       <div className="h-full flex flex-col items-center justify-center px-6 text-center">
         <MapPin
           size={45}
-          className="text-pink-500 mb-4"
+          className="text-black mb-4"
         />
 
         <h3 className="text-lg font-semibold text-gray-800">
@@ -40,10 +40,10 @@ export default function NearbyAddressList({
           <button
             key={`${address.lat}-${address.lng}-${index}`}
             onClick={() => onSelect(address)}
-            className={`w-full text-left p-4 transition-all duration-200 hover:bg-pink-50
+            className={`w-full text-left p-4 transition-all duration-200 hover:bg-gray-50
             ${
               active
-                ? "bg-pink-50 border-l-4 border-pink-600"
+                ? "bg-gray-50 border-l-4 border-black"
                 : ""
             }`}
           >
@@ -54,7 +54,7 @@ export default function NearbyAddressList({
                 {active ? (
                   <CheckCircle2
                     size={20}
-                    className="text-pink-600"
+                    className="text-black"
                   />
                 ) : (
                   <MapPin
@@ -77,7 +77,7 @@ export default function NearbyAddressList({
                 </p>
 
                 {address.distance && (
-                  <p className="text-xs text-pink-600 mt-2 font-medium">
+                  <p className="text-xs text-black mt-2 font-medium">
                     {address.distance}
                   </p>
                 )}

@@ -31,7 +31,7 @@ function mapNominatimAddress(item) {
   };
 }
 
-/** Forward search — used by the "Search Address" typeahead (Feature 3). */
+/** Forward search Ã¢â‚¬â€ used by the "Search Address" typeahead (Feature 3). */
 export async function searchAddress(query, { limit = 5, city = '', state = '' } = {}) {
   if (!query || query.trim().length < 3) return [];
 
@@ -49,7 +49,7 @@ export async function searchAddress(query, { limit = 5, city = '', state = '' } 
   return results.map(mapNominatimAddress);
 }
 
-/** Reverse geocode — used by the "Use Current Location" button (Feature 2). */
+/** Reverse geocode Ã¢â‚¬â€ used by the "Use Current Location" button (Feature 2). */
 export async function reverseGeocode(latitude, longitude) {
   const url = `${NOMINATIM_BASE}/reverse?format=jsonv2&addressdetails=1&lat=${latitude}&lon=${longitude}`;
 
@@ -89,7 +89,7 @@ export function getCurrentPosition() {
   });
 }
 
-/** Pincode lookup — used to auto-fill city/state (Feature 8). */
+/** Pincode lookup Ã¢â‚¬â€ used to auto-fill city/state (Feature 8). */
 export async function lookupPincode(pincode) {
   const cleaned = String(pincode || '').replace(/\D/g, '');
   if (cleaned.length !== 6) return null;

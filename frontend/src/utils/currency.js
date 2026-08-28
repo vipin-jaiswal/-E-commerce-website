@@ -1,5 +1,5 @@
 export const formatCurrency = (amount = 0) => {
-  return `₹${Number(amount).toLocaleString("en-IN")}`;
+  return `Ã¢â€šÂ¹${Number(amount).toLocaleString("en-IN")}`;
 };
 
 export default formatCurrency;

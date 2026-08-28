@@ -91,7 +91,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
 
       {product.comingSoon && (
         <p className="inline-flex w-fit rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 dark:bg-amber-500/20 dark:text-amber-200">
-          Coming soon — this product is not available to purchase yet.
+          Coming soon Ã¢â‚¬â€ this product is not available to purchase yet.
         </p>
       )}
 
@@ -109,8 +109,8 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
               onClick={() => setSelectedWeight(weight)}
               className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                 selectedWeight === weight
-                  ? 'border-pink-500 bg-pink-500 text-white'
-                  : 'border-border bg-white text-charcoal hover:border-pink-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+                  ? 'border-black bg-black text-white'
+                  : 'border-border bg-white text-charcoal hover:border-gray-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
               }`}
             >
               {weight}
@@ -148,7 +148,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="inline-flex items-center gap-2 rounded-pill bg-pink-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-pill bg-black px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black"
           >
             <ShoppingBag size={16} />
             Add to cart
@@ -158,7 +158,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
           <button
             type="button"
             onClick={handleBuyNow}
-            className="inline-flex items-center gap-2 rounded-pill bg-pink-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-pink-600"
+            className="inline-flex items-center gap-2 rounded-pill bg-black px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black"
           >
             <ShoppingBag size={16} />
             Buy Now
@@ -209,7 +209,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
           <button
             type="button"
             onClick={() => setIsReviewFormOpen(true)}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-accent dark:text-pink-400 hover:underline"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-accent dark:text-gray-700 hover:underline"
           >
             <MessageSquare size={16} />
             Write a review

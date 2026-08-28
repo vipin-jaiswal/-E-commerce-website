@@ -38,7 +38,7 @@ export default function Footer() {
           <div className="lg:w-[38%]">
             <Link
               to="/"
-              className="text-3xl font-bold text-pink-600 dark:text-pink-400"
+              className="text-3xl font-bold text-black dark:text-gray-700"
             >
               DYVA
             </Link>
@@ -84,7 +84,7 @@ export default function Footer() {
                       <li key={link.label}>
                         <Link
                           to={link.href}
-                          className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-500 transition"
+                          className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-black transition"
                         >
                           {link.label}
                         </Link>
@@ -103,20 +103,20 @@ export default function Footer() {
         <div className="border-t border-gray-200 dark:border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
 
           <p className="text-center sm:text-left">
-            © {new Date().getFullYear()} DYVA. All rights reserved.
+            Ã‚Â© {new Date().getFullYear()} DYVA. All rights reserved.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <Link
               to="/privacy-policy"
-              className="hover:text-pink-600 dark:hover:text-pink-500 transition"
+              className="hover:text-black dark:hover:text-black transition"
             >
               Privacy Policy
             </Link>
 
             <Link
               to="/terms"
-              className="hover:text-pink-600 dark:hover:text-pink-500 transition"
+              className="hover:text-black dark:hover:text-black transition"
             >
               Terms & Conditions
             </Link>

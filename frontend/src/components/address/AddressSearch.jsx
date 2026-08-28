@@ -60,9 +60,9 @@ export default function AddressSearch({ onSelect, city, state }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder="Search for area, street, landmark…"
+          placeholder="Search for area, street, landmarkÃ¢â‚¬Â¦"
           autoComplete="off"
-          className="w-full rounded-xl border border-gray-300 p-4 pl-11 pr-10 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-100"
+          className="w-full rounded-xl border border-gray-300 p-4 pl-11 pr-10 outline-none transition focus:border-black focus:ring-2 focus:ring-gray-100"
         />
         {loading && (
           <Loader2 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />
@@ -76,9 +76,9 @@ export default function AddressSearch({ onSelect, city, state }) {
               type="button"
               key={`${item.latitude}-${item.longitude}-${idx}`}
               onClick={() => handleSelect(item)}
-              className="flex w-full items-start gap-3 border-b border-gray-100 px-4 py-3 text-left text-sm last:border-0 hover:bg-pink-50"
+              className="flex w-full items-start gap-3 border-b border-gray-100 px-4 py-3 text-left text-sm last:border-0 hover:bg-gray-50"
             >
-              <MapPin size={16} className="mt-0.5 flex-shrink-0 text-pink-500" />
+              <MapPin size={16} className="mt-0.5 flex-shrink-0 text-black" />
               <span className="text-gray-700">{item.label}</span>
             </button>
           ))}

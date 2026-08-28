@@ -72,9 +72,9 @@ export default function SearchBox({
             text-sm
             outline-none
             transition
-            focus:border-pink-500
+            focus:border-black
             focus:ring-2
-            focus:ring-pink-100
+            focus:ring-gray-100
           "
         />
 
@@ -84,7 +84,7 @@ export default function SearchBox({
             onClick={() => setValue("")}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
           >
-            ✕
+            Ã¢Å“â€¢
           </button>
         )}
 
