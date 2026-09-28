@@ -16,7 +16,7 @@ const ConcernCard = ({ concern }) => {
           className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
         />
       </div>
-      <h3 className="mt-4 font-semibold text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-gray-700 transition">
+      <h3 className="mt-4 font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-primary transition">
         {concern.name}
       </h3>
     </div>
@@ -64,7 +64,7 @@ const AllConcernsPage = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`px-6 py-3 font-semibold text-lg transition-colors duration-300 ${
               activeTab === tab.id
-                ? "border-b-2 border-black text-black"
+                ? "border-b-2 border-primary text-primary"
                 : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
             }`}
           >

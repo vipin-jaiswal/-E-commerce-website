@@ -1,10 +1,10 @@
 import React from 'react';
 
 const variants = {
-  primary: 'bg-charcoal text-white hover:bg-accent',
-  outline:  'border border-charcoal text-charcoal hover:bg-charcoal hover:text-white',
-  accent:   'bg-accent text-white hover:bg-accent-dark',
-  ghost:    'text-charcoal hover:bg-ivory-dark',
+  primary: 'ui-primary',
+  outline:  'ui-outline',
+  accent:   'ui-primary',
+  ghost:    'text-charcoal hover:bg-primary-soft transition-colors duration-200',
 };
 
 const sizes = {
@@ -17,7 +17,7 @@ export default function Button({
   children,
   variant = 'primary',
   size = 'md',
-  className = ' text-black hover:text-gray-700',
+  className = '',
   loading = false,
   ...props
 }) {

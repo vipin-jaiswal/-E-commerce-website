@@ -5,11 +5,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#000000",
+        primary: "var(--color-primary)",
+        "primary-dark": "var(--color-primary-dark)",
+        "primary-soft": "var(--color-primary-soft)",
         secondary: "#FFFFFF",
-        dark: "#000000",
-        gold: "#333333",
-        border: "#CCCCCC",
+        dark: "var(--color-dark-bg)",
+        charcoal: "var(--color-text)",
+        foreground: "var(--color-text)",
+        card: "var(--color-surface)",
+        ivory: "var(--color-surface)",
+        "ivory-dark": "var(--color-primary-soft)",
+        muted: "var(--color-muted)",
+        border: "var(--color-border)",
+        gold: "var(--color-primary)",
       },
       animation: {
         marquee: "marquee 14s linear infinite",

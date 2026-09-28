@@ -5,15 +5,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        charcoal: '#1A1A2E',
+        charcoal: '#171717',
         'ivory-dark': '#F0EFEB',
         ivory: '#FAF8F5',
         border: '#EAE5E0',
         muted: '#6B6B78',
-        accent: '#D94682',
-        'accent-dark': '#C23A70',
-        sage: '#5A8C72',
-        'sage-dark': '#4F7A63',
+        accent: '#E91E63',
+        'accent-dark': '#C2185B',
+        primary: 'var(--color-primary)',
+        'primary-dark': 'var(--color-primary-dark)',
+        'primary-soft': 'var(--color-primary-soft)',
+        sage: '#E91E63',
+        'sage-dark': '#C2185B',
         gold: '#E6A500',
         'gold-light': '#FFF8E6',
 

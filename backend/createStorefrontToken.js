@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('node:fs');
+const path = require('node:path');
 
 const storeDomain = String(process.env.SHOPIFY_STORE_DOMAIN || '')
   .trim()
@@ -7,6 +9,8 @@ const storeDomain = String(process.env.SHOPIFY_STORE_DOMAIN || '')
 const apiVersion = process.env.SHOPIFY_API_VERSION || '2026-07';
 
 const adminGraphqlUrl = `https://${storeDomain}/admin/api/${apiVersion}/graphql.json`;
+const METAOBJECT_SCOPE = 'unauthenticated_read_metaobjects';
+const envPath = path.join(__dirname, '.env');
 
 const getAdminToken = async () => {
   if (process.env.SHOPIFY_ADMIN_TOKEN) return process.env.SHOPIFY_ADMIN_TOKEN;
@@ -32,12 +36,55 @@ const getAdminToken = async () => {
   return payload.access_token;
 };
 
+const saveStorefrontToken = (token) => {
+  const current = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+  const newline = current.includes('\r\n') ? '\r\n' : '\n';
+  const lines = current.split(/\r?\n/);
+  let replaced = false;
+  const updated = lines.map((line) => {
+    if (!line.startsWith('SHOPIFY_STOREFRONT_TOKEN=')) return line;
+    replaced = true;
+    return `SHOPIFY_STOREFRONT_TOKEN=${token}`;
+  });
+  if (!replaced) updated.push(`SHOPIFY_STOREFRONT_TOKEN=${token}`);
+  fs.writeFileSync(envPath, updated.join(newline), 'utf8');
+};
+
 const createStorefrontToken = async () => {
   if (!storeDomain) throw new Error('SHOPIFY_STORE_DOMAIN is missing');
+
+  const adminToken = await getAdminToken();
+  const scopesResponse = await fetch(adminGraphqlUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': adminToken,
+    },
+    body: JSON.stringify({
+      query: `query CurrentAppScopes {
+        currentAppInstallation { accessScopes { handle } }
+      }`,
+    }),
+  });
+  const scopesPayload = await scopesResponse.json();
+  if (!scopesResponse.ok || scopesPayload.errors?.length) {
+    throw new Error(
+      `Unable to verify installed Shopify scopes: ${scopesPayload.errors?.map((error) => error.message).join(', ') || `HTTP ${scopesResponse.status}`}`
+    );
+  }
+  const grantedScopes = new Set(
+    (scopesPayload.data?.currentAppInstallation?.accessScopes || []).map((scope) => scope.handle)
+  );
+  if (!grantedScopes.has(METAOBJECT_SCOPE)) {
+    throw new Error(
+      `The installed DYVA app has not been granted ${METAOBJECT_SCOPE}. Open the app in Shopify Admin and approve the updated permissions, then run this script again.`
+    );
+  }
 
   const query = `mutation StorefrontAccessTokenCreate($input: StorefrontAccessTokenInput!) {
     storefrontAccessTokenCreate(input: $input) {
       storefrontAccessToken {
+        id
         accessToken
         title
         accessScopes { handle }
@@ -50,7 +97,7 @@ const createStorefrontToken = async () => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': await getAdminToken(),
+      'X-Shopify-Access-Token': adminToken,
     },
     body: JSON.stringify({ query, variables: { input: { title: 'Dyva Storefront' } } }),
   });
@@ -72,11 +119,18 @@ const createStorefrontToken = async () => {
   }
 
   const token = result.storefrontAccessToken;
+  const tokenScopes = token.accessScopes.map((scope) => scope.handle);
+  if (!tokenScopes.includes(METAOBJECT_SCOPE)) {
+    throw new Error(
+      `The new Storefront token is missing ${METAOBJECT_SCOPE}. No token was saved to backend/.env.`
+    );
+  }
+
   console.log('Storefront token created successfully.');
   console.log(`Title: ${token.title}`);
-  console.log(`Scopes: ${token.accessScopes.map((scope) => scope.handle).join(', ') || 'none reported'}`);
-  console.log('\nAdd this to backend/.env manually:');
-  console.log(`SHOPIFY_STOREFRONT_TOKEN=${token.accessToken}`);
+  console.log(`Scopes: ${tokenScopes.join(', ') || 'none reported'}`);
+  saveStorefrontToken(token.accessToken);
+  console.log('Updated SHOPIFY_STOREFRONT_TOKEN in backend/.env. Token value was not printed.');
 };
 
 createStorefrontToken().catch((error) => {

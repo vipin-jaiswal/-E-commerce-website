@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { X, ShoppingBag, UserRound } from 'lucide-react';
 
-export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
+export default function MobileMenu({ open, onClose, links }) {
   // Lock body scroll when open
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -56,7 +56,7 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
                 key={link.label}
                 to={link.to}
                 onClick={onClose}
-                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-black transition-colors"
+                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-primary transition-colors"
               >
                 {link.label}
               </Link>
@@ -65,7 +65,7 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-black transition-colors"
+                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-primary transition-colors"
               >
                 {link.label}
               </a>
@@ -74,16 +74,14 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
         </nav>
 
         {/* Bottom actions */}
-        {!isAdmin && (
-          <div className="px-6 py-5 border-t border-border">
-            <Link to={localStorage.getItem('token') ? '/account' : '/login'} onClick={onClose} className="mb-4 flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
-              <UserRound size={18} /> {localStorage.getItem('token') ? 'My account' : 'Sign in'}
-            </Link>
-            <Link to="/cart" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
-              <ShoppingBag size={18} /> Cart
-            </Link>
-          </div>
-        )}
+        <div className="px-6 py-5 border-t border-border">
+          <Link to={localStorage.getItem('token') ? '/account' : '/login'} onClick={onClose} className="mb-4 flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
+            <UserRound size={18} /> {localStorage.getItem('token') ? 'My account' : 'Sign in'}
+          </Link>
+          <Link to="/cart" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
+            <ShoppingBag size={18} /> Cart
+          </Link>
+        </div>
       </aside>
     </>
   );

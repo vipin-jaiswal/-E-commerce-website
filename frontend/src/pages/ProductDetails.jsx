@@ -51,7 +51,7 @@ export default function ProductDetails() {
         </div>
       )}
 
-      <ReviewSection reviews={product.reviews || []} />
+      <ReviewSection productHandle={product.handle} reviews={product.reviews || []} />
 
     </div>
   );

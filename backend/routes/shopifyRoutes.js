@@ -2,6 +2,7 @@ const express = require("express");
 const {
   fetchProducts,
   fetchProduct,
+  fetchStorefrontContent,
   fetchCart,
   validateCartInventory,
   createCart,
@@ -65,6 +66,20 @@ router.get("/products/:handle", async (req, res) => {
     if (!product) return res.status(404).json({ message: "Product not found" });
     return res.json({ data: product });
   } catch (error) {
+    return handleError(res, error);
+  }
+});
+
+router.get("/content", async (req, res) => {
+  try {
+    return res.json({ success: true, data: await fetchStorefrontContent() });
+  } catch (error) {
+    if (error.message?.includes("unauthenticated_read_metaobjects")) {
+      return res.json({
+        success: true,
+        data: { announcement: null, banners: [] },
+      });
+    }
     return handleError(res, error);
   }
 });

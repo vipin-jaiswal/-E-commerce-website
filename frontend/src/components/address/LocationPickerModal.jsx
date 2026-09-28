@@ -19,7 +19,7 @@ export default function LocationPickerModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
-      <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-[#151515] dark:text-white">
 
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
@@ -133,7 +133,7 @@ export default function LocationPickerModal({
             type="button"
             disabled={!selectedLocation}
             onClick={() => onConfirm(selectedLocation)}
-            className="flex items-center gap-2 rounded-xl bg-black px-8 py-3 text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl ui-primary px-8 py-3 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <CheckCircle size={18} />
             Use This Address

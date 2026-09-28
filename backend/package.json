@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "setup:storefront-content": "node scripts/setupStorefrontContent.js",
+    "seed:announcement": "node scripts/seedAnnouncement.js",
+    "setup:reviews": "node scripts/setupReviews.js"
   },
   "keywords": [],
   "author": "",

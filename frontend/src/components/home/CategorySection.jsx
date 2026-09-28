@@ -48,7 +48,7 @@ function CategorySlider({ category }) {
           absolute left-0 top-1/2 -translate-y-1/2 z-20
           hidden lg:flex items-center justify-center
           w-11 h-11 rounded-full bg-white text-slate-700 border border-slate-200 shadow-md
-          hover:bg-black hover:text-white
+          hover:bg-primary hover:text-white
           dark:bg-slate-900 dark:text-slate-100 dark:border-white/10 dark:shadow-none
           transition-all duration-300`}
         >
@@ -60,7 +60,7 @@ function CategorySlider({ category }) {
           absolute right-0 top-1/2 -translate-y-1/2 z-20
           hidden lg:flex items-center justify-center
           w-11 h-11 rounded-full bg-white text-slate-700 border border-slate-200 shadow-md
-          hover:bg-black hover:text-white
+          hover:bg-primary hover:text-white
           dark:bg-slate-900 dark:text-slate-100 dark:border-white/10 dark:shadow-none
           transition-all duration-300`}
         >
@@ -106,7 +106,7 @@ function CategorySlider({ category }) {
           to={isComingSoon ? "/products" : `/products/category/${category.key}`}
           aria-disabled={isComingSoon}
           onClick={(event) => isComingSoon && event.preventDefault()}
-          className="group flex items-center gap-2 bg-black hover:bg-black text-white px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full font-semibold transition duration-300 shadow-md hover:shadow-lg"
+          className="ui-primary group flex items-center gap-2 px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base rounded-full shadow-md"
         >
           {isComingSoon ? `${category.label} Coming Soon` : `View All ${category.label} Products`}
           <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
@@ -134,7 +134,7 @@ const CategorySection = () => {
       ))}
 
       <div className="flex justify-center mt-10">
-        <Link to="/products" className="border-2 border-black text-black hover:bg-black hover:text-white px-8 py-3 sm:px-10 sm:py-4 rounded-full font-bold transition duration-300 text-sm sm:text-base">
+        <Link to="/products" className="ui-outline border-2 rounded-full px-8 py-3 sm:px-10 sm:py-4 text-sm sm:text-base">
           View All Categories
         </Link>
       </div>

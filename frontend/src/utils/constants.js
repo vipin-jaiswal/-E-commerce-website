@@ -15,8 +15,8 @@ export const SORT_OPTIONS = [
 ];
 
 export const CATEGORIES = [
-  { key: 'skin-care', label: 'Skin Care' },
   { key: 'hair-care', label: 'Hair Care' },
+  { key: 'skin-care', label: 'Skin Care' },
   { key: 'makeup', label: 'Makeup' },
   { key: 'body-care', label: 'Body Care' },
   { key: 'wellness', label: 'Wellness' },

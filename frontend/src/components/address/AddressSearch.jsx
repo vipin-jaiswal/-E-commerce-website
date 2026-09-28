@@ -62,7 +62,7 @@ export default function AddressSearch({ onSelect, city, state }) {
           onFocus={() => results.length > 0 && setOpen(true)}
           placeholder="Search for area, street, landmarkÃ¢â‚¬Â¦"
           autoComplete="off"
-          className="w-full rounded-xl border border-gray-300 p-4 pl-11 pr-10 outline-none transition focus:border-black focus:ring-2 focus:ring-gray-100"
+          className="w-full rounded-xl border border-gray-300 p-4 pl-11 pr-10 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 dark:bg-[#151515] dark:text-white"
         />
         {loading && (
           <Loader2 size={16} className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />

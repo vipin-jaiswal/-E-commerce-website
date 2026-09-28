@@ -24,10 +24,9 @@ export default function ProductCard({ product }) {
       ? Number(product.price ?? 0)
       : null;
   const isComingSoon = Boolean(product.comingSoon);
-  const defaultVariant = product.variants?.[0];
-  const isOutOfStock = defaultVariant
-    ? defaultVariant.availableForSale !== true
-    : product.availableForSale === false;
+  const variants = Array.isArray(product.variants) && product.variants.length > 0 ? product.variants : [];
+  const hasAvailableVariant = variants.some((variant) => variant.availableForSale === true);
+  const isOutOfStock = !isComingSoon && (variants.length > 0 ? !hasAvailableVariant : product.availableForSale === false);
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
@@ -66,14 +65,14 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <article className="group mx-auto w-full max-w-[18rem] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800">
-      <div className="relative overflow-hidden bg-gray-100">
+    <article className="ui-card group mx-auto w-full max-w-[18rem] overflow-hidden">
+      <div className="relative overflow-hidden bg-gray-50 dark:bg-[#101010]">
         <Link to={`/products/${productId}`}>
           {image ? (
             <img
               src={image}
               alt={product.name}
-              className="w-full h-60 object-contain bg-white transition duration-500 group-hover:scale-105"
+              className="w-full h-60 object-contain bg-white transition duration-500 group-hover:scale-[1.025] dark:bg-[#151515]"
             />
           ) : (
             <div className="w-full h-56 flex items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 text-xs uppercase tracking-[0.25em] text-slate-400">
@@ -88,7 +87,7 @@ export default function ProductCard({ product }) {
               type="button"
               onClick={handlePrevImage}
               aria-label="Previous product image"
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-slate-700/95 shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:bg-gray-50 hover:text-black dark:hover:bg-slate-600 transition"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-[#202020] shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:text-primary transition"
             >
               <ChevronLeft size={20} />
             </button>
@@ -97,7 +96,7 @@ export default function ProductCard({ product }) {
               type="button"
               onClick={handleNextImage}
               aria-label="Next product image"
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-slate-700/95 shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:bg-gray-50 hover:text-black dark:hover:bg-slate-600 transition"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 dark:bg-[#202020] shadow-md flex items-center justify-center text-gray-700 dark:text-slate-200 hover:text-primary transition"
             >
               <ChevronRight size={20} />
             </button>
@@ -110,18 +109,18 @@ export default function ProductCard({ product }) {
         >
           <Heart
             size={18}
-            className={wishlisted ? "fill-black text-black" : "text-gray-500 dark:text-slate-400"}
+            className={wishlisted ? "fill-primary text-primary" : "text-gray-500 dark:text-slate-400"}
           />
         </button>
 
         {product.salePrice && product.salePrice < product.price && (
-          <span className="absolute top-3 left-3 bg-black text-white text-xs font-semibold px-3 py-1 rounded-full">
+          <span className="absolute top-3 left-3 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">
             SALE
           </span>
         )}
 
         {isComingSoon && (
-          <span className="absolute top-12 left-3 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white">
+          <span className="absolute top-12 left-3 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
             COMING SOON
           </span>
         )}
@@ -138,7 +137,7 @@ export default function ProductCard({ product }) {
         </p>
 
         <Link to={`/products/${productId}`}>
-          <h3 className="mt-2 text-sm font-semibold text-gray-800 dark:text-slate-100 line-clamp-2 min-h-[42px] hover:text-black dark:hover:text-gray-700 transition">
+          <h3 className="mt-2 text-sm font-semibold text-gray-800 dark:text-slate-100 line-clamp-2 min-h-[42px] hover:text-primary dark:hover:text-primary transition">
             {product.name}
           </h3>
         </Link>
@@ -166,7 +165,13 @@ export default function ProductCard({ product }) {
         <button
           onClick={handleAddToCart}
           disabled={isComingSoon || isOutOfStock}
-          className="mt-4 w-full rounded-full bg-gray-900 py-2.5 font-medium text-white transition duration-300 hover:bg-black disabled:cursor-not-allowed disabled:bg-amber-500 disabled:hover:bg-amber-500 dark:bg-slate-700"
+          className={`mt-4 w-full rounded-full py-2.5 font-medium transition duration-300 ${
+            isComingSoon
+              ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 cursor-not-allowed border border-amber-200 dark:border-amber-800/40"
+              : isOutOfStock
+              ? "bg-gray-200 text-gray-500 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed"
+              : "ui-primary"
+          }`}
         >
           {isComingSoon ? "Coming Soon" : isOutOfStock ? "Out of Stock" : "Add To Cart"}
         </button>

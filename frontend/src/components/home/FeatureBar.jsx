@@ -35,9 +35,9 @@ const FeatureBar = () => {
         {features.map((item, index) => (
           <div
             key={index}
-            className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl p-6 text-center hover:shadow-md transition"
+            className="ui-card p-6 text-center hover:shadow-md"
           >
-            <div className="flex justify-center text-black">
+            <div className="flex justify-center text-primary">
               {item.icon}
             </div>
 

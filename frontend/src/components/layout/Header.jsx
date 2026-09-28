@@ -18,10 +18,10 @@ import { useTheme } from "../../context/ThemeContext";
 
 const NAV_LINKS = [
   { label: "Shop", to: "/products" },
-  { label: "Best Sellers", to: "/products?sort=best_seller" },
-  { label: "Skin Care", to: "/products/category/skin-care" },
   { label: "Hair Care", to: "/products/category/hair-care" },
+  { label: "Skin Care", to: "/products/category/skin-care" },
   { label: "Makeup", to: "/products/category/makeup" },
+  { label: "Best Sellers", to: "/products?sort=best_seller" },
 ];
 
 const Header = () => {
@@ -50,11 +50,11 @@ const Header = () => {
           className="
           max-w-[1500px]
           mx-auto
-          bg-white/80 dark:bg-slate-900/80
+          bg-white/95 dark:bg-[#0F0F0F]/95
           backdrop-blur-xl
-          border border-slate-200 dark:border-white/10
+          border border-gray-200 dark:border-[#2A2A2A]
           rounded-2xl
-          shadow-lg
+          shadow-md
           px-5
           h-16
           flex
@@ -69,8 +69,8 @@ const Header = () => {
               className="
                 text-2xl
                 font-bold
-                text-black dark:text-gray-700
-                hover:text-gray-700 dark:hover:text-gray-200
+                text-primary dark:text-primary
+                hover:text-primary-dark dark:hover:text-primary
                 transition
               "
             >
@@ -82,11 +82,11 @@ const Header = () => {
           <nav className="hidden lg:flex items-center gap-8 font-medium">
             {navLinks.map((link) =>
               link.to ? (
-                <Link key={link.label} to={link.to} className="text-slate-700 dark:text-slate-200 hover:text-black dark:hover:text-gray-400 transition duration-300">
+                <Link key={link.label} to={link.to} className="text-slate-700 dark:text-slate-200 hover:text-primary transition duration-200">
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.label} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-slate-700 dark:text-slate-200 hover:text-black dark:hover:text-gray-400 transition duration-300">
+                <a key={link.label} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-slate-700 dark:text-slate-200 hover:text-primary transition duration-200">
                   {link.label}
                 </a>
               )
@@ -113,12 +113,13 @@ const Header = () => {
                 border
                 border-slate-200
                 text-slate-700
-                hover:border-black
-                hover:text-black
+                hover:border-primary
+                hover:text-primary
                 dark:border-white/10
                 dark:text-slate-200
-                dark:hover:border-gray-700
-                dark:hover:text-gray-400
+                dark:hover:border-primary
+                dark:hover:text-primary
+                transition duration-200
               "
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
@@ -131,7 +132,7 @@ const Header = () => {
                 className="
                   hidden lg:flex
                   text-slate-700 dark:text-slate-200
-                  hover:text-black dark:hover:text-gray-400
+                  hover:text-primary dark:hover:text-primary
                   transition
                   duration-300
                   flex items-center gap-2
@@ -145,7 +146,7 @@ const Header = () => {
             <Link
                 to={isLoggedIn ? "/account" : "/login"}
                 aria-label="Account"
-                className="hidden lg:flex text-slate-700 dark:text-slate-200 hover:text-black dark:hover:text-gray-400 transition duration-300"
+                className="hidden lg:flex text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary transition duration-200"
               >
                 <UserRound size={22} />
             </Link>
@@ -155,7 +156,7 @@ const Header = () => {
                 className="
                   hidden lg:flex
                   text-slate-700 dark:text-slate-200
-                  hover:text-black dark:hover:text-gray-400
+                  hover:text-primary dark:hover:text-primary
                   transition
                   duration-300
                   flex items-center gap-2
@@ -171,7 +172,7 @@ const Header = () => {
                 className="
                   relative
                   text-slate-700 dark:text-slate-200
-                  hover:text-black dark:hover:text-gray-400
+                  hover:text-primary dark:hover:text-primary
                   transition
                   duration-300
                   flex items-center gap-2
@@ -186,7 +187,7 @@ const Header = () => {
                       absolute
                       -top-2
                       -right-2
-                      bg-black
+                      bg-primary
                       text-white
                       text-[10px]
                       font-semibold

@@ -42,13 +42,23 @@ export const CartProvider = ({ children }) => {
     return nextCart;
   };
 
-  const addToCart = async (product, weight = '') => {
-    const selectedVariant = getSelectedVariant(product, weight);
-    if (product?.comingSoon || selectedVariant?.availableForSale === false || (!selectedVariant && product?.availableForSale === false)) {
+  const addToCart = async (product, variantTitleOrId = '') => {
+    if (product?.comingSoon) {
+      throw new Error('This product is coming soon and cannot be purchased yet.');
+    }
+
+    const variants = Array.isArray(product?.variants) ? product.variants : [];
+    const selectedVariant =
+      variants.find((v) => v.id === variantTitleOrId || v.title === variantTitleOrId) ||
+      variants.find((v) => v.availableForSale) ||
+      variants[0] ||
+      null;
+
+    if (selectedVariant?.availableForSale === false || (!selectedVariant && product?.availableForSale === false)) {
       throw new Error('This product is out of stock.');
     }
 
-    const variantId = selectedVariant?.id || getVariantId(product, weight);
+    const variantId = selectedVariant?.id || product?.variantId;
     if (!variantId) throw new Error('This product has no purchasable Shopify variant.');
 
     const nextCart = await cartService.add(cartId, variantId, 1);

@@ -30,8 +30,8 @@ export default function CouponBox({ onApply }) {
 
   if (applied) {
     return (
-      <div className="flex items-center justify-between bg-sage/10 border border-sage/30 rounded-xl px-4 py-3">
-        <div className="flex items-center gap-2 text-sm text-sage font-medium">
+      <div className="flex items-center justify-between bg-primary-soft border border-primary/30 rounded-xl px-4 py-3 dark:bg-primary-soft/20">
+        <div className="flex items-center gap-2 text-sm text-primary font-medium">
           <CheckCircle size={16} />
           {applied.code} Ã¢â‚¬â€ {applied.label}
         </div>

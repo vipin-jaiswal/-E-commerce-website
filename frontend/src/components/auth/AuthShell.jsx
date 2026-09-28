@@ -170,7 +170,7 @@ export default function AuthShell({
 
             {/* Pink Panel */}
             <motion.aside
-              className={`relative flex h-full flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-black via-black to-gray-700 px-6 py-10 text-white sm:px-10 lg:px-12 ${panelRounded}`}
+              className={`relative flex h-full flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-[#090909] via-[#151515] to-[#351323] px-6 py-10 text-white sm:px-10 lg:px-12 ${panelRounded}`}
               variants={reduceMotion ? undefined : columnVariants}
               custom={panelDirection}
               initial={reduceMotion ? false : 'initial'}
@@ -199,18 +199,18 @@ export default function AuthShell({
   to={panelCtaTo}
   className="
     mt-8 inline-flex min-w-40 items-center justify-center
-    rounded-full border border-white/50
-    bg-white/10
+    rounded-full border border-primary/70
+    bg-primary
     px-7 py-3
     text-xs font-semibold uppercase tracking-[0.25em]
     text-white
     shadow-[0_8px_24px_rgba(26,26,46,0.18)]
     transition-all
-    duration-1000
+    duration-300
     ease-[cubic-bezier(0.22,1,0.36,1)]
     hover:-translate-y-1
-    hover:bg-white
-    hover:text-black
+    hover:bg-primary-dark
+    hover:text-white
     active:scale-95
   "
 >

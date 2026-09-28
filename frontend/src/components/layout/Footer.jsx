@@ -28,7 +28,7 @@ const FOOTER_LINKS = {
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-100 dark:bg-gray-950 text-gray-600 dark:text-gray-400 mt-16">
+    <footer className="bg-gray-50 dark:bg-[#0F0F0F] text-gray-600 dark:text-gray-400 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         {/* Top Section */}
@@ -38,7 +38,7 @@ export default function Footer() {
           <div className="lg:w-[38%]">
             <Link
               to="/"
-              className="text-3xl font-bold text-black dark:text-gray-700"
+              className="text-3xl font-bold text-charcoal dark:text-white"
             >
               DYVA
             </Link>
@@ -84,7 +84,7 @@ export default function Footer() {
                       <li key={link.label}>
                         <Link
                           to={link.href}
-                          className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-black transition"
+                          className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition"
                         >
                           {link.label}
                         </Link>
@@ -109,14 +109,14 @@ export default function Footer() {
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <Link
               to="/privacy-policy"
-              className="hover:text-black dark:hover:text-black transition"
+              className="hover:text-primary dark:hover:text-primary transition"
             >
               Privacy Policy
             </Link>
 
             <Link
               to="/terms"
-              className="hover:text-black dark:hover:text-black transition"
+              className="hover:text-primary dark:hover:text-primary transition"
             >
               Terms & Conditions
             </Link>

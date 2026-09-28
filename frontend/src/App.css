@@ -3,11 +3,30 @@ html {
 }
 
 body {
-  @apply bg-white text-black;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 :root {
-  --color-primary: #000000;
+  --color-primary: #d51291;
+  --color-primary-dark: #e765bd;
+  --color-primary-soft: #FCE4EC;
   --color-secondary: #FFFFFF;
-  --color-dark: #000000;
+  --color-dark-bg: #090909;
+  --color-bg: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-text: #171717;
+  --color-muted: #6B7280;
+  --color-border: #E5E7EB;
+}
+
+html.dark {
+  --color-primary: #d51291;
+  --color-primary-dark: #e765bd;
+  --color-primary-soft: #351323;
+  --color-bg: #090909;
+  --color-surface: #151515;
+  --color-text: #FFFFFF;
+  --color-muted: #BDBDBD;
+  --color-border: #2A2A2A;
 }

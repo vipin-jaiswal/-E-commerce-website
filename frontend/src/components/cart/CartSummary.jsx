@@ -54,7 +54,7 @@ export default function CartSummary() {
       <button
         type="button"
         onClick={handleOrderNow}
-        className="w-full mt-6 bg-black hover:bg-black text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl"
+        className="ui-primary w-full mt-6 py-4 rounded-2xl flex items-center justify-center gap-2"
       >
         Order Now →
         <ArrowRight size={18} />
@@ -63,7 +63,7 @@ export default function CartSummary() {
       <button
         type="button"
         onClick={() => navigate("/products")}
-        className="w-full mt-4 border-2 border-black text-black hover:bg-black hover:text-white py-4 rounded-2xl font-semibold transition-all duration-300"
+        className="ui-outline w-full mt-4 border-2 py-4 rounded-2xl"
       >
         Continue Shopping
       </button>

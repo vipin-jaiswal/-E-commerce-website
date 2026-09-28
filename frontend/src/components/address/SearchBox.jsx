@@ -72,7 +72,7 @@ export default function SearchBox({
             text-sm
             outline-none
             transition
-            focus:border-black
+            focus:border-primary focus:ring-2 focus:ring-primary/15
             focus:ring-2
             focus:ring-gray-100
           "

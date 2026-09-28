@@ -20,13 +20,12 @@ import Checkout from './pages/Checkout';
 import Wishlist from './pages/Wishlist';
 import AllConcernsPage from './pages/AllConcernsPage';
 import Account from './pages/Account';
-import { AdminDashboard, AdminLogin, AdminProtectedRoute } from './pages/AdminPages';
 import { Login, Register } from './pages/AuthPages';
 import { ForgotPassword, ResetPassword } from './pages/AuthRecovery';
 
 
 const AppLayout = () => (
-  <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div className="flex flex-col min-h-screen bg-white text-[#171717] dark:bg-[#090909] dark:text-white">
     <AnnouncementBar />
     <Header />
     <main className="flex-1 pt-20 pb-20">
@@ -55,13 +54,6 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-            <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-            <Route path="/admin/products" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-            <Route path="/admin/orders" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-            <Route path="/admin/customers" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-            <Route path="/admin/settings" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<Products />} />

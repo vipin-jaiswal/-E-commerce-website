@@ -49,8 +49,8 @@ const BestSellerSection = () => {
             absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2
             z-20 hidden lg:flex items-center justify-center
             w-11 h-11 rounded-full 
-            bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 dark:text-slate-300
-            hover:bg-black hover:text-white dark:hover:text-white
+            bg-white dark:bg-slate-800 shadow-lg border border-primary-soft dark:border-slate-700 dark:text-slate-300
+            hover:bg-primary hover:text-white dark:hover:text-white
             transition duration-300
           "
         >
@@ -64,8 +64,8 @@ const BestSellerSection = () => {
             absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2
             z-20 hidden lg:flex items-center justify-center
             w-11 h-11 rounded-full
-            bg-white dark:bg-slate-800 shadow-lg border border-gray-200 dark:border-slate-700 dark:text-slate-300
-            hover:bg-black hover:text-white dark:hover:text-white
+            bg-white dark:bg-slate-800 shadow-lg border border-primary-soft dark:border-slate-700 dark:text-slate-300
+            hover:bg-primary hover:text-white dark:hover:text-white
             transition duration-300
           "
         >
@@ -129,7 +129,7 @@ const BestSellerSection = () => {
           to="/products"
           className="
             group flex items-center gap-2
-            bg-black hover:bg-black
+            bg-primary hover:bg-primary-dark
             text-white
             px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base
             rounded-full

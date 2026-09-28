@@ -32,18 +32,43 @@ const canAttemptRecovery = (key) => {
   return true;
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 router.post('/forgot-password', async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
+  
+  if (!email || !EMAIL_REGEX.test(email)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a valid email address.',
+    });
+  }
+
+  const rateLimitKey = `${req.ip || 'ip'}:${email}`;
+  if (!canAttemptRecovery(rateLimitKey)) {
+    return res.status(429).json({
+      success: false,
+      message: 'A reset link was recently requested. Please wait at least a minute before trying again.',
+    });
+  }
+
   const genericResponse = {
     success: true,
     message: 'If an account exists for that email, a password reset link has been sent.',
   };
-  if (!email || !canAttemptRecovery(`${req.ip}:${email}`)) return res.json(genericResponse);
+
   try {
-    await recoverCustomer(email);
+    const result = await recoverCustomer(email);
+    // User errors from Shopify (e.g. UNIDENTIFIED_CUSTOMER) are logged internally
+    if (result?.customerUserErrors?.length) {
+      console.info(`[auth] recoverCustomer note for ${email}:`, result.customerUserErrors[0].message);
+    }
     return res.json(genericResponse);
   } catch (error) {
-    if (error.message?.includes('SHOPIFY_STOREFRONT_TOKEN')) return handleShopifyError(res, error, 'Password recovery is not configured');
+    if (error.message?.includes('SHOPIFY_STOREFRONT_TOKEN')) {
+      return handleShopifyError(res, error, 'Password recovery is not configured');
+    }
+    console.error(`[auth] recoverCustomer error for ${email}:`, error.message);
     return res.json(genericResponse);
   }
 });

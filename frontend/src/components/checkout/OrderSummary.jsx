@@ -8,7 +8,7 @@ export default function OrderSummary({ discount = 0 }) {
   const total = cartTotal - discountAmount;
 
   return (
-    <div className="bg-white rounded-2xl shadow-card p-6 sticky top-24">
+    <div className="ui-card p-6 sticky top-24">
       <h3 className="font-display text-xl font-semibold text-charcoal mb-5">
         Order Summary
       </h3>
@@ -49,7 +49,7 @@ export default function OrderSummary({ discount = 0 }) {
         </div>
 
         {discountAmount > 0 && (
-          <div className="flex justify-between text-sm text-sage">
+          <div className="flex justify-between text-sm text-primary">
             <span>Discount</span>
             <span>-{formatCurrency(discountAmount)}</span>
           </div>
