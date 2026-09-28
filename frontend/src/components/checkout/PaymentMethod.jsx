@@ -5,7 +5,7 @@ const METHODS = [
   { id: 'card',   label: 'Credit / Debit Card', icon: CreditCard,   sub: 'Visa, Mastercard, RuPay' },
   { id: 'upi',    label: 'UPI',                  icon: Smartphone,   sub: 'GPay, PhonePe, Paytm, BHIM' },
   { id: 'netbank',label: 'Net Banking',           icon: Building2,    sub: 'All major banks supported' },
-  { id: 'cod',    label: 'Cash on Delivery',      icon: Banknote,     sub: 'Pay when you receive' },
+  { id: 'cod',    label: 'Cash on Delivery',      icon: Banknote,     sub: 'Available when enabled at Shopify checkout' },
 ];
 
 export default function PaymentMethod({ selected, onSelect }) {

@@ -1,24 +1,19 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, ShoppingBag, Heart, User } from 'lucide-react';
+import { Home, Search, ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '../../hooks/useCart';
-import { useAuth } from '../../hooks/useAuth';
 
 const NAV = [
   { icon: Home,        label: 'Home',    href: '/' },
   { icon: Search,      label: 'Search',  href: '/products' },
   { icon: ShoppingBag, label: 'Cart',    href: '/cart' },
   { icon: Heart,       label: 'Wishlist',href: '/wishlist' },
-  { icon: User,        label: 'Account', href: '/profile' },
 ];
 
 export default function BottomNavigation() {
   const { pathname } = useLocation();
   const { cartCount } = useCart();
-  const { user } = useAuth();
-  const navItems = user?.isAdmin
-    ? NAV.filter((item) => !['Search', 'Cart', 'Wishlist', 'Account'].includes(item.label))
-    : NAV;
+  const navItems = NAV;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-white/10 lg:hidden">

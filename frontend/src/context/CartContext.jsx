@@ -1,135 +1,94 @@
 import React, { createContext, useEffect, useMemo, useState } from 'react';
+import { cartService } from '../services/cartService';
 
 export const CartContext = createContext(null);
 
-const LS_KEY = "cart";
+const CART_ID_KEY = 'shopifyCartId';
 
-const readLocalCart = () => {
-  try {
-    const savedCart = localStorage.getItem(LS_KEY);
-    return savedCart ? JSON.parse(savedCart) : [];
-  } catch {
-    return [];
-  }
+const getVariantId = (product, weight = '') => {
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  const selected = variants.find((variant) => variant.title === weight);
+  return selected?.id || variants[0]?.id || product?.variantId;
 };
 
-const writeLocalCart = (items) => {
-  localStorage.setItem(LS_KEY, JSON.stringify(items));
+const getSelectedVariant = (product, weight = '') => {
+  const variants = Array.isArray(product?.variants) ? product.variants : [];
+  return variants.find((variant) => variant.title === weight) || variants[0] || null;
 };
-
-const normalizeItem = (item) => {
-  const product = item?.product ?? item ?? {};
-  const productId = item?.productId ?? product.id ?? item?.id;
-  const quantity = Number(item?.quantity ?? item?.qty ?? 1) || 1;
-
-  return {
-    ...product,
-    ...item,
-    id: productId,
-    productId,
-    cartItemId: item?.cartItemId ?? (item?.product ? item.id : undefined),
-    quantity,
-    qty: quantity,
-    price: Number(item?.price ?? product.price ?? 0),
-    salePrice:
-      item?.salePrice === null || item?.salePrice === undefined
-        ? product.salePrice ?? null
-        : Number(item.salePrice),
-    weight: item?.weight ?? product.weight ?? '',
-    images: Array.isArray(product.images) ? product.images : item?.images ?? [],
-  };
-};
-
-const asLocalCartItem = (product, quantity = 1, weight = '') => ({
-  ...product,
-  id: product.id,
-  productId: product.id,
-  cartItemId: `${product.id}::${weight}`,
-  quantity,
-  qty: quantity,
-  price: Number(product.price ?? 0),
-  salePrice: product.salePrice ?? null,
-  weight,
-  images: Array.isArray(product.images) ? product.images : [],
-});
 
 export const CartProvider = ({ children }) => {
-  const [items, setItems] = useState(() => readLocalCart().map(normalizeItem));
+  const [cartId, setCartId] = useState(() => localStorage.getItem(CART_ID_KEY));
+  const [cart, setCart] = useState({ items: [], totalPrice: 0 });
 
   useEffect(() => {
-    writeLocalCart(items);
-  }, [items]);
+    if (!cartId) return;
+    cartService.get(cartId)
+      .then(setCart)
+      .catch((error) => {
+        if (error.response?.status === 404) {
+          localStorage.removeItem(CART_ID_KEY);
+          setCartId(null);
+          setCart({ items: [], totalPrice: 0 });
+        }
+      });
+  }, [cartId]);
+
+  const rememberCart = (nextCart) => {
+    setCart(nextCart);
+    if (nextCart?.cartId) {
+      localStorage.setItem(CART_ID_KEY, nextCart.cartId);
+      setCartId(nextCart.cartId);
+    }
+    return nextCart;
+  };
 
   const addToCart = async (product, weight = '') => {
-    if (product?.comingSoon) {
-      throw new Error('This product is coming soon and cannot be added to the cart yet.');
+    const selectedVariant = getSelectedVariant(product, weight);
+    if (product?.comingSoon || selectedVariant?.availableForSale === false || (!selectedVariant && product?.availableForSale === false)) {
+      throw new Error('This product is out of stock.');
     }
 
-    setItems((prevItems) => {
-      const existing = prevItems.find((item) => item.id === product.id && item.weight === weight);
+    const variantId = selectedVariant?.id || getVariantId(product, weight);
+    if (!variantId) throw new Error('This product has no purchasable Shopify variant.');
 
-      if (existing) {
-        return prevItems.map((item) =>
-          item.id === product.id && item.weight === weight
-            ? {
-                ...item,
-                quantity: Number(item.quantity ?? item.qty ?? 1) + 1,
-                qty: Number(item.quantity ?? item.qty ?? 1) + 1,
-              }
-            : item
-        );
-      }
-
-      return [...prevItems, asLocalCartItem(product, 1, weight)];
-    });
+    const nextCart = await cartService.add(cartId, variantId, 1);
+    return rememberCart(nextCart);
   };
 
-  const removeFromCart = async (id) => {
-    setItems((prevItems) => prevItems.filter((item) => (item.cartItemId || item.id) !== id));
+  const removeFromCart = async (lineId) => {
+    if (!cartId) return;
+    return rememberCart(await cartService.remove(cartId, lineId));
   };
 
-  const updateQty = async (id, quantity) => {
-    if (quantity < 1) {
-      return removeFromCart(id);
-    }
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        (item.cartItemId || item.id) === id ? { ...item, quantity, qty: quantity } : item
-      )
-    );
+  const updateQty = async (lineId, quantity) => {
+    if (quantity < 1) return removeFromCart(lineId);
+    if (!cartId) return;
+    return rememberCart(await cartService.update(cartId, lineId, quantity));
   };
 
   const clearCart = async () => {
-    setItems([]);
+    if (cartId) await cartService.clear(cartId);
+    localStorage.removeItem(CART_ID_KEY);
+    setCartId(null);
+    setCart({ items: [], totalPrice: 0 });
   };
 
   const cartCount = useMemo(
-    () => items.reduce((total, item) => total + Number(item.quantity ?? item.qty ?? 0), 0),
-    [items]
-  );
-
-  const cartTotal = useMemo(
-    () =>
-      items.reduce(
-        (total, item) =>
-          total +
-          Number(item.salePrice ?? item.price ?? 0) *
-            Number(item.quantity ?? item.qty ?? 0),
-        0
-      ),
-    [items]
+    () => cart.items.reduce((total, item) => total + Number(item.quantity || item.qty || 0), 0),
+    [cart.items]
   );
 
   return (
     <CartContext.Provider
       value={{
-        items,
+        cartId,
+        items: cart.items,
         addToCart,
         removeFromCart,
         updateQty,
         clearCart,
         cartCount,
-        cartTotal,
+        cartTotal: Number(cart.totalPrice || 0),
       }}
     >
       {children}

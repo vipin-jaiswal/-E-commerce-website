@@ -3,8 +3,6 @@ import { useLocation } from "react-router-dom";
 import HeroSlider from "../components/home/HeroSlider";
 import BestSellerSection from "../components/home/BestSellerSection";
 import ShopByConcern from "../components/home/ShopByConcern";
-import CategorySection from "../components/home/CategorySection";
-import CustomerReview from "../components/home/CustomerReview";
 
 const Home = () => {
   const { hash } = useLocation();
@@ -26,9 +24,7 @@ const Home = () => {
       <HeroSlider />
 
       <BestSellerSection />
-      <CategorySection />
-     <ShopByConcern />
-      <CustomerReview />
+      <ShopByConcern />
     </main>
   );
 };

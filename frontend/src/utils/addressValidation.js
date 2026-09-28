@@ -17,7 +17,8 @@ export function validateAddressForm(data) {
   if (!data.address1?.trim()) errors.address1 = 'Address line 1 is required';
   else if (data.address1.trim().length > 200) errors.address1 = 'Address line 1 is too long';
 
-  if (data.address2 && data.address2.trim().length > 200) errors.address2 = 'Address line 2 is too long';
+  if (!data.address2?.trim()) errors.address2 = 'Street / Area is required';
+  else if (data.address2.trim().length > 200) errors.address2 = 'Address line 2 is too long';
 
   if (!data.city?.trim()) errors.city = 'City is required';
   if (!data.state?.trim()) errors.state = 'State is required';

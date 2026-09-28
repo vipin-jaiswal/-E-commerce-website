@@ -31,6 +31,7 @@ export function useProducts(params = {}) {
     if (params.sort) next.sort = params.sort;
     return next;
   }, [params.q, params.keyword, params.category, params.page, params.limit, params.bestSeller, params.sort]);
+  const enabled = params.enabled !== false;
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,11 +43,18 @@ export function useProducts(params = {}) {
     let alive = true;
 
     const load = async () => {
+      if (!enabled) {
+        setProducts([]);
+        setTotal(0);
+        setPages(0);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
 
       try {
-        const response = await api.get('/products', { params: query });
+        const response = await api.get('/shopify/products', { params: query });
         const list = normalizeList(response);
 
         if (!alive) return;
@@ -69,7 +77,7 @@ export function useProducts(params = {}) {
     return () => {
       alive = false;
     };
-  }, [query]);
+  }, [query, enabled]);
 
   return { products, loading, error, total, pages };
 }
@@ -93,7 +101,7 @@ export function useProduct(id) {
       setError(null);
 
       try {
-        const response = await api.get(`/products/${id}`);
+        const response = await api.get(`/shopify/products/${id}`);
         if (!alive) return;
         setProduct(normalizeItem(response));
       } catch (err) {

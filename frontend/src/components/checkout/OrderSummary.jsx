@@ -1,11 +1,11 @@
 import React from "react";
 import { useCart } from "../../hooks/useCart";
+import { formatCurrency } from "../../utils/currency";
 
 export default function OrderSummary({ discount = 0 }) {
   const { items, cartTotal } = useCart();
-  const shipping = cartTotal >= 999 ? 0 : 99;
   const discountAmount = Math.round(cartTotal * discount);
-  const total = cartTotal - discountAmount + shipping;
+  const total = cartTotal - discountAmount;
 
   return (
     <div className="bg-white rounded-2xl shadow-card p-6 sticky top-24">
@@ -35,7 +35,7 @@ export default function OrderSummary({ discount = 0 }) {
                 <p className="text-xs text-muted">Qty: {qty}</p>
               </div>
               <p className="text-xs font-semibold text-charcoal flex-shrink-0">
-                Ã¢â€šÂ¹{(price * qty).toLocaleString("en-IN")}
+                {formatCurrency(price * qty)}
               </p>
             </div>
           );
@@ -45,24 +45,24 @@ export default function OrderSummary({ discount = 0 }) {
       <div className="border-t border-border pt-4 space-y-2">
         <div className="flex justify-between text-sm text-muted">
           <span>Subtotal</span>
-          <span>Ã¢â€šÂ¹{cartTotal.toLocaleString("en-IN")}</span>
+          <span>{formatCurrency(cartTotal)}</span>
         </div>
 
         {discountAmount > 0 && (
           <div className="flex justify-between text-sm text-sage">
             <span>Discount</span>
-            <span>Ã¢Ë†â€™Ã¢â€šÂ¹{discountAmount.toLocaleString("en-IN")}</span>
+            <span>-{formatCurrency(discountAmount)}</span>
           </div>
         )}
 
         <div className="flex justify-between text-sm text-muted">
           <span>Shipping</span>
-          <span>{shipping === 0 ? "Free" : `Ã¢â€šÂ¹${shipping}`}</span>
+          <span>Calculated by Shopify</span>
         </div>
 
         <div className="flex justify-between text-sm font-bold text-charcoal pt-2 border-t border-border">
           <span>Total</span>
-          <span>Ã¢â€šÂ¹{total.toLocaleString("en-IN")}</span>
+          <span>{formatCurrency(total)}</span>
         </div>
       </div>
     </div>

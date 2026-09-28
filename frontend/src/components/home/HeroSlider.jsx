@@ -1,19 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
-import { bannerService } from '../../services/bannerService';
 
 import "swiper/css";
 import "swiper/css/navigation";
 
 const HeroSlider = () => {
   const navigate = useNavigate();
-  const [banners, setBanners] = useState([]);
-
-  useEffect(() => {
-    bannerService.listLive().then((items) => setBanners(Array.isArray(items) ? items : [])).catch(() => setBanners([]));
-  }, []);
+  const [banners] = useState([]);
 
   if (banners.length === 0) return null;
 

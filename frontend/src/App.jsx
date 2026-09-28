@@ -1,11 +1,9 @@
 import React from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Navigate, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { AddressProvider } from './context/AddressContext';
 
 // Layout components
 import Header from './components/layout/Header';
@@ -19,16 +17,12 @@ import Products from './pages/Products';
 import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Profile from './pages/Profile';
-import Orders from './pages/Orders';
-import OrderDetails from './pages/OrderDetails';
 import Wishlist from './pages/Wishlist';
 import AllConcernsPage from './pages/AllConcernsPage';
-import Admin from './pages/Admin';
-import PhoneAuth from "./components/PhoneAuth";
-import FaceScan from './pages/FaceScan';
+import Account from './pages/Account';
+import { AdminDashboard, AdminLogin, AdminProtectedRoute } from './pages/AdminPages';
+import { Login, Register } from './pages/AuthPages';
+import { ForgotPassword, ResetPassword } from './pages/AuthRecovery';
 
 
 const AppLayout = () => (
@@ -43,38 +37,48 @@ const AppLayout = () => (
   </div>
 );
 
+const ProtectedRoute = ({ children }) => {
+  const location = useLocation();
+  return localStorage.getItem('token')
+    ? children
+    : <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname)}`} replace />;
+};
+
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <AddressProvider>
-              <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/phone-auth" element={<PhoneAuth />} />
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/category/:category" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetails />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/orders/:id" element={<OrderDetails />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
-                  <Route path="/concerns" element={<AllConcernsPage />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/face-scan" element={<FaceScan />} />
-                </Route>
-              </Routes>
-            </AddressProvider>
-          </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin/products" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin/orders" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin/customers" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin/settings" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/category/:category" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetails />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/concerns" element={<AllConcernsPage />} />
+              <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+              <Route path="/address" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/payment" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/orders" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            </Route>
+          </Routes>
+        </WishlistProvider>
+      </CartProvider>
     </ThemeProvider>
   );
 }

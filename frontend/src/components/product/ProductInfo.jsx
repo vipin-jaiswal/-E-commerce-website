@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ShoppingBag, ShieldCheck, MessageSquare, X } from 'lucide-react';
+import { Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
 import Rating from '../common/Rating';
 import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
-import { useAuth } from '../../hooks/useAuth';
-import ReviewForm from './ReviewForm';
 import toast from 'react-hot-toast';
+import { formatCurrency } from '../../utils/currency';
 
-export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
+export default function ProductInfo({ product }) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
-  const { user } = useAuth();
-  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const availableWeights = product?.weights?.length ? product.weights : ['50 gm', '100 gm', '150 gm'];
   const [selectedWeight, setSelectedWeight] = useState(availableWeights[0]);
 
   if (!product) return null;
 
   const wishlisted = isWishlisted(product.id);
+  const selectedVariant = product.variants?.find((variant) => variant.title === selectedWeight) || product.variants?.[0];
+  const isOutOfStock = selectedVariant
+    ? selectedVariant.availableForSale !== true
+    : product.availableForSale === false;
 
   const handleAddToCart = async () => {
     try {
@@ -34,7 +35,8 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
     try {
       await addToCart(product, selectedWeight);
       toast.success('Added to cart');
-      navigate('/checkout');
+      const checkoutPath = '/checkout';
+      navigate(localStorage.getItem('token') ? checkoutPath : `/login?returnTo=${encodeURIComponent(checkoutPath)}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Could not add item');
     }
@@ -50,8 +52,8 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
     product.salePrice && product.price && product.salePrice !== product.price
       ? Number(product.price)
       : null;
-  const reviewCount = reviewSummary?.count ?? product.numReviews ?? product.reviewCount ?? 0;
-  const reviewRating = reviewSummary?.average ?? product.rating ?? 0;
+  const reviewCount = product.reviewCount || 0;
+  const reviewRating = product.rating || 0;
 
   return (
     <div className="space-y-6">
@@ -80,11 +82,11 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
 
       <div className="flex items-end gap-3 dark:text-slate-100">
         <span className="text-3xl font-semibold text-charcoal ">
-          Rs. {price.toLocaleString('en-IN')}
+          {formatCurrency(price)}
         </span>
         {originalPrice && (
           <span className="pb-1 text-sm text-muted dark:text-slate-400 line-through">
-            Rs. {originalPrice.toLocaleString('en-IN')}
+            {formatCurrency(originalPrice)}
           </span>
         )}
       </div>
@@ -107,6 +109,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
               key={weight}
               type="button"
               onClick={() => setSelectedWeight(weight)}
+              disabled={product.variants?.find((variant) => variant.title === weight)?.availableForSale === false}
               className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                 selectedWeight === weight
                   ? 'border-black bg-black text-white'
@@ -144,7 +147,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {!user?.isAdmin && !product.comingSoon && (
+        {!product.comingSoon && !isOutOfStock && (
           <button
             type="button"
             onClick={handleAddToCart}
@@ -154,7 +157,7 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
             Add to cart
           </button>
         )}
-        {!user?.isAdmin && !product.comingSoon && (
+        {!product.comingSoon && !isOutOfStock && (
           <button
             type="button"
             onClick={handleBuyNow}
@@ -164,7 +167,10 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
             Buy Now
           </button>
         )}
-        {!user?.isAdmin && (
+        {isOutOfStock && (
+          <p className="w-full rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">Sorry, this product is currently out of stock.</p>
+        )}
+        {(
           <button
             type="button"
             onClick={handleWishlist}
@@ -184,39 +190,6 @@ export default function ProductInfo({ product, reviewSummary, onReviewAdded }) {
         Stock: {Number(product.stock ?? 0)} available
       </div>
 
-      {!user?.isAdmin && (
-        <div className="border-t border-border dark:border-slate-700 pt-6">
-        {isReviewFormOpen ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-charcoal dark:text-slate-100">Write a Review</h2>
-              <button
-                onClick={() => setIsReviewFormOpen(false)}
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <ReviewForm
-              productId={product._id || product.id}
-              onReviewAdded={(review) => {
-                setIsReviewFormOpen(false);
-                onReviewAdded?.(review);
-              }}
-            />
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setIsReviewFormOpen(true)}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-accent dark:text-gray-700 hover:underline"
-          >
-            <MessageSquare size={16} />
-            Write a review
-          </button>
-        )}
-        </div>
-      )}
     </div>
     
   );

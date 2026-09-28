@@ -1,5 +1,9 @@
 export const formatCurrency = (amount = 0) => {
-  return `Ã¢â€šÂ¹${Number(amount).toLocaleString("en-IN")}`;
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0);
 };
 
 export default formatCurrency;

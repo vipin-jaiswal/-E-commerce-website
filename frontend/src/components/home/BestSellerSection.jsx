@@ -27,10 +27,6 @@ const BestSellerSection = () => {
     >
       {/* Header */}
       <div className="text-center mb-8">
-        <p className="text-black uppercase tracking-[3px] text-xs font-semibold mb-1">
-          From MongoDB
-        </p>
-
         <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-slate-100">
           Products
         </h2>

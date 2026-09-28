@@ -12,7 +12,12 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 function CategorySlider({ category }) {
-  const { products, loading } = useProducts({ category: category.key, limit: 8 });
+  const isComingSoon = ["skin-care", "makeup"].includes(category.key);
+  const { products, loading } = useProducts({
+    category: category.key,
+    limit: 8,
+    enabled: !isComingSoon,
+  });
   const [swiper, setSwiper] = useState(null);
 
   return (
@@ -23,11 +28,17 @@ function CategorySlider({ category }) {
         </h3>
 
         <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm">
-          {loading ? "Loading products..." : `${products.length} Products Available`}
+          {isComingSoon ? "Coming soon" : loading ? "Loading products..." : `${products.length} Products Available`}
         </p>
       </div>
 
-      <div
+      {isComingSoon ? (
+        <div className="flex min-h-48 items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center dark:border-white/10 dark:bg-slate-900">
+          <p className="text-lg font-semibold text-slate-600 dark:text-slate-300">
+            {category.label} products are coming soon.
+          </p>
+        </div>
+      ) : <div
         className="relative px-8"
         onMouseEnter={() => swiper?.autoplay.stop()}
         onMouseLeave={() => swiper?.autoplay.start()}
@@ -88,14 +99,16 @@ function CategorySlider({ category }) {
                 </SwiperSlide>
               ))}
         </Swiper>
-      </div>
+      </div>}
 
       <div className="flex justify-center mt-8">
         <Link
-          to={`/products/category/${category.key}`}
+          to={isComingSoon ? "/products" : `/products/category/${category.key}`}
+          aria-disabled={isComingSoon}
+          onClick={(event) => isComingSoon && event.preventDefault()}
           className="group flex items-center gap-2 bg-black hover:bg-black text-white px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base rounded-full font-semibold transition duration-300 shadow-md hover:shadow-lg"
         >
-          View All {category.label} Products
+          {isComingSoon ? `${category.label} Coming Soon` : `View All ${category.label} Products`}
           <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
         </Link>
       </div>

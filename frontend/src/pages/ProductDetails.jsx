@@ -1,16 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import { useParams, Link } from "react-router-dom";
 import ProductGallery from "../components/product/ProductGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import ProductSlider from "../components/product/ProductSlider";
-import ProductReviews from "../components/product/ProductReviews";
+import ReviewSection from "../components/review/ReviewSection";
 import { useProduct, useProducts } from "../hooks/useProducts";
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const [reviewSummary, setReviewSummary] = useState(null);
-  const [reviewVersion, setReviewVersion] = useState(0);
-
   const { product, loading } = useProduct(id);
 
   const { products: related } = useProducts({
@@ -41,8 +38,6 @@ export default function ProductDetails() {
 
         <ProductInfo
           product={product}
-          reviewSummary={reviewSummary}
-          onReviewAdded={() => setReviewVersion((version) => version + 1)}
         />
       </div>
 
@@ -56,11 +51,8 @@ export default function ProductDetails() {
         </div>
       )}
 
-      <ProductReviews
-        productId={product.id || product._id}
-        onSummaryChange={setReviewSummary}
-        refreshKey={reviewVersion}
-      />
+      <ReviewSection reviews={product.reviews || []} />
+
     </div>
   );
 }

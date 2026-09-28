@@ -1,171 +1,116 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
-import { CheckCircle } from "lucide-react";
+import React, { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
-import AddressSelector from "../components/address/AddressSelector";
-import PaymentMethod from "../components/checkout/PaymentMethod";
 import OrderSummary from "../components/checkout/OrderSummary";
+import PaymentMethod from "../components/checkout/PaymentMethod";
 import { useCart } from "../hooks/useCart";
-import { orderService } from "../services/orderService";
-import { useAuth } from "../hooks/useAuth";
-import { useAddress } from "../context/AddressContext";
+import { cartService } from "../services/cartService";
+import { isFormValid, sanitizeAddressData, validateAddressForm } from "../utils/addressValidation";
 
-const STEPS = ["Delivery", "Payment"];
+const ADDRESS_KEY = "dyvaCheckoutAddress";
+const PAYMENT_KEY = "dyvaCheckoutPayment";
+const initialAddress = { name: "", phone: "", address1: "", address2: "", landmark: "", city: "", state: "", pincode: "" };
+const getSavedDefaultAddress = () => JSON.parse(localStorage.getItem("dyvaSavedAddresses") || "[]").find((savedAddress) => savedAddress.default) || initialAddress;
+const inputClass = "mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-black";
 
 export default function Checkout() {
-  const { user } = useAuth();
-  const [step, setStep] = useState(0);
-  const [payment, setPayment] = useState("card");
+  const { items, cartId } = useCart();
   const [loading, setLoading] = useState(false);
-
-  const { items, cartTotal, clearCart } = useCart();
-  const { addresses, defaultAddress } = useAddress();
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [step, setStep] = useState("address");
+  const [address, setAddress] = useState(() => JSON.parse(sessionStorage.getItem(ADDRESS_KEY) || "null") || getSavedDefaultAddress());
+  const [payment, setPayment] = useState(() => sessionStorage.getItem(PAYMENT_KEY) || "card");
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // If user is not logged in, redirect them to the login page
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!localStorage.getItem("token")) {
+    return <Navigate to={`/login?returnTo=${encodeURIComponent("/checkout")}`} replace />;
+  }
 
-  const getAddressId = (address) => String(address?._id || address?.id || '');
-  const activeAddressId = selectedAddressId || getAddressId(defaultAddress);
-  const selectedAddress = addresses.find((address) => getAddressId(address) === String(activeAddressId));
-
-  const handleSelectAddress = (id) => {
-    setSelectedAddressId(id);
+  const updateAddress = (event) => {
+    setAddress((current) => ({ ...current, [event.target.name]: event.target.value }));
+    setErrors((current) => ({ ...current, [event.target.name]: "" }));
   };
 
-  const next = (addressToUse = selectedAddress) => {
-    if (step === 0 && !addressToUse) {
-      toast.error("Please select a delivery address.");
-      return;
-    }
-    setStep((prev) => Math.min(prev + 1, STEPS.length - 1));
-  };
-
-  const placeOrder = async () => {
-    if (items.length === 0) {
-      toast.error("Your cart is empty.");
-      return;
-    }
+  const continueToPayment = async (event) => {
+    event.preventDefault();
+    const nextErrors = validateAddressForm(address);
+    setErrors(nextErrors);
+    if (!isFormValid(address) || !cartId) return;
     setLoading(true);
-
     try {
-      const createdOrder = await orderService.create({
-        addressId: getAddressId(selectedAddress),
-        paymentMethod: payment,
-        items,
-      });
+      await cartService.validateInventory(cartId);
+      sessionStorage.setItem(ADDRESS_KEY, JSON.stringify(sanitizeAddressData(address)));
+      setStep("payment");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Some products are no longer available in the requested quantity.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (payment === 'cod') {
-        await clearCart();
-        toast.success("Order placed successfully!");
-        navigate("/orders");
-      } else {
-        // For other payment methods, redirect to a payment page
-        // In a real app, this would be the payment gateway
-        navigate(`/payment/${createdOrder.id}`, { state: { order: createdOrder } });
-      }
-    } catch (err) {
-      console.error("Order placement error:", err);
-      toast.error(err.response?.data?.message || "Something went wrong.");
+  const startCheckout = async () => {
+    if (!items.length || !cartId) {
+      toast.error("Your Shopify cart is empty.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const cleanAddress = sanitizeAddressData(address);
+      await cartService.checkout(cartId, cleanAddress);
+      sessionStorage.setItem(ADDRESS_KEY, JSON.stringify(cleanAddress));
+      sessionStorage.setItem(PAYMENT_KEY, payment);
+      const { checkoutUrl } = await cartService.getCartCheckoutUrl(cartId);
+      if (!checkoutUrl) throw new Error("Shopify checkout URL was not returned");
+      window.location.assign(checkoutUrl);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Checkout failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen py-10">
-      <div className="max-w-[1500px] mx-auto px-6">
-        <h1 className="text-4xl font-bold text-gray-800 dark:text-slate-100 mb-10">Checkout</h1>
+    <div className="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-950">
+      <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-2">
+        <section className="rounded-3xl bg-white p-8 shadow-lg dark:bg-slate-900">
+          <h1 className="mb-2 text-3xl font-bold dark:text-white">{step === "address" ? "Delivery Address" : "Payment Method"}</h1>
+          <p className="mb-8 text-gray-500 dark:text-slate-400">{step === "address" ? "Enter your delivery details to continue." : "Shopify will show and process the payment methods available for this checkout."}</p>
 
-        <div className="flex items-center gap-2 mb-10 max-w-lg mx-auto">
-          {STEPS.map((item, index) => (
-            <React.Fragment key={item}>
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
-                    index < step
-                      ? "bg-black text-white"
-                      : index === step
-                      ? "bg-gray-100 text-black border-2 border-black"
-                      : "bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400"
-                  }`}
-                >
-                  {index < step ? <CheckCircle size={18} /> : index + 1}
-                </div>
-
-                <span
-                  className={`mt-2 text-sm font-medium dark:text-slate-400 ${
-                    index === step ? "text-black" : "text-gray-500"
-                  }`}
-                >
-                  {item}
-                </span>
+          {step === "address" ? (
+            <form className="grid gap-4 sm:grid-cols-2" onSubmit={continueToPayment}>
+              {[["name", "Full Name"], ["phone", "Mobile Number"], ["address1", "House / Flat / Building"], ["address2", "Street / Area"], ["landmark", "Landmark"], ["city", "City"], ["state", "State"], ["pincode", "Pincode"]].map(([name, label]) => (
+                <label key={name} className="text-sm font-medium text-gray-700">
+                  {label}
+                    <input className={inputClass} name={name} value={address[name]} onChange={updateAddress} required={name !== "landmark"} inputMode={name === "phone" || name === "pincode" ? "numeric" : undefined} />
+                  {errors[name] && <span className="mt-1 block text-xs text-red-600">{errors[name]}</span>}
+                </label>
+              ))}
+              <button type="submit" disabled={loading || !items.length} className="sm:col-span-2 w-full rounded-xl bg-black px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400">
+                {loading ? "Checking stock..." : "Continue to Payment"}
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-6">
+              <PaymentMethod selected={payment} onSelect={setPayment} />
+              <p className="text-sm text-gray-500">Card, UPI, COD, and other payment options are ultimately controlled by Shopify checkout. No payment details are collected here.</p>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setStep("address")} className="w-1/3 rounded-xl border px-4 py-3 font-semibold">Back</button>
+                <button type="button" onClick={startCheckout} disabled={loading || !items.length} className="w-2/3 rounded-xl bg-black px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400">
+                  {loading ? "Processing..." : "Continue to Shopify Checkout"}
+                </button>
               </div>
-
-              {index < STEPS.length - 1 && (
-                <div
-                  className={`flex-1 h-1 rounded-full dark:bg-slate-700 ${
-                    index < step ? "bg-black" : "bg-gray-300"
-                  }`}
-                />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {step === 0 && (
-              <AddressSelector selectedId={activeAddressId} onSelectAddress={handleSelectAddress} onSaveAndContinue={(address) => next(address)} />
-            )}
-
-            {step === 1 && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 mb-6">Payment Method</h2>
-                <PaymentMethod selected={payment} onSelect={setPayment} />
-              </div>
-            )}
-
-            <div className="flex items-center justify-between mt-8">
-              {step > 0 ? (
-                <button
-                  onClick={() => setStep((s) => s - 1)}
-                  className="px-6 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 font-medium hover:bg-gray-100 dark:hover:bg-slate-700 transition-all duration-300 shadow-sm"
-                >
-                  Back
-                </button>
-              ) : (
-                <div />
-              )}
-
-              {step < STEPS.length - 1 ? (
-                <button
-                  onClick={next}
-                  className="px-8 py-3 rounded-xl bg-black text-white font-semibold hover:bg-black transition-all duration-300 shadow-lg"
-                >
-                  Continue
-                </button>
-              ) : (
-                <button
-                  onClick={placeOrder}
-                  disabled={loading}
-                  className="px-8 py-3 rounded-xl bg-black text-white font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-lg"
-                >
-                  {loading ? "Placing Order..." : "Place Order"}
-                </button>
-              )}
             </div>
-          </div>
-
-          <div>
-            <div className="sticky top-24">
-              <OrderSummary />
-            </div>
-          </div>
-        </div>
+          )}
+          <button
+            type="button"
+            onClick={() => navigate("/cart")}
+            className="mt-3 w-full rounded-xl border px-6 py-3 font-semibold"
+          >
+            Back to cart
+          </button>
+        </section>
+        <OrderSummary />
       </div>
     </div>
   );

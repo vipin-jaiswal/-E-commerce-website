@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Trash2, ShoppingBag } from 'lucide-react';
 import { useWishlist } from '../hooks/useWishlist';
 import { useCart } from '../hooks/useCart';
+import { formatCurrency } from '../utils/currency';
 import Rating from '../components/common/Rating';
 import toast from 'react-hot-toast';
 
@@ -77,7 +78,7 @@ export default function Wishlist() {
               </Link>
               <Rating value={product.rating} count={product.reviewCount} size={12} />
               <div className="flex items-center justify-between mt-3">
-                <span className="font-semibold text-charcoal text-sm">Ã¢â€šÂ¹{product.price?.toLocaleString()}</span>
+                  <span className="font-semibold text-charcoal text-sm">{formatCurrency(product.price)}</span>
                 <button
                   onClick={() => moveToCart(product)}
                   disabled={product.comingSoon}

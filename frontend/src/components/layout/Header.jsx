@@ -1,23 +1,20 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Search,
   Heart,
   ShoppingCart,
-  User,
   Menu,
   Moon,
   Sun,
-  Camera,
-  ImageIcon,
+  UserRound,
 } from "lucide-react";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import SearchBar from "../common/SearchBar";
 import { useCart } from "../../hooks/useCart";
 import MobileMenu from "./MobileMenu";
 import { useTheme } from "../../context/ThemeContext";
-import { useAuth } from "../../hooks/useAuth";
 
 const NAV_LINKS = [
   { label: "Shop", to: "/products" },
@@ -25,24 +22,15 @@ const NAV_LINKS = [
   { label: "Skin Care", to: "/products/category/skin-care" },
   { label: "Hair Care", to: "/products/category/hair-care" },
   { label: "Makeup", to: "/products/category/makeup" },
-  { label: "Ai Doctor", isAiDoctor: true },
 ];
 
 const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [faceScanMenuOpen, setFaceScanMenuOpen] = useState(false);
-
-  const faceScanMenuRef = useRef(null);
-  const navigate = useNavigate();
-
   const { cartCount } = useCart();
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuth();
-  const isAdmin = user?.isAdmin;
-  const navLinks = isAdmin
-    ? NAV_LINKS.concat({ label: "Admin", to: "/admin" })
-    : NAV_LINKS;
+  const navLinks = NAV_LINKS;
+  const isLoggedIn = Boolean(localStorage.getItem("token"));
 
   const handleNavClick = (event, href) => {
     if (href.startsWith("/#")) {
@@ -53,31 +41,6 @@ const Header = () => {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
-  };
-
-  // Close the face-scan popup when clicking outside of it
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        faceScanMenuRef.current &&
-        !faceScanMenuRef.current.contains(event.target)
-      ) {
-        setFaceScanMenuOpen(false);
-      }
-    };
-
-    if (faceScanMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [faceScanMenuOpen]);
-
-  const goToFaceScan = (mode) => {
-    setFaceScanMenuOpen(false);
-    navigate("/face-scan", { state: { mode } });
   };
 
   return (
@@ -118,60 +81,7 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8 font-medium">
             {navLinks.map((link) =>
-              link.isAiDoctor ? (
-                <div className="relative" ref={faceScanMenuRef} key={link.label}>
-                  <button
-                    type="button"
-                    onClick={() => setFaceScanMenuOpen((prev) => !prev)}
-                    className="
-                      text-slate-700 dark:text-slate-200
-                      hover:text-black dark:hover:text-gray-400
-                      transition
-                      duration-300
-                      flex items-center gap-1
-                    "
-                    aria-haspopup="true"
-                    aria-expanded={faceScanMenuOpen}
-                  >
-                    {link.label}
-                  </button>
-
-                  {faceScanMenuOpen && (
-                    <div
-                      className="
-                        absolute
-                        left-1/2 -translate-x-1/2
-                        mt-3
-                        w-52
-                        bg-white dark:bg-slate-800
-                        border border-slate-200 dark:border-white/10
-                        rounded-xl
-                        shadow-xl
-                        overflow-hidden
-                        z-50
-                      "
-                    >
-                      <button
-                        type="button"
-                        onClick={() => goToFaceScan("camera")}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-black dark:hover:text-gray-400 transition"
-                      >
-                        <Camera size={18} />
-                        Open Camera
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => goToFaceScan("upload")}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-black dark:hover:text-gray-400 transition border-t border-slate-100 dark:border-white/10"
-                      >
-                        <ImageIcon size={18} />
-                        Upload Image
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : link.to ? (
+              link.to ? (
                 <Link key={link.label} to={link.to} className="text-slate-700 dark:text-slate-200 hover:text-black dark:hover:text-gray-400 transition duration-300">
                   {link.label}
                 </Link>
@@ -215,8 +125,7 @@ const Header = () => {
             </button>
 
             {/* Search */}
-            {!isAdmin && (
-              <button
+            <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 className="
@@ -230,12 +139,18 @@ const Header = () => {
               >
                 <Search size={22} />
                 <span className="hidden">Search</span>
-              </button>
-            )}
+            </button>
 
             {/* Wishlist */}
-            {!isAdmin && (
-              <Link
+            <Link
+                to={isLoggedIn ? "/account" : "/login"}
+                aria-label="Account"
+                className="hidden lg:flex text-slate-700 dark:text-slate-200 hover:text-black dark:hover:text-gray-400 transition duration-300"
+              >
+                <UserRound size={22} />
+            </Link>
+
+            <Link
                 to="/wishlist"
                 className="
                   hidden lg:flex
@@ -248,28 +163,10 @@ const Header = () => {
               >
                 <Heart size={22} />
                 <span className="hidden">Wishlist</span>
-              </Link>
-            )}
-
-            {/* Profile */}
-            <Link
-              to="/profile"
-              className="
-                hidden lg:flex
-                text-slate-700 dark:text-slate-200
-                hover:text-black dark:hover:text-gray-400
-                transition
-                duration-300
-                flex items-center gap-2
-              "
-            >
-              <User size={22} />
-              <span className="hidden">Profile</span>
             </Link>
 
             {/* Cart */}
-            {!isAdmin && (
-              <Link
+            <Link
                 to="/cart"
                 className="
                   relative
@@ -305,8 +202,7 @@ const Header = () => {
                     {cartCount}
                   </span>
                 )}
-              </Link>
-            )}
+            </Link>
 
             <button
               type="button"
@@ -321,15 +217,12 @@ const Header = () => {
       </header>
 
       {/* Search Modal */}
-      {!isAdmin && (
-        <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
-      )}
+      <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <MobileMenu
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         links={navLinks}
-        isAdmin={isAdmin}
       />
     </>
   );

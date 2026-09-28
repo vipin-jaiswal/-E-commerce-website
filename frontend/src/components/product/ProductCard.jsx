@@ -4,14 +4,13 @@ import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import Rating from "../common/Rating";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../hooks/useWishlist";
-import { useAuth } from "../../hooks/useAuth";
 import toast from "react-hot-toast";
+import { formatCurrency } from "../../utils/currency";
 
 export default function ProductCard({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
-  const { user } = useAuth();
 
   if (!product) return null;
 
@@ -25,22 +24,21 @@ export default function ProductCard({ product }) {
       ? Number(product.price ?? 0)
       : null;
   const isComingSoon = Boolean(product.comingSoon);
+  const defaultVariant = product.variants?.[0];
+  const isOutOfStock = defaultVariant
+    ? defaultVariant.availableForSale !== true
+    : product.availableForSale === false;
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (user?.isAdmin) {
-      toast.error("Admins do not have a cart.");
-      return;
+    try {
+      await addToCart({ ...product, id: productId });
+      toast.success("Added to cart");
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Could not add item");
     }
-
-    addToCart({
-      ...product,
-      id: productId,
-    });
-
-    toast.success("Added to cart");
   };
 
   const handleWishlist = (e) => {
@@ -127,6 +125,11 @@ export default function ProductCard({ product }) {
             COMING SOON
           </span>
         )}
+        {!isComingSoon && isOutOfStock && (
+          <span className="absolute top-12 left-3 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
+            OUT OF STOCK
+          </span>
+        )}
       </div>
 
       <div className="p-4">
@@ -150,22 +153,22 @@ export default function ProductCard({ product }) {
 
         <div className="flex items-center gap-2 mt-3">
           <span className="text-lg font-bold text-black">
-            Rs. {price.toLocaleString("en-IN")}
+            {formatCurrency(price)}
           </span>
 
           {originalPrice !== null && (
             <span className="text-sm text-gray-400 dark:text-slate-500 line-through">
-              Rs. {originalPrice.toLocaleString("en-IN")}
+              {formatCurrency(originalPrice)}
             </span>
           )}
         </div>
 
         <button
           onClick={handleAddToCart}
-          disabled={isComingSoon}
+          disabled={isComingSoon || isOutOfStock}
           className="mt-4 w-full rounded-full bg-gray-900 py-2.5 font-medium text-white transition duration-300 hover:bg-black disabled:cursor-not-allowed disabled:bg-amber-500 disabled:hover:bg-amber-500 dark:bg-slate-700"
         >
-          {isComingSoon ? "Coming Soon" : "Add To Cart"}
+          {isComingSoon ? "Coming Soon" : isOutOfStock ? "Out of Stock" : "Add To Cart"}
         </button>
       </div>
     </article>

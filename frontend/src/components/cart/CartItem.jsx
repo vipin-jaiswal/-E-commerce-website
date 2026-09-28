@@ -2,6 +2,7 @@ import React from "react";
 import { Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
+import { formatCurrency } from "../../utils/currency";
 
 export default function CartItem({ item }) {
   const { updateQty, removeFromCart } = useCart();
@@ -42,7 +43,7 @@ export default function CartItem({ item }) {
         {item.weight && <p className="mt-1 text-xs text-muted dark:text-slate-400">Weight: {item.weight}</p>}
 
         <p className="text-sm font-semibold text-charcoal dark:text-slate-100 mt-1">
-          Ã¢â€šÂ¹{price.toLocaleString("en-IN")}
+          {formatCurrency(price)}
         </p>
 
         <div className="flex items-center gap-4 mt-3">
@@ -79,7 +80,7 @@ export default function CartItem({ item }) {
 
       <div className="flex-shrink-0 text-right">
         <p className="text-sm font-semibold text-charcoal dark:text-slate-100">
-          Ã¢â€šÂ¹{(price * qty).toLocaleString("en-IN")}
+          {formatCurrency(price * qty)}
         </p>
       </div>
     </div>

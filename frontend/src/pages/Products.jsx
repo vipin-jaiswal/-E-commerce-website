@@ -22,6 +22,7 @@ export default function Products() {
     : "All Products";
 
   const { products, loading } = useProducts(params);
+  const isComingSoon = ["skin-care", "makeup"].includes(selectedCategory);
 
   const setParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -53,7 +54,7 @@ export default function Products() {
     <div className="max-w-[1500px] mx-auto px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold mb-2">{pageTitle}</h1>
       <p className="text-gray-500 dark:text-slate-400 mb-6">
-        Browse all products stored in the backend or filter by category.
+        {isComingSoon ? `${pageTitle} products are coming soon.` : "Browse products or filter by category."}
       </p>
 
       <div className="flex gap-3 mb-8 flex-wrap items-center">
@@ -85,11 +86,12 @@ export default function Products() {
         </select>
       </div>
 
-      <ProductGrid
-        products={products}
-        loading={loading}
-        cols={4}
-      />
+      {isComingSoon ? (
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-16 text-center dark:border-white/10 dark:bg-slate-900">
+          <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200">Coming soon</h2>
+          <p className="mt-2 text-slate-500 dark:text-slate-400">We are preparing this collection for launch.</p>
+        </div>
+      ) : <ProductGrid products={products} loading={loading} cols={4} />}
     </div>
   );
 }

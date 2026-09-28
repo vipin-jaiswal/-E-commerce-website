@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { X, ShoppingBag, Camera } from 'lucide-react';
+import { X, ShoppingBag, UserRound } from 'lucide-react';
 
 export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
   // Lock body scroll when open
@@ -71,15 +71,14 @@ export default function MobileMenu({ open, onClose, links, isAdmin = false }) {
               </a>
             )
           )}
-          <Link to="/face-scan" onClick={onClose} className="flex items-center gap-3 py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-black transition-colors">
-            <Camera size={18} />
-            <span>AI Face Scan</span>
-          </Link>
         </nav>
 
         {/* Bottom actions */}
         {!isAdmin && (
           <div className="px-6 py-5 border-t border-border">
+            <Link to={localStorage.getItem('token') ? '/account' : '/login'} onClick={onClose} className="mb-4 flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
+              <UserRound size={18} /> {localStorage.getItem('token') ? 'My account' : 'Sign in'}
+            </Link>
             <Link to="/cart" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
               <ShoppingBag size={18} /> Cart
             </Link>

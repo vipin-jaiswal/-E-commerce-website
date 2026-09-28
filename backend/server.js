@@ -1,30 +1,29 @@
 const express = require("express");
 const cors = require("cors");
-const productRoutes = require("./routes/productRoutes");
-const authRoutes = require("./routes/authRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
-const uploadRoutes = require("./routes/uploadRoutes");
-const scanFaceRoutes = require("./routes/scanFaceRoutes");
-const addressRoutes = require("./routes/addressRoutes");
-const orderRoutes = require("./routes/orderRoutes");
-const bannerRoutes = require('./routes/bannerRoutes');
+const shopifyRoutes = require('./routes/shopifyRoutes');
+const authRoutes = require('./routes/authRoutes');
+const { router: adminRoutes } = require('./routes/adminRoutes');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    // The storefront may be served by Vite (5173) or another local dev port.
+    if (!origin || /^https?:\/\/localhost(?::\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin)) {
+      return callback(null, origin || true);
+    }
+    return callback(null, origin);
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("API Running...");
 });
 
-app.use("/api/products", productRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use("/api/scan-face", scanFaceRoutes);
-app.use("/api/address", addressRoutes);
-app.use("/api/orders", orderRoutes);
-app.use('/api/banners', bannerRoutes);
+app.use('/api/shopify', shopifyRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 
 module.exports = app;
