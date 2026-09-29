@@ -66,13 +66,13 @@ export default function ProductCard({ product }) {
 
   return (
     <article className="ui-card group mx-auto w-full max-w-[18rem] overflow-hidden">
-      <div className="relative overflow-hidden bg-gray-50 dark:bg-[#101010]">
+      <div className="relative overflow-hidden bg-[#fff5f9] dark:bg-[#191216]">
         <Link to={`/products/${productId}`}>
           {image ? (
             <img
               src={image}
               alt={product.name}
-              className="w-full h-60 object-contain bg-white transition duration-500 group-hover:scale-[1.025] dark:bg-[#151515]"
+              className="w-full h-60 object-contain bg-[#fff5f9] transition duration-500 group-hover:scale-[1.025] dark:bg-[#191216]"
             />
           ) : (
             <div className="w-full h-56 flex items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 text-xs uppercase tracking-[0.25em] text-slate-400">
@@ -151,7 +151,7 @@ export default function ProductCard({ product }) {
         </div>
 
         <div className="flex items-center gap-2 mt-3">
-          <span className="text-lg font-bold text-black">
+          <span className="text-lg font-bold text-[#d93b7f] dark:text-primary-dark">
             {formatCurrency(price)}
           </span>
 

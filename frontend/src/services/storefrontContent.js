@@ -6,8 +6,8 @@ export const getStorefrontContent = () => {
   if (contentPromise) return contentPromise;
 
   const request = api.get('/shopify/content')
-    .then((response) => response.data?.data || { announcement: null, banners: [] })
-    .catch(() => ({ announcement: null, banners: [] }));
+    .then((response) => response.data?.data || { announcement: null, banners: [], concerns: [] })
+    .catch(() => ({ announcement: null, banners: [], concerns: [] }));
 
   contentPromise = request;
   request.then(() => {

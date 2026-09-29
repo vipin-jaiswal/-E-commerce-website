@@ -60,6 +60,19 @@ const definitions = [
       { key: "sort_order", name: "Sort order", type: "number_integer" },
     ],
   },
+  {
+    type: "$app:dyva_concern",
+    name: "DYVA Shop by Concern",
+    access: { admin: "MERCHANT_READ_WRITE", storefront: "PUBLIC_READ" },
+    fieldDefinitions: [
+      { key: "name", name: "Name", type: "single_line_text_field" },
+      { key: "query", name: "Product search term", type: "single_line_text_field" },
+      { key: "category", name: "Category", type: "single_line_text_field" },
+      { key: "image_url", name: "Image URL", type: "url" },
+      { key: "enabled", name: "Enabled", type: "boolean" },
+      { key: "sort_order", name: "Sort order", type: "number_integer" },
+    ],
+  },
 ];
 
 const createDefinition = async (definition) => {

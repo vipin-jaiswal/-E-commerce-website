@@ -82,11 +82,11 @@ const Header = () => {
           <nav className="hidden lg:flex items-center gap-8 font-medium">
             {navLinks.map((link) =>
               link.to ? (
-                <Link key={link.label} to={link.to} className="text-slate-700 dark:text-slate-200 hover:text-primary transition duration-200">
+                <Link key={link.label} to={link.to} className="rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 hover:-translate-y-1 hover:shadow-lg hover:text-[#d93b7f] dark:hover:text-[#ec5895] transition-all duration-300">
                   {link.label}
                 </Link>
               ) : (
-                <a key={link.label} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="text-slate-700 dark:text-slate-200 hover:text-primary transition duration-200">
+                <a key={link.label} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 hover:-translate-y-1 hover:shadow-lg hover:text-[#d93b7f] dark:hover:text-[#ec5895] transition-all duration-300">
                   {link.label}
                 </a>
               )

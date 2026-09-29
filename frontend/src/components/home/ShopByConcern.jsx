@@ -1,10 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { ALL_CONCERNS } from "../../utils/concerns";
+import useShopifyConcerns from "../../hooks/useShopifyConcerns";
 
 const ShopByConcern = () => {
   const navigate = useNavigate();
-
-  const concerns = ALL_CONCERNS.slice(0, 6);
+  const concerns = useShopifyConcerns();
 
   return (
     <section id="shop-by-concern" className="scroll-mt-28 max-w-[1500px] mx-auto px-4 py-16">
@@ -48,18 +47,13 @@ const ShopByConcern = () => {
               transition
               duration-300
             ">
-              <img
-                src={concern.image}
-                alt={concern.name}
-                className="
-                  w-full
-                  h-full
-                  object-cover
-                  group-hover:scale-110
-                  transition
-                  duration-500
-                "
-              />
+              {concern.image && (
+                <img
+                  src={concern.image}
+                  alt={concern.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                />
+              )}
             </div>
 
             <h3 className="

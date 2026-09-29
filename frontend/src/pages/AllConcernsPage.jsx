@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CONCERNS_DATA, ALL_CONCERNS } from "../utils/concerns";
+import useShopifyConcerns from "../hooks/useShopifyConcerns";
 
 const ConcernCard = ({ concern }) => {
   const navigate = useNavigate();
@@ -10,11 +10,13 @@ const ConcernCard = ({ concern }) => {
       className="cursor-pointer group text-center"
     >
       <div className="w-32 h-32 mx-auto rounded-full overflow-hidden shadow-md border-4 border-gray-100 group-hover:border-gray-700 transition duration-300">
-        <img
-          src={concern.image}
-          alt={concern.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-        />
+        {concern.image && (
+          <img
+            src={concern.image}
+            alt={concern.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+          />
+        )}
       </div>
       <h3 className="mt-4 font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary dark:group-hover:text-primary transition">
         {concern.name}
@@ -25,6 +27,7 @@ const ConcernCard = ({ concern }) => {
 
 const AllConcernsPage = () => {
   const [activeTab, setActiveTab] = useState("all");
+  const allConcerns = useShopifyConcerns();
 
   const tabs = [
     { id: "all", label: "All Concerns" },
@@ -35,12 +38,12 @@ const AllConcernsPage = () => {
   const getVisibleConcerns = () => {
     switch (activeTab) {
       case "skin":
-        return CONCERNS_DATA.skin;
+        return allConcerns.filter((item) => item.category === "skin");
       case "hair":
-        return CONCERNS_DATA.hair;
+        return allConcerns.filter((item) => item.category === "hair");
       case "all":
       default:
-        return ALL_CONCERNS;
+        return allConcerns;
     }
   };
 

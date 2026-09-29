@@ -6,8 +6,8 @@ html { scroll-behavior: smooth; color-scheme: light; }
 body { background-color: var(--color-bg); color: var(--color-text); transition: background-color .2s ease, color .2s ease; }
 
 :root {
-  --color-primary: #E91E63;
-  --color-primary-dark: #C2185B;
+  --color-primary: #d93b7f;
+  --color-primary-dark: #ec5895;  
   --color-primary-soft: #FCE4EC;
   --color-secondary: #FFFFFF;
   --color-dark-bg: #090909;
@@ -38,8 +38,8 @@ body { background-color: var(--color-bg); color: var(--color-text); transition: 
 }
 html.dark {
   color-scheme: dark;
-  --color-primary: #FF4F9A;
-  --color-primary-dark: #E83E86;
+  --color-primary: #d93b7f;
+  --color-primary-dark: #ec5895;
   --color-primary-soft: #351323;
   --color-bg: #090909;
   --color-surface: #151515;
@@ -68,7 +68,7 @@ html.dark {
   .ui-outline:hover { @apply -translate-y-0.5 bg-primary text-white shadow-md; }
   .ui-icon { @apply transition duration-200; }
   .ui-icon:hover { color: var(--color-primary); transform: scale(1.06); }
-  .ui-card { @apply rounded-2xl border bg-white transition-all duration-300; border-color: var(--color-border); box-shadow: var(--color-shadow); }
-  .dark .ui-card { @apply bg-[#151515]; }
+  .ui-card { @apply rounded-2xl border transition-all duration-300; background-color: #fff0f6; border-color: #f5c6d9; box-shadow: var(--color-shadow); }
+  .dark .ui-card { background-color: #1d1419; }
   .ui-card:hover { @apply -translate-y-1 shadow-lg; }
 }

@@ -11,6 +11,9 @@ const SHOPIFY_ANNOUNCEMENT_TYPE =
 const SHOPIFY_HERO_BANNER_TYPE =
   process.env.SHOPIFY_HERO_BANNER_TYPE || "banner";
 
+const SHOPIFY_CONCERN_TYPE =
+  process.env.SHOPIFY_CONCERN_TYPE || "app--428015452161--dyva_concern";
+
 const SHOPIFY_EXCLUDED_PRODUCT_HANDLES = new Set(
   (process.env.SHOPIFY_EXCLUDED_PRODUCT_HANDLES || "")
     .split(",")
@@ -504,29 +507,33 @@ const fetchProducts = async ({
     ? storefrontProductFields
     : adminProductFields;
 
-  const productQuery = [
-    SHOPIFY_PRODUCT_QUERY,
-    query,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const escapedSearchTerm = String(query || "")
+    .trim()
+    .replace(/[\\"():]/g, "\\$&");
+  const searchFields = ["title", "product_type", "vendor", "tag"];
+  const exactSearch = escapedSearchTerm
+    ? `(${searchFields.map((field) => `${field}:"${escapedSearchTerm}"`).join(" OR ")})`
+    : "";
 
-  const data = await graphql(
-    `query Products($first: Int!, $query: String) {
-      products(first: $first, query: $query) {
-        nodes {
-          ${fields}
+  const buildProductQuery = (search) =>
+    [SHOPIFY_PRODUCT_QUERY, search]
+      .filter(Boolean)
+      .map((part) => `(${part})`)
+      .join(" AND ") || null;
+
+  const fetchByQuery = async (search) => {
+    const data = await graphql(
+      `query Products($first: Int!, $query: String) {
+        products(first: $first, query: $query) {
+          nodes {
+            ${fields}
+          }
         }
-      }
-    }`,
-    {
-      first,
-      query: productQuery || null,
-    }
-  );
+      }`,
+      { first, query: buildProductQuery(search) }
+    );
 
-  const products =
-    data.products.nodes
+    return data.products.nodes
       .filter(
         (product) =>
           !SHOPIFY_EXCLUDED_PRODUCT_HANDLES.has(
@@ -534,6 +541,21 @@ const fetchProducts = async ({
           )
       )
       .map(normalizeProduct);
+  };
+
+  let products = await fetchByQuery(exactSearch);
+
+  // Shopify treats whitespace as AND. If a multiword concern has no exact
+  // phrase match, retry against each word across the existing searchable fields.
+  if (!products.length && escapedSearchTerm) {
+    const terms = [...new Set(escapedSearchTerm.split(/\s+/).filter(Boolean))];
+    if (terms.length > 1) {
+      const broadSearch = `(${terms.flatMap((term) =>
+        searchFields.map((field) => `${field}:${term}`)
+      ).join(" OR ")})`;
+      products = await fetchByQuery(broadSearch);
+    }
+  }
 
   return {
     products,
@@ -725,6 +747,7 @@ const fetchStorefrontContent =
         `query StorefrontContent(
           $announcementType: String!
           $bannerType: String!
+          $concernType: String!
         ) {
 
           announcements: metaobjects(
@@ -756,6 +779,20 @@ const fetchStorefrontContent =
               }
             }
           }
+
+          concerns: metaobjects(
+            type: $concernType
+            first: 50
+          ) {
+            nodes {
+              id
+              handle
+              fields {
+                key
+                value
+              }
+            }
+          }
         }`,
         {
           announcementType:
@@ -763,6 +800,9 @@ const fetchStorefrontContent =
 
           bannerType:
             SHOPIFY_HERO_BANNER_TYPE,
+
+          concernType:
+            SHOPIFY_CONCERN_TYPE,
         }
       );
 
@@ -960,6 +1000,27 @@ const fetchStorefrontContent =
           left.order - right.order
       );
 
+    const concerns = (data.concerns?.nodes || [])
+      .map((node) => ({
+        ...metaobjectFields(node),
+        id: node.id,
+        handle: node.handle,
+      }))
+      .filter((fields) =>
+        isVisibleContent(fields) &&
+        Boolean(String(fields.name || "").trim()) &&
+        Boolean(String(fields.query || "").trim())
+      )
+      .map((fields) => ({
+        id: fields.id || fields.handle,
+        name: fields.name,
+        query: fields.query,
+        category: String(fields.category || "skin").toLowerCase(),
+        image: fields.image_url || "",
+        order: Number(fields.sort_order || fields.order || 0),
+      }))
+      .sort((left, right) => left.order - right.order);
+
     /* =====================================================
        FINAL CONTENT
     ===================================================== */
@@ -983,16 +1044,17 @@ const fetchStorefrontContent =
           : null,
 
       banners,
+      concerns,
     };
 
     storefrontContentCache = {
       value,
 
       /*
-       * Cache for 60 seconds.
+       * Keep Shopify edits visible quickly while avoiding repeated requests.
        */
       expiresAt:
-        Date.now() + 60_000,
+        Date.now() + 5_000,
     };
 
     return value;
