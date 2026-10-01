@@ -51,7 +51,7 @@ export default function Products() {
   };
 
   return (
-    <div className="max-w-[1500px] mx-auto px-4 py-10 sm:px-6 lg:px-8">
+    <div className="max-w-[1500px] mx-auto px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
       <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold dark:text-slate-100">{pageTitle}</h1>

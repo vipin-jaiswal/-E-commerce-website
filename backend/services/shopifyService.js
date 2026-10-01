@@ -12,7 +12,7 @@ const SHOPIFY_HERO_BANNER_TYPE =
   process.env.SHOPIFY_HERO_BANNER_TYPE || "banner";
 
 const SHOPIFY_CONCERN_TYPE =
-  process.env.SHOPIFY_CONCERN_TYPE || "app--428015452161--dyva_concern";
+  process.env.SHOPIFY_CONCERN_TYPE || "$app:dyva_concern";
 
 const SHOPIFY_EXCLUDED_PRODUCT_HANDLES = new Set(
   (process.env.SHOPIFY_EXCLUDED_PRODUCT_HANDLES || "")
@@ -216,15 +216,29 @@ const storefrontGraphql = async (
     );
   }
 
-  return requestGraphql(
-    storefrontUrl(),
-    {
-      "X-Shopify-Storefront-Access-Token":
-        SHOPIFY_STOREFRONT_TOKEN,
-    },
-    query,
-    variables
-  );
+  try {
+    return await requestGraphql(
+      storefrontUrl(),
+      {
+        "X-Shopify-Storefront-Access-Token":
+          SHOPIFY_STOREFRONT_TOKEN,
+      },
+      query,
+      variables
+    );
+  } catch (error) {
+    const operation = query.match(/\b(?:query|mutation)\s+([A-Za-z0-9_]+)/)?.[1];
+    if (operation?.startsWith("Cart")) {
+      const cartId = variables?.cartId || variables?.id;
+      logCartDiagnostics(
+        operation,
+        cartId ? { id: cartId } : null,
+        [],
+        [error.message]
+      );
+    }
+    throw error;
+  }
 };
 
 /* =========================================================
@@ -732,6 +746,23 @@ const isTrue = (value) =>
    STOREFRONT CONTENT
 ========================================================= */
 
+const fetchStorePolicies = async () => {
+  const data = await adminGraphql(`query StorePolicies {
+    shop {
+      shopPolicies {
+        type
+        title
+        body
+        url
+      }
+    }
+  }`);
+
+  return (data.shop?.shopPolicies || []).filter((policy) =>
+    ["SHIPPING_POLICY", "REFUND_POLICY"].includes(policy.type)
+  );
+};
+
 const fetchStorefrontContent =
   async () => {
     if (
@@ -740,6 +771,22 @@ const fetchStorefrontContent =
         Date.now()
     ) {
       return storefrontContentCache.value;
+    }
+
+    let storefrontConcernType = SHOPIFY_CONCERN_TYPE;
+    if (storefrontConcernType.startsWith("$app:")) {
+      const definitionData = await adminGraphql(
+        `query ResolveConcernDefinitionType($type: String!) {
+          metaobjectDefinitionByType(type: $type) { type }
+        }`,
+        { type: storefrontConcernType }
+      );
+      storefrontConcernType = definitionData.metaobjectDefinitionByType?.type;
+      if (!storefrontConcernType) {
+        throw new Error(
+          `Shopify concern definition ${SHOPIFY_CONCERN_TYPE} is missing. Run "npm.cmd run setup:shopify-metaobjects" from the backend folder.`
+        );
+      }
     }
 
     const data =
@@ -802,7 +849,7 @@ const fetchStorefrontContent =
             SHOPIFY_HERO_BANNER_TYPE,
 
           concernType:
-            SHOPIFY_CONCERN_TYPE,
+            storefrontConcernType,
         }
       );
 
@@ -1069,6 +1116,11 @@ const cartFields = `
   checkoutUrl
   totalQuantity
 
+  discountCodes {
+    code
+    applicable
+  }
+
   cost {
     subtotalAmount {
       amount
@@ -1085,6 +1137,13 @@ const cartFields = `
     nodes {
       id
       quantity
+
+      cost {
+        totalAmount {
+          amount
+          currencyCode
+        }
+      }
 
       merchandise {
         ... on ProductVariant {
@@ -1138,6 +1197,24 @@ const normalizeCart = (cart) => ({
       0
   ),
 
+  merchandiseTotalPrice: (cart.lines?.nodes || []).reduce(
+    (sum, line) => sum + Number(
+      line.cost?.totalAmount?.amount ??
+      Number(line.merchandise?.price?.amount || 0) * line.quantity
+    ),
+    0
+  ),
+
+  currencyCode:
+    cart.cost?.totalAmount?.currencyCode ||
+    cart.cost?.subtotalAmount?.currencyCode ||
+    "INR",
+
+  discountCodes: (cart.discountCodes || []).map((discount) => ({
+    code: discount.code,
+    applicable: discount.applicable,
+  })),
+
   items: (
     cart.lines?.nodes || []
   ).map((line) => ({
@@ -1164,8 +1241,13 @@ const normalizeCart = (cart) => ({
       line.merchandise?.title,
 
     price: Number(
-      line.merchandise?.price
-        ?.amount || 0
+      line.cost?.totalAmount?.amount ??
+      Number(line.merchandise?.price?.amount || 0) * line.quantity
+    ) / (Number(line.quantity) || 1),
+
+    lineTotal: Number(
+      line.cost?.totalAmount?.amount ??
+      Number(line.merchandise?.price?.amount || 0) * line.quantity
     ),
 
     quantity: line.quantity,
@@ -1182,6 +1264,29 @@ const normalizeCart = (cart) => ({
         : [],
   })),
 });
+
+const logCartDiagnostics = (
+  operation,
+  cart,
+  userErrors = [],
+  graphQLErrors = []
+) => {
+  console.info(
+    `[shopify][cart] ${JSON.stringify({
+      operation,
+      cartId: cart?.id || null,
+      checkoutUrl: cart?.checkoutUrl || null,
+      graphQLErrors: graphQLErrors.map((error) =>
+        typeof error === "string" ? error : error?.message || String(error)
+      ),
+      userErrors: userErrors.map((error) => ({
+        field: error?.field || null,
+        code: error?.code || null,
+        message: error?.message || String(error),
+      })),
+    })}`
+  );
+};
 
 /* =========================================================
    FETCH CART
@@ -1438,6 +1543,12 @@ const updateCartDeliveryAddress =
     const errors =
       result.userErrors || [];
 
+    logCartDiagnostics(
+      "cartDeliveryAddressesAdd",
+      result.cart,
+      errors
+    );
+
     if (errors.length) {
       throw new Error(
         errors
@@ -1500,6 +1611,12 @@ const updateCartBuyerIdentity =
     const errors =
       result.userErrors || [];
 
+    logCartDiagnostics(
+      "cartBuyerIdentityUpdate",
+      result.cart,
+      errors
+    );
+
     if (errors.length) {
       throw new Error(
         errors
@@ -1523,8 +1640,7 @@ const updateCartBuyerIdentity =
 const createCart = async (
   lines
 ) => {
-  const data =
-    await storefrontGraphql(
+  const data = await storefrontGraphql(
       `mutation CartCreate(
         $input: CartInput!
       ) {
@@ -1552,6 +1668,12 @@ const createCart = async (
     data.cartCreate
       .userErrors || [];
 
+  logCartDiagnostics(
+    "cartCreate",
+    data.cartCreate?.cart,
+    errors
+  );
+
   if (errors.length) {
     throw new Error(
       errors
@@ -1577,17 +1699,18 @@ const mutateCart = async (
   variables,
   field
 ) => {
-  const data =
-    await storefrontGraphql(
-      mutation,
-      variables
-    );
+  const data = await storefrontGraphql(
+    mutation,
+    variables
+  );
 
   const result =
     data[field];
 
   const errors =
     result.userErrors || [];
+
+  logCartDiagnostics(field, result.cart, errors);
 
   if (errors.length) {
     throw new Error(
@@ -1637,6 +1760,37 @@ const addCartLines = (
       lines,
     },
     "cartLinesAdd"
+  );
+
+/* =========================================================
+   UPDATE CART DISCOUNT CODES
+========================================================= */
+
+const updateCartDiscountCodes = (cartId, discountCodes) =>
+  mutateCart(
+    `mutation CartDiscountCodesUpdate(
+      $cartId: ID!
+      $discountCodes: [String!]!
+    ) {
+      cartDiscountCodesUpdate(
+        cartId: $cartId
+        discountCodes: $discountCodes
+      ) {
+        cart {
+          ${cartFields}
+        }
+        userErrors {
+          field
+          message
+        }
+        warnings {
+          code
+          message
+        }
+      }
+    }`,
+    { cartId, discountCodes },
+    "cartDiscountCodesUpdate"
   );
 
 /* =========================================================
@@ -2041,6 +2195,8 @@ module.exports = {
 
   fetchStorefrontContent,
 
+  fetchStorePolicies,
+
   fetchCart,
 
   validateCartInventory,
@@ -2056,6 +2212,7 @@ module.exports = {
   createCart,
 
   addCartLines,
+  updateCartDiscountCodes,
 
   updateCartLines,
 

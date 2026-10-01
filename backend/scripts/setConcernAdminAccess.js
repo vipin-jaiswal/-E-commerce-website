@@ -1,8 +1,8 @@
 require("dotenv").config();
 
-const domain = String(process.env.SHOPIFY_STORE_DOMAIN || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+const domain = String(process.env.SHOPIFY_STORE_DOMAIN || "").trim().replace(/^https?:\/\//i, "").split(/[/?#]/)[0].toLowerCase();
 const version = process.env.SHOPIFY_API_VERSION || "2026-07";
-const type = process.env.SHOPIFY_CONCERN_TYPE || "app--428015452161--dyva_concern";
+const type = process.env.SHOPIFY_CONCERN_TYPE || "$app:dyva_concern";
 
 const token = async () => {
   if (process.env.SHOPIFY_ADMIN_TOKEN) return process.env.SHOPIFY_ADMIN_TOKEN;

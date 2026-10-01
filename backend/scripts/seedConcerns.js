@@ -1,10 +1,12 @@
 require("dotenv").config();
 
 const domain = String(process.env.SHOPIFY_STORE_DOMAIN || "")
-  .replace(/^https?:\/\//, "")
-  .replace(/\/$/, "");
+  .trim()
+  .replace(/^https?:\/\//i, "")
+  .split(/[/?#]/)[0]
+  .toLowerCase();
 const version = process.env.SHOPIFY_API_VERSION || "2026-07";
-const type = process.env.SHOPIFY_CONCERN_TYPE || "app--428015452161--dyva_concern";
+const type = process.env.SHOPIFY_CONCERN_TYPE || "$app:dyva_concern";
 
 const concerns = [
   { handle: "acne", name: "Acne", query: "acne", category: "skin", order: 1 },

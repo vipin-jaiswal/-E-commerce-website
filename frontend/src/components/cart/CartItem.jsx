@@ -1,67 +1,187 @@
 import React from "react";
-import { Trash2 } from "lucide-react";
+import {
+  Trash2,
+  Leaf,
+  Droplets,
+  Star,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+
 import { useCart } from "../../hooks/useCart";
 import { formatCurrency } from "../../utils/currency";
 
 export default function CartItem({ item }) {
-  const { updateQty, removeFromCart } = useCart();
+  const {
+    updateQty,
+    removeFromCart,
+    cartCurrency,
+  } = useCart();
 
   const productId = item.productId || item.id;
   const cartItemId = item.cartItemId || item.id;
+
   const name = item.name || "Product";
   const brand = item.brand || "";
-  const images = Array.isArray(item.images) ? item.images : [];
-  const price = Number(item.salePrice ?? item.price ?? 0);
-  const qty = Number(item.quantity ?? item.qty ?? 1) || 1;
+
+  const images = Array.isArray(item.images)
+    ? item.images
+    : [];
+
+  const price = Number(
+    item.salePrice ?? item.price ?? 0
+  );
+
+  const originalPrice = Number(
+    item.compareAtPrice ??
+      item.originalPrice ??
+      item.price ??
+      0
+  );
+
+  const qty =
+    Number(item.quantity ?? item.qty ?? 1) || 1;
 
   return (
-    <div className="flex gap-4 py-5 border-b border-border dark:border-white/10 last:border-0 transition-colors duration-300">
-      <Link to={`/products/${productId}`} className="flex-shrink-0">
-        <div className="w-20 h-20 rounded-xl overflow-hidden bg-ivory-dark dark:bg-slate-800">
+    <div className="group relative grid gap-4 rounded-2xl border border-white/10 bg-[#111] p-4 transition-all duration-300 hover:border-[#ff2f8a]/40 sm:grid-cols-[145px_minmax(0,1fr)_auto] sm:items-center sm:p-5">
+
+      {/* PRODUCT IMAGE */}
+      <Link
+        to={`/products/${productId}`}
+        className="mx-auto sm:mx-0"
+      >
+        <div className="relative h-[145px] w-[145px] overflow-hidden rounded-2xl border border-white/10 bg-[#1a1518]">
+
           <img
             src={images[0] || "/placeholder.jpg"}
             alt={name}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
           />
+
+          {/* CHECK ICON */}
+          <div className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md bg-[#ff2f8a] shadow-lg">
+            <span className="text-sm font-bold text-white">
+              ✓
+            </span>
+          </div>
         </div>
       </Link>
 
-      <div className="flex-1 min-w-0">
+      {/* PRODUCT DETAILS */}
+      <div className="min-w-0">
+
         {brand && (
-          <p className="text-[11px] text-muted dark:text-slate-400 font-medium tracking-widest uppercase mb-0.5">
+          <span className="mb-2 inline-flex rounded-md bg-[#ff2f8a]/15 px-2.5 py-1 text-xs font-semibold text-[#ff5ba5]">
             {brand}
-          </p>
+          </span>
         )}
 
         <Link to={`/products/${productId}`}>
-          <h3 className="text-sm font-semibold text-charcoal dark:text-slate-100 hover:text-accent transition-colors line-clamp-2">
+          <h3 className="text-lg font-bold leading-6 text-white transition hover:text-[#ff2f8a] sm:text-xl">
             {name}
           </h3>
         </Link>
 
-        {item.weight && <p className="mt-1 text-xs text-muted dark:text-slate-400">Weight: {item.weight}</p>}
+        {/* FEATURES */}
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-300">
 
-        <p className="text-sm font-semibold text-charcoal dark:text-slate-100 mt-1">
-          {formatCurrency(price)}
-        </p>
+          <span className="flex items-center gap-1.5">
+            <Leaf
+              size={18}
+              className="text-[#ff2f8a]"
+            />
+            Natural Formula
+          </span>
 
-        <div className="flex items-center gap-4 mt-3">
-          <div className="flex items-center border border-border dark:border-white/10 rounded-xl overflow-hidden">
+          <span className="flex items-center gap-1.5">
+            <Droplets
+              size={18}
+              className="text-[#ff2f8a]"
+            />
+            Ammonia Free
+          </span>
+
+          <span className="flex items-center gap-1.5">
+            <Star
+              size={18}
+              className="text-[#ff2f8a]"
+            />
+            Long Lasting
+          </span>
+        </div>
+
+        {/* STOCK */}
+        <div className="mt-3 flex items-center gap-2 text-sm font-medium text-emerald-400">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+          In stock
+        </div>
+
+        {/* MOBILE PRICE */}
+        <div className="mt-4 sm:hidden">
+          <p className="text-xl font-bold text-[#ff2f8a]">
+            {formatCurrency(price, cartCurrency)}
+          </p>
+
+          {originalPrice > price && (
+            <p className="text-sm text-slate-500 line-through">
+              {formatCurrency(
+                originalPrice,
+                cartCurrency
+              )}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+
+        {/* PRICE */}
+        <div className="hidden text-right sm:block">
+          <p className="text-xl font-bold text-[#ff2f8a]">
+            {formatCurrency(price, cartCurrency)}
+          </p>
+
+          {originalPrice > price && (
+            <p className="text-sm text-slate-500 line-through">
+              {formatCurrency(
+                originalPrice,
+                cartCurrency
+              )}
+            </p>
+          )}
+        </div>
+
+        {/* QUANTITY + DELETE */}
+        <div className="flex items-center gap-3">
+
+          <div className="flex h-12 items-center overflow-hidden rounded-xl border border-white/10 bg-[#181818]">
+
             <button
               type="button"
-              onClick={() => updateQty(cartItemId, qty - 1)}
-              className="w-8 h-8 flex items-center justify-center text-charcoal dark:text-slate-200 hover:bg-ivory-dark dark:hover:bg-slate-800 transition-colors"
+              onClick={() =>
+                updateQty(
+                  cartItemId,
+                  qty - 1
+                )
+              }
+              className="flex h-full w-12 items-center justify-center text-lg font-bold text-[#ff2f8a] transition hover:bg-[#ff2f8a]/10"
             >
-              -
+              −
             </button>
-            <span className="w-8 text-center text-sm font-medium text-charcoal dark:text-slate-100">
+
+            <span className="flex w-10 justify-center text-sm font-semibold text-white">
               {qty}
             </span>
+
             <button
               type="button"
-              onClick={() => updateQty(cartItemId, qty + 1)}
-              className="w-8 h-8 flex items-center justify-center text-charcoal dark:text-slate-200 hover:bg-ivory-dark dark:hover:bg-slate-800 transition-colors"
+              onClick={() =>
+                updateQty(
+                  cartItemId,
+                  qty + 1
+                )
+              }
+              className="flex h-full w-12 items-center justify-center text-lg font-bold text-[#ff2f8a] transition hover:bg-[#ff2f8a]/10"
             >
               +
             </button>
@@ -69,19 +189,15 @@ export default function CartItem({ item }) {
 
           <button
             type="button"
-            onClick={() => removeFromCart(cartItemId)}
-            className="text-muted dark:text-slate-400 hover:text-red-400 transition-colors"
-            aria-label="Remove item"
+            onClick={() =>
+              removeFromCart(cartItemId)
+            }
+            aria-label={`Remove ${name}`}
+            className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 text-[#ff8abb] transition hover:border-[#ff2f8a] hover:bg-[#ff2f8a]/10 hover:text-[#ff2f8a]"
           >
-            <Trash2 size={16} />
+            <Trash2 size={18} />
           </button>
         </div>
-      </div>
-
-      <div className="flex-shrink-0 text-right">
-        <p className="text-sm font-semibold text-charcoal dark:text-slate-100">
-          {formatCurrency(price * qty)}
-        </p>
       </div>
     </div>
   );

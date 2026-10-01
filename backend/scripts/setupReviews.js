@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { REVIEW_TYPE, APP_OWNED_REVIEW_TYPE, REVIEW_FIELDS } = require("../services/reviewMetaobject");
 
 const domain = String(process.env.SHOPIFY_STORE_DOMAIN || "")
   .trim()
@@ -10,11 +11,7 @@ const domain = String(process.env.SHOPIFY_STORE_DOMAIN || "")
 
 const version = process.env.SHOPIFY_API_VERSION || "2026-07";
 
-// Existing Shopify review metaobject type
-const reviewType = "app--428015452161--dyva_product_review";
-
-// Used only when creating the definition
-const appOwnedReviewType = "$app:dyva_product_review";
+const reviewType = REVIEW_TYPE;
 
 const reviewsFile =
   process.env.REVIEWS_FILE ||
@@ -58,9 +55,7 @@ const getAdminToken = async () => {
 
   if (!response.ok || !payload.access_token) {
     throw new Error(
-      `Shopify Admin authentication failed (HTTP ${response.status}): ${JSON.stringify(
-        payload
-      )}`
+      `Shopify Admin authentication failed (HTTP ${response.status}): ${payload.error_description || payload.error || "No access token was returned."}`
     );
   }
 
@@ -162,7 +157,7 @@ const request = async (query, variables = {}) => {
    CREATE / VERIFY REVIEW METAOBJECT DEFINITION
 ========================================================= */
 
-const ensureReviewDefinition = async () => {
+const ensureReviewDefinition = async ({ createIfMissing = true } = {}) => {
   console.log("Checking Shopify review definition...");
 
   const existing = await request(
@@ -173,6 +168,8 @@ const ensureReviewDefinition = async () => {
         name
         fieldDefinitions {
           key
+          required
+          type { name }
         }
       }
     }`,
@@ -187,28 +184,27 @@ const ensureReviewDefinition = async () => {
   if (existing.metaobjectDefinitionByType) {
     const definition = existing.metaobjectDefinitionByType;
 
-    const requiredKeys = [
-      "product_handle",
-      "author",
-      "rating",
-      "title",
-      "body",
-      "created_at",
-    ];
-
-    const present = new Set(
-      (definition.fieldDefinitions || []).map((field) => field.key)
+    const present = new Map(
+      (definition.fieldDefinitions || []).map((field) => [field.key, field])
     );
+    const mismatches = REVIEW_FIELDS.flatMap((expected) => {
+      const actual = present.get(expected.key);
+      if (!actual) return [`${expected.key} (missing; expected ${expected.type})`];
+      const problems = [];
+      if (actual.type?.name !== expected.type) {
+        problems.push(`${expected.key} type is ${actual.type?.name || "unknown"}; expected ${expected.type}`);
+      }
+      if (actual.required !== expected.required) {
+        problems.push(`${expected.key} required=${actual.required}; expected ${expected.required}`);
+      }
+      return problems;
+    });
 
-    const missing = requiredKeys.filter(
-      (key) => !present.has(key)
-    );
-
-    if (missing.length) {
+    if (mismatches.length) {
       throw new Error(
-        `Existing ${reviewType} definition is missing fields: ${missing.join(
+        `Existing ${reviewType} definition does not match the review service schema: ${mismatches.join(
           ", "
-        )}`
+        )}. Update this existing definition in Shopify before retrying; setup will not create a duplicate.`
       );
     }
 
@@ -219,6 +215,12 @@ const ensureReviewDefinition = async () => {
       type: definition.type,
       name: definition.name,
     };
+  }
+
+  if (!createIfMissing) {
+    throw new Error(
+      `Review definition ${reviewType} is missing. Run "npm.cmd run setup:reviews" from the backend folder to create it.`
+    );
   }
 
   /*
@@ -247,7 +249,7 @@ const ensureReviewDefinition = async () => {
     }`,
     {
       definition: {
-        type: appOwnedReviewType,
+        type: APP_OWNED_REVIEW_TYPE,
         name: "DYVA Product Review",
 
         access: {
@@ -255,43 +257,7 @@ const ensureReviewDefinition = async () => {
           storefront: "NONE",
         },
 
-        fieldDefinitions: [
-          {
-            key: "product_handle",
-            name: "Product handle",
-            type: "single_line_text_field",
-            required: true,
-          },
-          {
-            key: "author",
-            name: "Reviewer name",
-            type: "single_line_text_field",
-            required: true,
-          },
-          {
-            key: "rating",
-            name: "Star rating",
-            type: "number_integer",
-            required: true,
-          },
-          {
-            key: "title",
-            name: "Review title",
-            type: "single_line_text_field",
-          },
-          {
-            key: "body",
-            name: "Review",
-            type: "multi_line_text_field",
-            required: true,
-          },
-          {
-            key: "created_at",
-            name: "Submitted at",
-            type: "date_time",
-            required: true,
-          },
-        ],
+        fieldDefinitions: REVIEW_FIELDS,
       },
     }
   );
@@ -312,6 +278,12 @@ const ensureReviewDefinition = async () => {
   if (!result?.metaobjectDefinition) {
     throw new Error(
       "Shopify did not return the created review definition."
+    );
+  }
+
+  if (!result.metaobjectDefinition.type.endsWith("--dyva_product_review")) {
+    throw new Error(
+      `Shopify returned unexpected app-owned review type ${result.metaobjectDefinition.type}. Expected an app-owned type ending in --dyva_product_review.`
     );
   }
 
@@ -541,6 +513,7 @@ const migrateLocalReviews = async () => {
 ========================================================= */
 
 const main = async () => {
+  const verifyOnly = process.argv.includes("--verify-only");
   if (!domain) {
     throw new Error(
       "SHOPIFY_STORE_DOMAIN is missing"
@@ -562,8 +535,13 @@ const main = async () => {
    * Step 1:
    * Make sure the review metaobject definition exists.
    */
-  const definition =
-    await ensureReviewDefinition();
+  const definition = await ensureReviewDefinition({ createIfMissing: !verifyOnly });
+
+  if (verifyOnly) {
+    console.log("Review definition verified against the review service schema.");
+    console.log(JSON.stringify(definition, null, 2));
+    return;
+  }
 
   /*
    * Step 2:

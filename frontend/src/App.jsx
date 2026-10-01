@@ -18,6 +18,7 @@ import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Wishlist from './pages/Wishlist';
+import ShippingReturns from './pages/ShippingReturns';
 import AllConcernsPage from './pages/AllConcernsPage';
 import Account from './pages/Account';
 import { Login, Register } from './pages/AuthPages';
@@ -28,7 +29,7 @@ const AppLayout = () => (
   <div className="flex flex-col min-h-screen bg-white text-[#171717] dark:bg-[#090909] dark:text-white">
     <AnnouncementBar />
     <Header />
-    <main className="flex-1 pt-20 pb-20">
+    <main className="flex-1 pt-4 pb-16 sm:pt-20 sm:pb-20">
       <Outlet />
     </main>
     <Footer />
@@ -62,6 +63,7 @@ function App() {
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
               <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/shipping-returns" element={<ShippingReturns />} />
               <Route path="/concerns" element={<AllConcernsPage />} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
               <Route path="/address" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />

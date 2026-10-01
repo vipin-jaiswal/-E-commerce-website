@@ -5,14 +5,14 @@ import { ProductCardSkeleton } from '../common/Loader';
 export default function ProductGrid({ products = [], loading = false, cols = 4 }) {
   const gridColumns =
     cols >= 4
-      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+      ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
       : cols === 3
-        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-        : 'grid-cols-1 sm:grid-cols-2';
+        ? 'sm:grid-cols-2 lg:grid-cols-3'
+        : 'sm:grid-cols-2';
 
   if (loading) {
     return (
-      <div className={`grid justify-items-center gap-4 md:gap-6 ${gridColumns}`}>
+      <div className={`grid grid-cols-2 justify-items-center gap-3 sm:gap-4 md:gap-6 ${gridColumns}`}>
         {Array.from({ length: cols * 2 }).map((_, index) => (
           <ProductCardSkeleton key={index} />
         ))}
@@ -29,7 +29,7 @@ export default function ProductGrid({ products = [], loading = false, cols = 4 }
   }
 
   return (
-    <div className={`grid justify-items-center gap-4 md:gap-6 ${gridColumns}`}>
+    <div className={`grid grid-cols-2 justify-items-center gap-3 sm:gap-4 md:gap-6 ${gridColumns}`}>
       {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}

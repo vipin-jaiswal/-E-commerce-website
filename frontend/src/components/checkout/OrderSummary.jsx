@@ -2,10 +2,8 @@ import React from "react";
 import { useCart } from "../../hooks/useCart";
 import { formatCurrency } from "../../utils/currency";
 
-export default function OrderSummary({ discount = 0 }) {
-  const { items, cartTotal } = useCart();
-  const discountAmount = Math.round(cartTotal * discount);
-  const total = cartTotal - discountAmount;
+export default function OrderSummary() {
+  const { items, cartSubtotal, cartTotal, cartCurrency } = useCart();
 
   return (
     <div className="ui-card p-6 sticky top-24">
@@ -35,7 +33,7 @@ export default function OrderSummary({ discount = 0 }) {
                 <p className="text-xs text-muted">Qty: {qty}</p>
               </div>
               <p className="text-xs font-semibold text-charcoal flex-shrink-0">
-                {formatCurrency(price * qty)}
+                {formatCurrency(price * qty, cartCurrency)}
               </p>
             </div>
           );
@@ -44,25 +42,18 @@ export default function OrderSummary({ discount = 0 }) {
 
       <div className="border-t border-border pt-4 space-y-2">
         <div className="flex justify-between text-sm text-muted">
-          <span>Subtotal</span>
-          <span>{formatCurrency(cartTotal)}</span>
+          <span>Products</span>
+          <span>{formatCurrency(cartSubtotal, cartCurrency)}</span>
         </div>
 
-        {discountAmount > 0 && (
-          <div className="flex justify-between text-sm text-primary">
-            <span>Discount</span>
-            <span>-{formatCurrency(discountAmount)}</span>
-          </div>
-        )}
-
         <div className="flex justify-between text-sm text-muted">
-          <span>Shipping</span>
-          <span>Calculated by Shopify</span>
+          <span>Shipping &amp; taxes</span>
+          <span>Shown at checkout</span>
         </div>
 
         <div className="flex justify-between text-sm font-bold text-charcoal pt-2 border-t border-border">
-          <span>Total</span>
-          <span>{formatCurrency(total)}</span>
+          <span>Products total</span>
+          <span>{formatCurrency(cartTotal, cartCurrency)}</span>
         </div>
       </div>
     </div>

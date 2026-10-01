@@ -39,7 +39,7 @@ function CategorySlider({ category }) {
           </p>
         </div>
       ) : <div
-        className="relative px-8"
+        className="relative px-0 sm:px-8"
         onMouseEnter={() => swiper?.autoplay.stop()}
         onMouseLeave={() => swiper?.autoplay.start()}
       >
@@ -95,7 +95,9 @@ function CategorySlider({ category }) {
               ))
             : products.map((product) => (
                 <SwiperSlide key={product.id}>
-                  <ProductCard product={product} />
+                  <div className="mx-auto w-full max-w-[10.5rem] px-1 sm:max-w-[18rem] sm:px-0">
+                    <ProductCard product={product} />
+                  </div>
                 </SwiperSlide>
               ))}
         </Swiper>

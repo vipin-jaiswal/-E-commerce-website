@@ -4,13 +4,35 @@ const path = require('node:path');
 
 const storeDomain = String(process.env.SHOPIFY_STORE_DOMAIN || '')
   .trim()
-  .replace(/^https?:\/\//, '')
-  .replace(/\/.*$/, '');
+  .replace(/^https?:\/\//i, '')
+  .split(/[/?#]/)[0]
+  .toLowerCase();
 const apiVersion = process.env.SHOPIFY_API_VERSION || '2026-07';
 
 const adminGraphqlUrl = `https://${storeDomain}/admin/api/${apiVersion}/graphql.json`;
 const METAOBJECT_SCOPE = 'unauthenticated_read_metaobjects';
 const envPath = path.join(__dirname, '.env');
+
+const sanitizePreview = (value) => String(value || '')
+  .replace(/<[^>]*>/g, ' ')
+  .replace(/\s+/g, ' ')
+  .replace(/(access[_]?token|storefrontAccessToken|client_secret|client_id)["'=:\s]+[^&"\s,}]+/ig, '$1=[REDACTED]')
+  .trim()
+  .slice(0, 240);
+
+const readShopifyResponse = async (response, label) => {
+  const text = await response.text();
+  const contentType = response.headers.get('content-type') || '(missing)';
+  let payload;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    throw new Error(
+      `${label} returned a non-JSON response (HTTP ${response.status}, content-type: ${contentType}). Body preview: ${sanitizePreview(text) || '(empty)'}`
+    );
+  }
+  return { payload, contentType, text };
+};
 
 const getAdminToken = async () => {
   if (process.env.SHOPIFY_ADMIN_TOKEN) return process.env.SHOPIFY_ADMIN_TOKEN;
@@ -20,7 +42,8 @@ const getAdminToken = async () => {
     throw new Error('Set SHOPIFY_ADMIN_TOKEN or SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET in backend/.env');
   }
 
-  const response = await fetch(`https://${storeDomain}/admin/oauth/access_token`, {
+  const tokenUrl = `https://${storeDomain}/admin/oauth/access_token`;
+  const response = await fetch(tokenUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -29,9 +52,11 @@ const getAdminToken = async () => {
       client_secret: clientSecret,
     }),
   });
-  const payload = await response.json();
+  const { payload, contentType, text } = await readShopifyResponse(response, `Shopify token endpoint ${tokenUrl}`);
   if (!response.ok || !payload.access_token) {
-    throw new Error(payload.error_description || `Admin token request failed (HTTP ${response.status})`);
+    throw new Error(
+      `Admin token request failed (HTTP ${response.status}, content-type: ${contentType}). ${sanitizePreview(text) || payload.error_description || payload.error || 'No response details.'}`
+    );
   }
   return payload.access_token;
 };
@@ -52,6 +77,9 @@ const saveStorefrontToken = (token) => {
 
 const createStorefrontToken = async () => {
   if (!storeDomain) throw new Error('SHOPIFY_STORE_DOMAIN is missing');
+  if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(storeDomain)) {
+    throw new Error('SHOPIFY_STORE_DOMAIN must be the store myshopify.com domain (for example: example.myshopify.com)');
+  }
 
   const adminToken = await getAdminToken();
   const scopesResponse = await fetch(adminGraphqlUrl, {
@@ -66,10 +94,15 @@ const createStorefrontToken = async () => {
       }`,
     }),
   });
-  const scopesPayload = await scopesResponse.json();
+  const { payload: scopesPayload } = await readShopifyResponse(scopesResponse, 'Shopify Admin GraphQL scope check');
   if (!scopesResponse.ok || scopesPayload.errors?.length) {
     throw new Error(
       `Unable to verify installed Shopify scopes: ${scopesPayload.errors?.map((error) => error.message).join(', ') || `HTTP ${scopesResponse.status}`}`
+    );
+  }
+  if (!scopesPayload.data?.currentAppInstallation) {
+    throw new Error(
+      `Shopify Admin authentication succeeded for ${storeDomain}, but the app has no installation on that store. Check that this Dev Dashboard app is installed on a store in its Shopify organization.`
     );
   }
   const grantedScopes = new Set(
@@ -101,10 +134,10 @@ const createStorefrontToken = async () => {
     },
     body: JSON.stringify({ query, variables: { input: { title: 'Dyva Storefront' } } }),
   });
-  const payload = await response.json();
+  const { payload, contentType, text } = await readShopifyResponse(response, 'Shopify Admin GraphQL Storefront token mutation');
 
   if (!response.ok) {
-    throw new Error(`Shopify Admin API HTTP error ${response.status}: ${JSON.stringify(payload)}`);
+    throw new Error(`Shopify Admin API HTTP error ${response.status} (content-type: ${contentType}): ${sanitizePreview(text)}`);
   }
   if (payload.errors?.length) {
     throw new Error(`Shopify GraphQL error: ${payload.errors.map((error) => error.message).join(', ')}`);

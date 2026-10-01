@@ -66,15 +66,9 @@ const Header = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/"
-              className="
-                text-2xl
-                font-bold
-                text-primary dark:text-primary
-                hover:text-primary-dark dark:hover:text-primary
-                transition
-              "
+              className="text-2xl font-bold transition"
             >
-              DYVA
+              <span className="text-gray-900 dark:text-white">DY</span><span className="text-primary">VA</span>
             </Link>
           </div>
 

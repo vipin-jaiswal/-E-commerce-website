@@ -4,129 +4,132 @@ import {
   ShoppingBag,
   Trash2,
   ArrowLeft,
+  Home,
+  ChevronRight,
 } from "lucide-react";
 
 import CartItem from "../components/cart/CartItem";
 import CartSummary from "../components/cart/CartSummary";
+import CouponBox from "../components/cart/CouponBox";
 import { useCart } from "../hooks/useCart";
 
 export default function Cart() {
   const { items, clearCart } = useCart();
 
-  // Empty Cart
   if (items.length === 0) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 bg-white dark:bg-[#090909] transition-colors duration-300">
-        <div className="ui-card p-10 text-center max-w-md w-full">
+      <div className="cart-theme min-h-screen bg-[#090909] px-4 py-16 text-white">
+        <div className="mx-auto flex min-h-[70vh] max-w-md items-center justify-center">
+          <div className="w-full rounded-3xl border border-white/10 bg-[#111] p-10 text-center">
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[#351323]">
+              <ShoppingBag size={48} className="text-[#ff2f8a]" />
+            </div>
 
-          <div className="w-24 h-24 bg-primary-soft dark:bg-[#351323] rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShoppingBag
-              size={50}
-            className="text-primary"
-            />
+            <h2 className="mb-3 text-3xl font-bold">
+              Your Cart is Empty
+            </h2>
+
+            <p className="mb-8 text-slate-400">
+              Looks like you haven't added any products yet.
+            </p>
+
+            <Link
+              to="/products"
+              className="inline-flex items-center gap-2 rounded-full bg-[#ff2f8a] px-8 py-3 font-semibold text-white transition hover:bg-[#ff167c]"
+            >
+              <ArrowLeft size={18} />
+              Continue Shopping
+            </Link>
           </div>
-
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-slate-100 mb-3">
-            Your Cart is Empty
-          </h2>
-
-          <p className="text-gray-500 dark:text-slate-400 mb-8">
-            Looks like you haven't added any products yet.
-          </p>
-
-          <Link
-            to="/products"
-            className="
-              inline-flex
-              items-center
-              gap-2
-              ui-primary
-              px-8
-              py-3
-              rounded-full
-              font-semibold
-              transition
-            "
-          >
-            <ArrowLeft size={18} />
-            Continue Shopping
-          </Link>
-
         </div>
       </div>
     );
   }
 
   return (
-    <section className="min-h-screen bg-white dark:bg-[#090909] py-10 px-4 transition-colors duration-300">
-      <div className="max-w-[1500px] mx-auto">
+    <section className="cart-theme min-h-screen bg-[#090909] px-4 py-8 text-white sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1430px]">
 
-        {/* Header */}
-        <div className="ui-card p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-
+        {/* PAGE HEADER */}
+        <div className="mb-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-slate-100">
-              Shopping Cart
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+              Your{" "}
+              <span className="text-[#ff2f8a]">
+                Shopping Cart
+              </span>
             </h1>
 
-            <p className="text-gray-500 dark:text-slate-400 mt-2">
-              {items.length} item{items.length > 1 ? "s" : ""} in your cart
+            <p className="mt-2 text-base text-slate-300 sm:text-lg">
+              Review your items and proceed to checkout
             </p>
           </div>
 
-          <button
-            onClick={clearCart}
-            className="
-              flex
-              items-center
-              gap-2
-              border border-primary text-primary
-              px-5
-              py-3
-              rounded-full
-              hover:bg-primary
-              hover:text-white
-              transition
-            "
-          >
-            <Trash2 size={18} />
-            Clear Cart
-          </button>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-slate-400">
+            <Home size={17} />
+            <span>Home</span>
+            <ChevronRight size={16} />
+            <span className="text-[#ff2f8a]">Cart</span>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* MAIN GRID */}
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_490px]">
 
-          {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-6">
-            {items.map((item) => (
-                <div
-                key={item.id}
-                  className="
-                  bg-white dark:bg-[#151515]
-                  rounded-3xl
-                  shadow-md dark:shadow-none
-                  hover:shadow-lg
-                  transition
-                  overflow-hidden
-                  border border-slate-100 dark:border-white/10
-                "
-              >
-                <CartItem item={item} />
+          {/* LEFT */}
+          <div className="min-w-0">
+
+            {/* CART ITEMS BOX */}
+            <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#0d0d0d]">
+
+              {/* CART HEADER */}
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-5 sm:px-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#ff2f8a]">
+                    <span className="text-sm font-bold text-white">
+                      ✓
+                    </span>
+                  </div>
+
+                  <span className="text-sm font-medium text-slate-200 sm:text-base">
+                    {items.length} item{items.length !== 1 ? "s" : ""} selected
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-300 transition hover:text-[#ff2f8a]"
+                >
+                  <Trash2 size={18} />
+                  <span className="hidden sm:inline">
+                    Clear Cart
+                  </span>
+                </button>
               </div>
-            ))}
+
+              {/* ITEMS */}
+              <div className="p-3 sm:p-4">
+                {items.map((item) => (
+                  <CartItem
+                    key={item.cartItemId || item.id}
+                    item={item}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* COUPON */}
+            <div className="mt-4">
+              <CouponBox />
+            </div>
+
           </div>
 
-          {/* Order Summary */}
-          <div className="lg:sticky lg:top-24 h-fit">
-            <div className="
-              bg-white dark:bg-slate-900
-              rounded-3xl
-              shadow-lg dark:shadow-none
-              p-6
-              border
-              border-gray-100 dark:border-white/10
-            ">
+          {/* RIGHT SUMMARY */}
+          <div className="lg:sticky lg:top-24">
+            <div className="rounded-3xl border border-[#ff2f8a]/40 bg-[#111] p-6 shadow-[0_0_35px_rgba(255,47,138,0.06)] sm:p-7">
               <CartSummary />
             </div>
           </div>

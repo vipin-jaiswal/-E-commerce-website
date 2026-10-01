@@ -16,6 +16,11 @@ export const cartService = {
     api.get(`/shopify/cart/inventory${cartQuery(cartId)}`).then((response) => response.data?.data),
   add: (cartId, variantId, quantity = 1) =>
     api.post('/shopify/cart', { cartId, variantId, quantity }).then(unwrapCart),
+  updateDiscountCode: (cartId, code) =>
+    api.post('/shopify/cart/discount', { cartId, code }).then((response) => ({
+      cart: response.data?.data,
+      discount: response.data?.discount,
+    })),
   update: (cartId, lineId, quantity) =>
     api.patch(`/shopify/cart/items${cartQuery(cartId)}`, { lineId, quantity }).then(unwrapCart),
   remove: (cartId, lineId) =>

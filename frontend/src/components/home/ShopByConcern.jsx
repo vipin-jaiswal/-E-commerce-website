@@ -6,15 +6,15 @@ const ShopByConcern = () => {
   const concerns = useShopifyConcerns();
 
   return (
-    <section id="shop-by-concern" className="scroll-mt-28 max-w-[1500px] mx-auto px-4 py-16">
+    <section id="shop-by-concern" className="scroll-mt-28 mx-auto max-w-[1500px] px-4 py-8 sm:py-16">
 
       {/* Heading */}
-      <div className="text-center mb-12">
+      <div className="mb-6 text-center sm:mb-12">
           <p className="text-primary uppercase tracking-[4px] text-sm font-semibold mb-2">
           Find Products For
         </p>
 
-        <h2 className="text-4xl font-bold text-gray-800 dark:text-slate-100">
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-slate-100 sm:text-4xl">
           Shop By Concern
         </h2>
 
@@ -24,7 +24,7 @@ const ShopByConcern = () => {
       </div>
 
       {/* Concern Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+      <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-6">
 
         {concerns.map((concern) => (
           <div
@@ -37,7 +37,7 @@ const ShopByConcern = () => {
             "
           >
             <div className="
-              w-32 h-32
+              h-24 w-24 sm:h-32 sm:w-32
               mx-auto
               rounded-full
               overflow-hidden
@@ -71,7 +71,7 @@ const ShopByConcern = () => {
       </div>
 
       {/* View All */}
-      <div className="flex justify-center mt-12">
+      <div className="mt-7 flex justify-center sm:mt-12">
         <button
           onClick={() => navigate("/concerns")}
           className="

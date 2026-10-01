@@ -28,7 +28,7 @@ const FOOTER_LINKS = {
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-50 dark:bg-[#0F0F0F] text-gray-600 dark:text-gray-400 mt-16">
+    <footer className="mt-0 bg-gray-50 text-gray-600 dark:bg-[#0F0F0F] dark:text-gray-400 sm:mt-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         {/* Top Section */}

@@ -3,10 +3,12 @@ const {
   fetchProducts,
   fetchProduct,
   fetchStorefrontContent,
+  fetchStorePolicies,
   fetchCart,
   validateCartInventory,
   createCart,
   addCartLines,
+  updateCartDiscountCodes,
   updateCartLines,
   removeCartLines,
   getVariantInventory,
@@ -84,6 +86,23 @@ router.get("/content", async (req, res) => {
   }
 });
 
+router.get("/policies/shipping-returns", async (_req, res) => {
+  try {
+    return res.json({ success: true, data: await fetchStorePolicies() });
+  } catch (error) {
+    const message = error.message || "Shopify policy request failed";
+    const missingPolicyScope = /read_legal_policies|access denied|access scope/i.test(message);
+    console.error("Shopify policy request failed:", message);
+    return res.status(missingPolicyScope ? 503 : 502).json({
+      success: false,
+      message: missingPolicyScope
+        ? "The Shopify app needs the read_legal_policies access scope. Update the app scopes and reauthorize the app."
+        : message,
+      errors: [message],
+    });
+  }
+});
+
 router.get("/cart", async (req, res) => {
   try {
     const cartId = getCartId(req);
@@ -140,6 +159,25 @@ router.post("/cart", async (req, res) => {
       ? await addCartLines(cartId, requestedLines)
       : await createCart(requestedLines);
     return res.status(cartId ? 200 : 201).json({ success: true, data: cart });
+  } catch (error) {
+    return handleError(res, error);
+  }
+});
+
+router.post("/cart/discount", async (req, res) => {
+  try {
+    const cartId = getCartId(req);
+    const code = typeof req.body?.code === "string" ? req.body.code.trim() : "";
+    if (!cartId) return res.status(400).json({ success: false, message: "cartId is required" });
+    if (code.length > 100) return res.status(400).json({ success: false, message: "Discount code is too long" });
+
+    const cart = await updateCartDiscountCodes(cartId, code ? [code] : []);
+    const discount = cart.discountCodes.find((item) => item.code.toLowerCase() === code.toLowerCase());
+    return res.json({
+      success: true,
+      data: cart,
+      discount: code ? { code, applicable: Boolean(discount?.applicable) } : null,
+    });
   } catch (error) {
     return handleError(res, error);
   }
@@ -212,10 +250,25 @@ router.post("/checkout", async (req, res) => {
     if (!inventory.cart) return res.status(404).json({ success: false, message: "Shopify cart not found", errors: [] });
     if (inventory.issues.length) return res.status(409).json({ success: false, message: "Some products are unavailable in the requested quantity.", issues: inventory.issues });
     await updateCartBuyerIdentity(cartId, customerToken);
-    const cart = await updateCartDeliveryAddress(cartId, address);
+    await updateCartDeliveryAddress(cartId, address);
+
+    // Fetch Shopify's current cart URL after all cart updates, immediately before redirect.
+    const cart = await fetchCart(cartId);
     if (!cart) return res.status(404).json({ success: false, message: "Shopify cart not found", errors: [] });
-    if (!cart.checkoutUrl) return res.status(400).json({ success: false, message: "A valid Shopify cart is required", errors: [] });
-    return res.json({ success: true, data: { checkoutUrl: cart.checkoutUrl } });
+    if (!cart.checkoutUrl) return res.status(400).json({ success: false, message: "Shopify did not return a checkout URL for this cart", errors: [] });
+
+    let parsedCheckoutUrl;
+    try {
+      parsedCheckoutUrl = new URL(cart.checkoutUrl);
+    } catch {
+      throw new Error("Shopify returned an invalid checkout URL");
+    }
+    if (parsedCheckoutUrl.protocol !== "https:") {
+      throw new Error("Shopify returned a checkout URL that does not use HTTPS");
+    }
+
+    console.info(`[shopify][checkout] ${JSON.stringify({ cartId: cart.id, checkoutUrl: cart.checkoutUrl, graphQLErrors: [], userErrors: [] })}`);
+    return res.json({ success: true, data: { cartId: cart.id, checkoutUrl: cart.checkoutUrl } });
   } catch (error) {
     return handleError(res, error);
   }

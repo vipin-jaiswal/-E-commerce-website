@@ -57,11 +57,17 @@ export default function Checkout() {
     setLoading(true);
     try {
       const cleanAddress = sanitizeAddressData(address);
-      await cartService.checkout(cartId, cleanAddress);
+      const checkout = await cartService.checkout(cartId, cleanAddress);
       sessionStorage.setItem(ADDRESS_KEY, JSON.stringify(cleanAddress));
-      sessionStorage.setItem(PAYMENT_KEY, payment);
-      const { checkoutUrl } = await cartService.getCartCheckoutUrl(cartId);
+      const { checkoutUrl, cartId: checkoutCartId } = checkout || {};
       if (!checkoutUrl) throw new Error("Shopify checkout URL was not returned");
+      if (checkoutCartId && checkoutCartId !== cartId) {
+        throw new Error("Shopify returned a checkout URL for a different cart");
+      }
+      const parsedCheckoutUrl = new URL(checkoutUrl);
+      if (parsedCheckoutUrl.protocol !== "https:") {
+        throw new Error("Shopify returned a checkout URL that does not use HTTPS");
+      }
       window.location.assign(checkoutUrl);
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || "Checkout failed");
@@ -92,8 +98,7 @@ export default function Checkout() {
             </form>
           ) : (
             <div className="space-y-6">
-              <PaymentMethod selected={payment} onSelect={setPayment} />
-              <p className="text-sm text-gray-500">Card, UPI, COD, and other payment options are ultimately controlled by Shopify checkout. No payment details are collected here.</p>
+              <p className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">Shopify will show the final item total, discounts, shipping, and available payment methods before you place the order.</p>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep("address")} className="w-1/3 rounded-xl border px-4 py-3 font-semibold">Back</button>
                 <button type="button" onClick={startCheckout} disabled={loading || !items.length} className="ui-primary w-2/3 disabled:cursor-not-allowed disabled:opacity-50">

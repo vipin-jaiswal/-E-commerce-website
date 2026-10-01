@@ -29,8 +29,8 @@ export default function ReviewCard({ review }) {
       className="
         group
         flex
-        h-[260px]
-        w-[320px]
+        h-[166px]
+        w-full
         shrink-0
         flex-col
         overflow-hidden
@@ -38,7 +38,7 @@ export default function ReviewCard({ review }) {
         border
         border-gray-200
         bg-white
-        p-5
+        p-2.5
         shadow-sm
         transition-all
         duration-300
@@ -48,6 +48,9 @@ export default function ReviewCard({ review }) {
         dark:border-[#292929]
         dark:bg-[#111111]
         dark:hover:border-pink-500
+        sm:h-[260px]
+        sm:w-[320px]
+        sm:p-5
       "
     >
       {/* Top */}
@@ -57,8 +60,8 @@ export default function ReviewCard({ review }) {
           <div
             className="
               flex
-              h-12
-              w-12
+              h-8
+              w-8
               shrink-0
               items-center
               justify-center
@@ -69,6 +72,8 @@ export default function ReviewCard({ review }) {
               bg-gray-50
               dark:border-[#333]
               dark:bg-[#181818]
+              sm:h-12
+              sm:w-12
             "
           >
             {productImage ? (
@@ -78,18 +83,18 @@ export default function ReviewCard({ review }) {
                 className="h-full w-full object-contain"
               />
             ) : (
-              <span className="text-xs text-gray-400">DYVA</span>
+              <span className="text-[9px] text-gray-400 sm:text-xs">DYVA</span>
             )}
           </div>
 
           {/* Customer */}
           <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="truncate text-[11px] font-semibold text-gray-900 dark:text-white sm:text-sm">
               {customerName}
             </h3>
 
             {date && (
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-0.5 text-[9px] text-gray-500 dark:text-gray-400 sm:text-xs">
                 {date}
               </p>
             )}
@@ -101,12 +106,12 @@ export default function ReviewCard({ review }) {
           {[1, 2, 3, 4, 5].map((star) => (
             <Star
               key={star}
-              size={14}
-              className={
+              size={10}
+              className={`sm:h-3.5 sm:w-3.5 ${
                 star <= rating
                   ? "fill-pink-500 text-pink-500"
                   : "text-gray-300 dark:text-gray-600"
-              }
+              }`}
             />
           ))}
         </div>
@@ -114,7 +119,7 @@ export default function ReviewCard({ review }) {
 
       {/* Review title */}
       {review?.title && (
-        <h4 className="mt-4 line-clamp-1 text-sm font-semibold text-gray-900 dark:text-white">
+        <h4 className="mt-2 line-clamp-1 text-xs font-semibold text-gray-900 dark:text-white sm:mt-4 sm:text-sm">
           {review.title}
         </h4>
       )}
@@ -122,26 +127,30 @@ export default function ReviewCard({ review }) {
       {/* Review body */}
       <p
         className="
-          mt-3
-          line-clamp-5
+          mt-2
+          line-clamp-2
           flex-1
           overflow-hidden
-          text-sm
-          leading-6
+          text-[10px]
+          leading-4
           text-gray-600
           dark:text-gray-300
+          sm:mt-3
+          sm:line-clamp-5
+          sm:text-sm
+          sm:leading-6
         "
       >
         {reviewText}
       </p>
 
       {/* Bottom */}
-      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 dark:border-[#292929]">
-        <span className="text-xs font-medium text-pink-500">
+      <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-1.5 dark:border-[#292929] sm:mt-4 sm:pt-3">
+        <span className="text-[9px] font-medium text-pink-500 sm:text-xs">
           Verified Customer
         </span>
 
-        <span className="text-xs text-gray-400">
+        <span className="text-[9px] text-gray-400 sm:text-xs">
           ★ {rating.toFixed(1)}
         </span>
       </div>

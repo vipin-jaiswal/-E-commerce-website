@@ -32,7 +32,7 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] bg-gray-50 px-4 py-6 dark:bg-gray-900 sm:px-6 lg:py-8">
+    <div className="mx-auto max-w-[1400px] bg-gray-50 px-4 py-4 dark:bg-gray-900 sm:px-6 sm:py-6 lg:py-8">
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-10">
         <ProductGallery images={product.images} />
 
@@ -42,8 +42,8 @@ export default function ProductDetails() {
       </div>
 
       {related.length > 0 && (
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold mb-8 dark:text-slate-100">
+        <div className="mt-10 sm:mt-20">
+          <h2 className="mb-5 text-2xl font-bold dark:text-slate-100 sm:mb-8 sm:text-3xl">
             Related Products
           </h2>
 

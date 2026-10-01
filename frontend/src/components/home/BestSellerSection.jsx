@@ -23,7 +23,7 @@ const BestSellerSection = () => {
   return (
     <section
       id="best-sellers"
-      className="scroll-mt-28 max-w-[1500px] mx-auto px-4 py-12"
+      className="scroll-mt-28 mx-auto max-w-[1500px] px-4 py-6 sm:py-12"
     >
       {/* Header */}
       <div className="text-center mb-8">
@@ -31,9 +31,6 @@ const BestSellerSection = () => {
           Products
         </h2>
 
-        <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm max-w-xl mx-auto">
-          Showing live products from the database.
-        </p>
       </div>
 
       {/* Slider Container */}
@@ -97,7 +94,7 @@ const BestSellerSection = () => {
               slidesPerView: 5,
             },
           }}
-          className="px-10"
+          className="px-0 sm:px-10"
         >
           {loading ? (
             Array.from({ length: 8 }).map((_, index) => (
@@ -110,7 +107,7 @@ const BestSellerSection = () => {
           ) : products?.length > 0 ? (
             products.map((product) => (
               <SwiperSlide key={product._id || product.id}>
-                <div className="px-1">
+                <div className="mx-auto w-full max-w-[10.5rem] px-1 sm:max-w-[18rem] sm:px-1">
                   <ProductCard product={product} />
                 </div>
               </SwiperSlide>

@@ -56,7 +56,10 @@ router.post("/", async (req, res) => {
     return res.status(201).json({ success: true, data: review });
   } catch (error) {
     console.error("Unable to save product review:", error.message);
-    return res.status(500).json({ success: false, message: "Unable to save your review right now." });
+    const message = process.env.NODE_ENV === "production"
+      ? "Unable to save your review right now."
+      : `Unable to save your review right now: ${error.message}`;
+    return res.status(500).json({ success: false, message });
   }
 });
 

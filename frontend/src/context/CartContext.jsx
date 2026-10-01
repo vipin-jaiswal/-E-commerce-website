@@ -18,7 +18,7 @@ const getSelectedVariant = (product, weight = '') => {
 
 export const CartProvider = ({ children }) => {
   const [cartId, setCartId] = useState(() => localStorage.getItem(CART_ID_KEY));
-  const [cart, setCart] = useState({ items: [], totalPrice: 0 });
+  const [cart, setCart] = useState({ items: [], subtotalPrice: 0, totalPrice: 0, currencyCode: 'INR' });
 
   useEffect(() => {
     if (!cartId) return;
@@ -28,7 +28,7 @@ export const CartProvider = ({ children }) => {
         if (error.response?.status === 404) {
           localStorage.removeItem(CART_ID_KEY);
           setCartId(null);
-          setCart({ items: [], totalPrice: 0 });
+          setCart({ items: [], subtotalPrice: 0, totalPrice: 0, currencyCode: 'INR' });
         }
       });
   }, [cartId]);
@@ -76,11 +76,26 @@ export const CartProvider = ({ children }) => {
     return rememberCart(await cartService.update(cartId, lineId, quantity));
   };
 
+  const applyDiscountCode = async (code) => {
+    if (!cartId) throw new Error('Your Shopify cart is empty.');
+    const result = await cartService.updateDiscountCode(cartId, code);
+    rememberCart(result.cart);
+    if (!result.discount?.applicable) {
+      throw new Error(`Discount code ${code} is not valid for this cart.`);
+    }
+    return result.discount;
+  };
+
+  const removeDiscountCode = async () => {
+    if (!cartId) return;
+    return rememberCart((await cartService.updateDiscountCode(cartId, '')).cart);
+  };
+
   const clearCart = async () => {
     if (cartId) await cartService.clear(cartId);
     localStorage.removeItem(CART_ID_KEY);
     setCartId(null);
-    setCart({ items: [], totalPrice: 0 });
+    setCart({ items: [], subtotalPrice: 0, totalPrice: 0, currencyCode: 'INR' });
   };
 
   const cartCount = useMemo(
@@ -96,9 +111,15 @@ export const CartProvider = ({ children }) => {
         addToCart,
         removeFromCart,
         updateQty,
+        applyDiscountCode,
+        removeDiscountCode,
         clearCart,
         cartCount,
-        cartTotal: Number(cart.totalPrice || 0),
+        cartSubtotal: Number(cart.subtotalPrice ?? cart.totalPrice ?? 0),
+        // Product amount after discounts; shipping and taxes are shown by Shopify checkout.
+        cartTotal: Number(cart.merchandiseTotalPrice ?? cart.subtotalPrice ?? cart.totalPrice ?? 0),
+        cartCurrency: cart.currencyCode || 'INR',
+        cartDiscountCodes: cart.discountCodes || [],
       }}
     >
       {children}

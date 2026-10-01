@@ -9,7 +9,9 @@
     "seed:concerns": "node scripts/seedConcerns.js",
     "setup:concern-access": "node scripts/setConcernAdminAccess.js",
     "seed:announcement": "node scripts/seedAnnouncement.js",
-    "setup:reviews": "node scripts/setupReviews.js"
+    "setup:reviews": "node scripts/setupReviews.js",
+    "verify:reviews": "node scripts/setupReviews.js --verify-only",
+    "setup:shopify-metaobjects": "npm run setup:reviews && npm run setup:storefront-content && npm run setup:concern-access && npm run seed:concerns"
   },
   "keywords": [],
   "author": "",

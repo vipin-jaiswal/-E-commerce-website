@@ -10,7 +10,7 @@ export default function ProductGallery({ images = [] }) {
 
   return (
     <div className="space-y-3 lg:sticky lg:top-24">
-      <div className="flex h-[280px] items-center justify-center overflow-hidden rounded-3xl bg-white p-3 shadow-card dark:bg-slate-800 sm:h-[360px] lg:h-[440px]">
+      <div className="flex h-[min(62vw,240px)] min-h-[200px] items-center justify-center overflow-hidden rounded-3xl bg-white p-3 shadow-card dark:bg-slate-800 sm:h-[360px] lg:h-[440px]">
         <img
           src={current}
           alt="Product"
