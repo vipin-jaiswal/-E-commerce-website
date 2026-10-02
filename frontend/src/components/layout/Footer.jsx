@@ -67,12 +67,12 @@ export default function Footer() {
 
           {/* Footer Links */}
           <div className="min-w-0 flex-1">
-            <div className="grid grid-cols-1 gap-6 sm:flex sm:justify-between sm:gap-6 lg:gap-10">
+            <div className="grid grid-cols-3 gap-3 sm:gap-6 lg:gap-10">
 
               {Object.entries(FOOTER_LINKS).map(([title, links]) => (
                 <div
                   key={title}
-                  className="min-w-0 sm:min-w-[130px] lg:min-w-[160px]"
+                  className="min-w-0"
                 >
                   <h3 className="mb-2 text-base font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-lg">
                     {title}
