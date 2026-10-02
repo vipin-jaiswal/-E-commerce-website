@@ -55,12 +55,12 @@ export default function Footer() {
 
               <div className="flex items-center gap-3">
                 <Phone size={16} className="shrink-0" />
-                <span>+91 9876543210</span>
+                <span>+91 98xxxxxxxx</span>
               </div>
 
               <div className="flex items-start gap-3">
                 <MapPin size={16} className="mt-1 shrink-0" />
-                <span>Bhilai, Chhattisgarh, India</span>
+                <span>Lucknow, Uttar Pradesh, India</span>
               </div>
             </div>
           </div>
@@ -100,18 +100,6 @@ export default function Footer() {
 
         {/* Legal links remain fixed above mobile navigation on small screens. */}
         <div className="fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-7xl flex-col items-center gap-2 border-t border-gray-200 bg-gray-50 px-4 py-2 text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:border-gray-800 dark:bg-[#0F0F0F] dark:text-gray-400 sm:static sm:mt-10 sm:flex-row sm:justify-between sm:gap-4 sm:border-t sm:px-0 sm:py-6 sm:text-sm sm:shadow-none">
-          <p className="text-center sm:text-left">
-            © {new Date().getFullYear()} DYVA. All rights reserved.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            <Link to="/privacy-policy" className="transition hover:text-primary dark:hover:text-primary">
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className="transition hover:text-primary dark:hover:text-primary">
-              Terms &amp; Conditions
-            </Link>
-          </div>
         </div>
       </div>
     </footer>
