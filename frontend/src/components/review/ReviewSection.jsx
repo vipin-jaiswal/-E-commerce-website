@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Star, X } from "lucide-react";
 import ReviewCard from "./ReviewCard";
 import { API_BASE } from "../../utils/constants";
+import api from "../../services/api";
 
 export default function ReviewSection({
   productHandle = "",
@@ -13,6 +14,8 @@ export default function ReviewSection({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [form, setForm] = useState({
     productHandle: productHandle || "",
     author: "",
@@ -99,6 +102,29 @@ export default function ReviewSection({
     setIsFormOpen(true);
   };
 
+  useEffect(() => {
+    if (!isFormOpen || normalizedHandle || products.length) return;
+
+    let alive = true;
+    const loadProducts = async () => {
+      setProductsLoading(true);
+      try {
+        const response = await api.get("/shopify/products", { params: { limit: 250 } });
+        const payload = response?.data?.data ?? response?.data;
+        const list = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+        if (alive) setProducts(list.filter((product) => product.handle && product.title));
+      } catch (err) {
+        console.error("Review product list error:", err);
+        if (alive) setSubmitError("Unable to load products. Please try again.");
+      } finally {
+        if (alive) setProductsLoading(false);
+      }
+    };
+
+    loadProducts();
+    return () => { alive = false; };
+  }, [isFormOpen, normalizedHandle, products.length]);
+
   const handleSubmitReview = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -133,7 +159,8 @@ export default function ReviewSection({
         px-3
         py-7
         sm:px-6
-        sm:py-16
+        sm:pb-6
+        sm:pt-16
         dark:bg-[#0b0b0b]
       "
     >
@@ -304,10 +331,12 @@ export default function ReviewSection({
                 scrollbar-thin
                 scrollbar-thumb-gray-300
                 dark:scrollbar-thumb-gray-700
-                sm:flex
-                sm:max-h-none
+                sm:max-h-[220px]
+                sm:grid-cols-3
+                lg:flex
+                lg:max-h-none
                 sm:gap-5
-                sm:overflow-x-auto
+                lg:overflow-x-auto
                 sm:overflow-y-hidden
                 sm:pb-3
               "
@@ -367,15 +396,22 @@ export default function ReviewSection({
             <form onSubmit={handleSubmitReview} className="space-y-4">
               {!normalizedHandle && (
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                  Product handle
-                  <input
+                  Product
+                  <select
                     required
-                    pattern="[A-Za-z0-9][A-Za-z0-9-]{0,254}"
                     value={form.productHandle}
                     onChange={(event) => setForm({ ...form, productHandle: event.target.value })}
-                    placeholder="product-name"
-                    className="mt-1 w-full rounded-xl border border-gray-300 bg-transparent px-4 py-3 font-normal outline-none focus:border-pink-500 dark:border-gray-700"
-                  />
+                    disabled={productsLoading}
+                    style={{ accentColor: "#d93b7f" }}
+                    className="review-product-select mt-1 w-full rounded-xl border border-pink-300 bg-pink-50 px-4 py-3 font-normal text-pink-800 outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200 dark:border-pink-500/40 dark:bg-pink-950/30 dark:text-pink-100 dark:focus:ring-pink-900"
+                  >
+                    <option value="" disabled>{productsLoading ? "Loading products…" : "Select a product"}</option>
+                    {products.map((product) => (
+                      <option key={product.id || product._id || product.handle} value={product.handle}>
+                        {product.title}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               )}
 

@@ -36,14 +36,14 @@ export default function MobileMenu({ open, onClose, links }) {
 
       {/* Drawer */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-xl flex flex-col transition-transform duration-300 ease-smooth ${
+        className={`fixed top-0 right-0 z-50 h-auto max-h-screen w-[18rem] max-w-[calc(100vw-1rem)] overflow-y-auto bg-white/70 text-charcoal shadow-xl backdrop-blur-xl flex flex-col transition-transform duration-300 ease-smooth dark:bg-[#151015]/70 dark:text-white ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-          <Link to="/" onClick={onClose} className="font-display text-xl font-semibold text-charcoal">DYVA</Link>
-          <button onClick={onClose} aria-label="Close menu" className="p-1 text-muted hover:text-charcoal">
+          <Link to="/" onClick={onClose} className="font-display text-xl font-semibold text-charcoal dark:text-white">DYVA</Link>
+          <button onClick={onClose} aria-label="Close menu" className="p-1 text-muted transition-colors hover:text-primary dark:hover:text-pink-300">
             <X size={22} />
           </button>
         </div>
@@ -56,7 +56,7 @@ export default function MobileMenu({ open, onClose, links }) {
                 key={link.label}
                 to={link.to}
                 onClick={onClose}
-                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-primary transition-colors"
+                className="block border-b border-gray-200/70 py-3 text-sm font-medium text-charcoal transition-colors hover:text-primary dark:border-white/10 dark:text-gray-100 dark:hover:text-pink-300"
               >
                 {link.label}
               </Link>
@@ -65,7 +65,7 @@ export default function MobileMenu({ open, onClose, links }) {
                 key={link.label}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="block py-3 text-sm font-medium text-charcoal border-b border-gray-200/50 hover:text-primary transition-colors"
+                className="block border-b border-gray-200/70 py-3 text-sm font-medium text-charcoal transition-colors hover:text-primary dark:border-white/10 dark:text-gray-100 dark:hover:text-pink-300"
               >
                 {link.label}
               </a>
@@ -73,15 +73,15 @@ export default function MobileMenu({ open, onClose, links }) {
           )}
         </nav>
 
-        {/* Bottom actions */}
-        <div className="px-6 py-5 border-t border-border">
-          <Link to={localStorage.getItem('token') ? '/account' : '/login'} onClick={onClose} className="mb-4 flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
+        {/* Bottom actions
+        <div className="border-t border-border px-6 py-5">
+          <Link to={localStorage.getItem('token') ? '/account' : '/login'} onClick={onClose} className="mb-4 flex items-center gap-2 text-sm text-muted transition-colors hover:text-primary dark:hover:text-pink-300">
             <UserRound size={18} /> {localStorage.getItem('token') ? 'My account' : 'Sign in'}
           </Link>
-          <Link to="/cart" onClick={onClose} className="flex items-center gap-2 text-sm text-muted hover:text-charcoal transition-colors">
+          <Link to="/cart" onClick={onClose} className="flex items-center gap-2 text-sm text-muted transition-colors hover:text-primary dark:hover:text-pink-300">
             <ShoppingBag size={18} /> Cart
           </Link>
-        </div>
+        </div> */}
       </aside>
     </>
   );

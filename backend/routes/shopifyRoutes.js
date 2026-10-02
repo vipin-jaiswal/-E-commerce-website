@@ -4,6 +4,7 @@ const {
   fetchProduct,
   fetchStorefrontContent,
   fetchStorePolicies,
+  fetchAllStorePolicies,
   fetchCart,
   validateCartInventory,
   createCart,
@@ -99,6 +100,29 @@ router.get("/policies/shipping-returns", async (_req, res) => {
         ? "The Shopify app needs the read_legal_policies access scope. Update the app scopes and reauthorize the app."
         : message,
       errors: [message],
+    });
+  }
+});
+
+router.get("/policies/:kind", async (req, res) => {
+  const policyTypes = {
+    privacy: "PRIVACY_POLICY",
+    terms: "TERMS_OF_SERVICE",
+  };
+  const requestedType = policyTypes[String(req.params.kind).toLowerCase()];
+  if (!requestedType) return res.status(404).json({ success: false, message: "Policy not found." });
+  try {
+    const policies = await fetchAllStorePolicies();
+    return res.json({ success: true, data: policies.filter((policy) => policy.type === requestedType) });
+  } catch (error) {
+    const message = error.message || "Shopify policy request failed";
+    const missingPolicyScope = /read_legal_policies|access denied|access scope/i.test(message);
+    console.error("Shopify policy request failed:", message);
+    return res.status(missingPolicyScope ? 503 : 502).json({
+      success: false,
+      message: missingPolicyScope
+        ? "The Shopify app needs the read_legal_policies access scope. Update the app scopes and reauthorize the app."
+        : "Store policies could not be loaded right now.",
     });
   }
 });

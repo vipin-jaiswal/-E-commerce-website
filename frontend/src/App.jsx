@@ -19,17 +19,32 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Wishlist from './pages/Wishlist';
 import ShippingReturns from './pages/ShippingReturns';
+import FAQ from './pages/FAQ';
+import TrackOrder from './pages/TrackOrder';
+import Contact from './pages/Contact';
+import About from './pages/About';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Terms from './pages/Terms';
 import AllConcernsPage from './pages/AllConcernsPage';
 import Account from './pages/Account';
 import { Login, Register } from './pages/AuthPages';
 import { ForgotPassword, ResetPassword } from './pages/AuthRecovery';
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+
+  return null;
+};
 
 const AppLayout = () => (
   <div className="flex flex-col min-h-screen bg-white text-[#171717] dark:bg-[#090909] dark:text-white">
     <AnnouncementBar />
     <Header />
-    <main className="flex-1 pt-4 pb-16 sm:pt-20 sm:pb-20">
+    <main className="flex-1 pt-4 pb-1 sm:pt-20 sm:pb-5">
       <Outlet />
     </main>
     <Footer />
@@ -50,6 +65,7 @@ function App() {
       <CartProvider>
         <WishlistProvider>
           <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
+          <ScrollToTop />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -64,6 +80,12 @@ function App() {
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/shipping-returns" element={<ShippingReturns />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/track-order" element={<TrackOrder />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/concerns" element={<AllConcernsPage />} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
               <Route path="/address" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />

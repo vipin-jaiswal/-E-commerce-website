@@ -7,13 +7,16 @@ const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
+const configuredOrigins = String(process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+  .split(',').map((value) => value.trim()).filter(Boolean);
+const allowedOrigins = new Set(configuredOrigins);
 app.use(cors({
   origin: (origin, callback) => {
-    // The storefront may be served by Vite (5173) or another local dev port.
-    if (!origin || /^https?:\/\/localhost(?::\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin)) {
+    // Allow same-machine local Vite development and explicitly configured storefront origins.
+    if (!origin || /^https?:\/\/localhost(?::\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin) || allowedOrigins.has(origin)) {
       return callback(null, origin || true);
     }
-    return callback(null, origin);
+    return callback(new Error('Origin is not allowed by CORS'));
   },
   credentials: true,
 }));

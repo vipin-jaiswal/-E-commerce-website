@@ -13,10 +13,21 @@ const HeroSlider = () => {
   const [contentLoaded, setContentLoaded] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    const timeout = window.setTimeout(() => {
+      if (active) setContentLoaded(true);
+    }, 8000);
+
     getStorefrontContent().then((content) => {
+      if (!active) return;
       setBanners((content.banners || []).filter((banner) => banner.image || banner.desktopImage || banner.mobileImage));
       setContentLoaded(true);
     });
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   const openBannerLink = (link) => {
@@ -28,17 +39,26 @@ const HeroSlider = () => {
     window.location.assign(link);
   };
 
-  if (contentLoaded && banners.length === 0) {
+  if (banners.length === 0) {
     return (
       <section className="mx-auto max-w-[1500px] px-4 -mt-4">
-        <div className="flex aspect-[2/1] items-center justify-center rounded-3xl border border-dashed border-border bg-card text-sm text-muted sm:aspect-[3/1] lg:aspect-[4/1]">
-          Banner is not available
+        <div className="flex aspect-[2/1] flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white px-5 text-center dark:border-white/10 dark:bg-[#151015] sm:aspect-[3/1] lg:aspect-[4/1]">
+          {!contentLoaded ? (
+            <>
+              <span className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+              <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">Loading DYVA highlights…</p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-[.24em] text-primary">Welcome to DYVA</p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-5xl">Find your everyday favourites</h1>
+              <button type="button" onClick={() => navigate('/products')} className="mt-6 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary-dark">Shop now</button>
+            </>
+          )}
         </div>
       </section>
     );
   }
-
-  if (!contentLoaded) return null;
 
   return (
     <section className="mx-auto max-w-[1500px] px-4 -mt-4">

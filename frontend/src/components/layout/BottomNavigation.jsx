@@ -1,18 +1,16 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, ShoppingBag, Heart } from 'lucide-react';
-import { useCart } from '../../hooks/useCart';
+import { Home, Search, UserRound, Heart } from 'lucide-react';
 
 const NAV = [
   { icon: Home,        label: 'Home',    href: '/' },
   { icon: Search,      label: 'Search',  href: '/products' },
-  { icon: ShoppingBag, label: 'Cart',    href: '/cart' },
   { icon: Heart,       label: 'Wishlist',href: '/wishlist' },
+    { icon: UserRound,   label: 'Account', href: '/account' },
 ];
 
 export default function BottomNavigation() {
   const { pathname } = useLocation();
-  const { cartCount } = useCart();
   const navItems = NAV;
 
   return (
@@ -29,11 +27,6 @@ export default function BottomNavigation() {
             >
               <Icon size={21} strokeWidth={active ? 2 : 1.5} />
               <span className="text-[10px] font-medium">{label}</span>
-              {label === 'Cart' && cartCount > 0 && (
-                <span className="absolute top-0 right-1.5 w-4 h-4 bg-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
             </Link>
           );
         })}

@@ -48,8 +48,10 @@ export default function ReviewCard({ review }) {
         dark:border-[#292929]
         dark:bg-[#111111]
         dark:hover:border-pink-500
-        sm:h-[260px]
-        sm:w-[320px]
+        sm:h-[166px]
+        sm:w-full
+        lg:h-[260px]
+        lg:w-[320px]
         sm:p-5
       "
     >

@@ -1,4 +1,5 @@
-const rawApiBase = import.meta.env.VITE_API_URL || '';
+const rawApiBase = import.meta.env.VITE_API_URL
+  || (import.meta.env.DEV ? '/api' : 'https://e-commerce-website-2-2ugj.onrender.com');
 
 export const API_BASE = rawApiBase
   ? rawApiBase.replace(/\/$/, '').endsWith('/api')

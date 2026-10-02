@@ -746,7 +746,7 @@ const isTrue = (value) =>
    STOREFRONT CONTENT
 ========================================================= */
 
-const fetchStorePolicies = async () => {
+const fetchAllStorePolicies = async () => {
   const data = await adminGraphql(`query StorePolicies {
     shop {
       shopPolicies {
@@ -758,10 +758,13 @@ const fetchStorePolicies = async () => {
     }
   }`);
 
-  return (data.shop?.shopPolicies || []).filter((policy) =>
+  return data.shop?.shopPolicies || [];
+};
+
+const fetchStorePolicies = async () =>
+  (await fetchAllStorePolicies()).filter((policy) =>
     ["SHIPPING_POLICY", "REFUND_POLICY"].includes(policy.type)
   );
-};
 
 const fetchStorefrontContent =
   async () => {
@@ -2196,6 +2199,8 @@ module.exports = {
   fetchStorefrontContent,
 
   fetchStorePolicies,
+
+  fetchAllStorePolicies,
 
   fetchCart,
 

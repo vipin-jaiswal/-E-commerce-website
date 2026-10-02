@@ -45,18 +45,18 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 px-4 pt-2">
+      <header className="sticky top-0 z-50 px-4 py-2 pt-1.5 lg:pt-2">
         <div
           className="
           max-w-[1500px]
           mx-auto
-          bg-white/95 dark:bg-[#0F0F0F]/95
+          bg-transparent dark:bg-transparent
           backdrop-blur-xl
           border border-gray-200 dark:border-[#2A2A2A]
           rounded-2xl
           shadow-md
           px-5
-          h-16
+          h-12 lg:h-16
           flex
           items-center
           justify-between
