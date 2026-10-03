@@ -4,6 +4,7 @@ const cors = require("cors");
 const shopifyRoutes = require('./routes/shopifyRoutes');
 const authRoutes = require('./routes/authRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.get("/", (req, res) => {
 app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Direct aliases for auth recovery
 app.post('/api/forgot-password', (req, res, next) => {

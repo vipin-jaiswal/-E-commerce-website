@@ -3,7 +3,7 @@ import { ChevronDown, Search } from 'lucide-react';
 
 const FAQS = [
   { question: 'How can I find the right product for my routine?', answer: 'Explore our product categories and product details to find options that fit your needs. If you need help choosing, contact our support team.' },
-  { question: 'How do I track my order?', answer: 'Sign in with the email used for your purchase and visit Track Order. Your recent Shopify orders will be shown there.' },
+  { question: 'How do I track my order?', answer: 'Enter the tracking ID from your shipping confirmation on the Track Order page. No account or email is required.' },
   { question: 'Where can I find shipping and return information?', answer: 'Our current shipping and return policies are loaded directly from the DYVA Shopify store on the Shipping & Returns page.' },
   { question: 'How can I contact DYVA?', answer: 'Use the Contact Us page to prepare a message for our support team.' },
 ];

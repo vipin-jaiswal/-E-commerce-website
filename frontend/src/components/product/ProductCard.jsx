@@ -6,6 +6,7 @@ import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../hooks/useWishlist";
 import toast from "react-hot-toast";
 import { formatCurrency } from "../../utils/currency";
+import { useReviewStats } from "../../context/ReviewStatsContext";
 
 export default function ProductCard({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -27,6 +28,7 @@ export default function ProductCard({ product }) {
   const variants = Array.isArray(product.variants) && product.variants.length > 0 ? product.variants : [];
   const hasAvailableVariant = variants.some((variant) => variant.availableForSale === true);
   const isOutOfStock = !isComingSoon && (variants.length > 0 ? !hasAvailableVariant : product.availableForSale === false);
+  const reviewStats = useReviewStats(product.handle);
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
@@ -144,8 +146,8 @@ export default function ProductCard({ product }) {
 
         <div className="mt-2">
           <Rating
-            value={product.rating}
-            count={product.numReviews}
+            value={reviewStats?.rating ?? product.rating ?? 0}
+            count={reviewStats?.count ?? product.reviewCount ?? product.numReviews ?? 0}
             size={12}
           />
         </div>

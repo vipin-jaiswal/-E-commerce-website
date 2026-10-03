@@ -7,7 +7,7 @@ import { useWishlist } from '../../hooks/useWishlist';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../../utils/currency';
 
-export default function ProductInfo({ product }) {
+export default function ProductInfo({ product, reviews = [] }) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
@@ -34,8 +34,10 @@ export default function ProductInfo({ product }) {
     ? Number(selectedVariant.compareAtPrice)
     : (product.salePrice && product.price && product.salePrice !== product.price ? Number(product.price) : null);
 
-  const reviewCount = product.reviewCount || 0;
-  const reviewRating = product.rating || 0;
+  const reviewCount = reviews.length || product.reviewCount || 0;
+  const reviewRating = reviews.length
+    ? reviews.reduce((total, review) => total + (Number(review.rating) || 0), 0) / reviews.length
+    : (product.rating || 0);
 
   const handleAddToCart = async () => {
     if (isComingSoon || isOutOfStock) return;
@@ -67,12 +69,12 @@ export default function ProductInfo({ product }) {
   const hasMultipleRealVariants = variants.length > 1 && variants.some((v) => v.title && v.title !== 'Default Title');
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4 sm:gap-6">
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted dark:text-slate-400">
           {product.brand || 'DYVA'}
         </p>
-        <h1 className="font-display text-4xl font-semibold text-charcoal dark:text-slate-100">
+        <h1 className="font-display text-3xl font-semibold text-charcoal dark:text-slate-100 sm:text-4xl">
           {product.name}
         </h1>
       </div>
@@ -92,7 +94,7 @@ export default function ProductInfo({ product }) {
       </div>
 
       <div className="flex items-end gap-3 dark:text-slate-100">
-        <span className="text-3xl font-semibold text-charcoal dark:text-white">
+        <span className="text-2xl font-semibold text-charcoal dark:text-white sm:text-3xl">
           {formatCurrency(price)}
         </span>
         {originalPrice && originalPrice > price && (
@@ -143,7 +145,7 @@ export default function ProductInfo({ product }) {
         </div>
       )}
 
-      <div className="grid gap-3 rounded-3xl border border-border bg-white dark:border-[#2A2A2A] dark:bg-[#151515] p-5 sm:grid-cols-3">
+      <div className="order-8 grid gap-3 rounded-3xl border border-border bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#151515] sm:grid-cols-3 sm:p-5">
         <div className="flex items-center gap-3">
           <ShieldCheck className="text-accent" size={18} />
           <div>
@@ -167,14 +169,14 @@ export default function ProductInfo({ product }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="order-7 flex flex-wrap gap-2 sm:gap-3">
         {!isComingSoon && !isOutOfStock && (
           <button
             type="button"
             onClick={handleAddToCart}
-            className="ui-primary inline-flex items-center gap-2 rounded-pill px-6 py-3 text-sm"
+            className="ui-primary inline-flex items-center gap-2 rounded-pill px-4 py-2.5 text-xs sm:px-6 sm:py-3 sm:text-sm"
           >
-            <ShoppingBag size={16} />
+            <ShoppingBag size={15} />
             Add to cart
           </button>
         )}
@@ -182,9 +184,9 @@ export default function ProductInfo({ product }) {
           <button
             type="button"
             onClick={handleBuyNow}
-            className="ui-outline inline-flex items-center gap-2 rounded-pill px-6 py-3 text-sm"
+            className="ui-outline inline-flex items-center gap-2 rounded-pill px-4 py-2.5 text-xs sm:px-6 sm:py-3 sm:text-sm"
           >
-            <ShoppingBag size={16} />
+            <ShoppingBag size={15} />
             Buy Now
           </button>
         )}
@@ -197,7 +199,7 @@ export default function ProductInfo({ product }) {
           <button
             type="button"
             disabled
-            className="inline-flex items-center gap-2 rounded-pill bg-amber-500/20 px-6 py-3 text-sm font-semibold text-amber-800 dark:text-amber-300 cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-pill bg-amber-500/20 px-4 py-2.5 text-xs font-semibold text-amber-800 dark:text-amber-300 cursor-not-allowed sm:px-6 sm:py-3 sm:text-sm"
           >
             Coming Soon
           </button>
@@ -205,18 +207,18 @@ export default function ProductInfo({ product }) {
         <button
           type="button"
           onClick={handleWishlist}
-          className={`inline-flex items-center gap-2 rounded-pill border px-5 py-3 text-sm font-semibold transition-colors ${
+          className={`inline-flex items-center gap-2 rounded-pill border px-4 py-2.5 text-xs font-semibold transition-colors sm:px-5 sm:py-3 sm:text-sm ${
             wishlisted
               ? 'border-accent bg-accent/10 text-accent'
               : 'border-border bg-white text-charcoal hover:border-charcoal dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-100'
           }`}
         >
-          <Heart size={16} className={wishlisted ? 'fill-current' : ''} />
+          <Heart size={15} className={wishlisted ? 'fill-current' : ''} />
           {wishlisted ? 'Saved' : 'Save for later'}
         </button>
       </div>
 
-      <div className="text-sm text-muted dark:text-slate-400">
+      <div className="order-9 text-sm text-muted dark:text-slate-400">
         Status:{' '}
         {isComingSoon ? (
           <span className="font-medium text-amber-600 dark:text-amber-400">Coming Soon</span>

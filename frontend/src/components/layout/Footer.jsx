@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin } from "lucide-react";
+import TrackOrder from "../../pages/TrackOrder";
 
 const FOOTER_LINKS = {
   Shop: [
     { label: "Best Sellers", href: "/products?sort=best_seller" },
     { label: "New Arrivals", href: "/products?sort=newest" },
-    { label: "Skin Care", href: "/products/category/skin-care" },
     { label: "Hair Care", href: "/products/category/hair-care" },
+    { label: "Skin Care", href: "/products/category/skin-care" },
     { label: "Makeup", href: "/products/category/makeup" },
   ],
 
@@ -26,6 +27,8 @@ const FOOTER_LINKS = {
 };
 
 export default function Footer() {
+  const [trackingOpen, setTrackingOpen] = useState(false);
+
   return (
     <footer className="mt-0 bg-gray-50 text-gray-600 dark:bg-[#0F0F0F] dark:text-gray-400">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -67,7 +70,7 @@ export default function Footer() {
 
           {/* Footer Links */}
           <div className="min-w-0 flex-1">
-            <div className="grid grid-cols-3 gap-3 sm:gap-6 lg:gap-10">
+            <div className="grid grid-cols-3 gap-3 sm:gap-6 lg:gap-10 sm:p">
 
               {Object.entries(FOOTER_LINKS).map(([title, links]) => (
                 <div
@@ -81,12 +84,22 @@ export default function Footer() {
                   <ul className="space-y-2 sm:space-y-3">
                     {links.map((link) => (
                       <li key={link.label}>
-                        <Link
-                          to={link.href}
-                          className="text-xs text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary sm:text-sm"
-                        >
-                          {link.label}
-                        </Link>
+                        {link.label === "Track Order" ? (
+                          <button
+                            type="button"
+                            onClick={() => setTrackingOpen(true)}
+                            className="text-left text-xs text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary sm:text-sm"
+                          >
+                            {link.label}
+                          </button>
+                        ) : (
+                          <Link
+                            to={link.href}
+                            className="text-xs text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary sm:text-sm"
+                          >
+                            {link.label}
+                          </Link>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -99,9 +112,10 @@ export default function Footer() {
         </div>
 
         {/* Legal links remain fixed above mobile navigation on small screens. */}
-        <div className="fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-7xl flex-col items-center gap-2 border-t border-gray-200 bg-gray-50 px-4 py-2 text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:border-gray-800 dark:bg-[#0F0F0F] dark:text-gray-400 sm:static sm:mt-10 sm:flex-row sm:justify-between sm:gap-4 sm:border-t sm:px-0 sm:py-6 sm:text-sm sm:shadow-none">
+        <div className="fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-7xl flex-col items-center gap-2 border-t border-gray-200 bg-gray-50 px-2  text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:border-gray-800 dark:bg-[#0F0F0F] dark:text-gray-400 sm:static sm:mt-10 sm:flex-row sm:justify-between sm:gap-4 sm:border-t sm:px-0 sm:py-6 sm:text-sm sm:shadow-none">
         </div>
       </div>
+      {trackingOpen && <TrackOrder modal onClose={() => setTrackingOpen(false)} />}
     </footer>
     
   );

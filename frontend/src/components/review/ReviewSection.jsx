@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Star, X } from "lucide-react";
 import ReviewCard from "./ReviewCard";
 import { API_BASE } from "../../utils/constants";
@@ -26,16 +26,6 @@ export default function ReviewSection({
 
   const normalizedHandle = String(productHandle || "").trim();
 
-  const reviewsUrl = useMemo(() => {
-    const url = new URL(`${API_BASE}/reviews`, window.location.origin);
-
-    if (normalizedHandle) {
-      url.searchParams.set("productHandle", normalizedHandle);
-    }
-
-    return url.toString();
-  }, [normalizedHandle]);
-
   useEffect(() => {
     setForm((current) => ({ ...current, productHandle: normalizedHandle }));
   }, [normalizedHandle]);
@@ -48,21 +38,11 @@ export default function ReviewSection({
         setLoading(true);
         setError("");
 
-        const response = await fetch(reviewsUrl);
-
-        const payload = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(
-            payload?.message || "Unable to load reviews."
-          );
-        }
-
-        if (!payload?.success) {
-          throw new Error(
-            payload?.message || "Unable to load reviews."
-          );
-        }
+        const response = await api.get("/reviews", {
+          params: normalizedHandle ? { productHandle: normalizedHandle } : {},
+        });
+        const payload = response.data;
+        if (!payload?.success) throw new Error(payload?.message || "Unable to load reviews.");
 
         const reviewList = Array.isArray(payload.data)
           ? payload.data
@@ -90,7 +70,7 @@ export default function ReviewSection({
     return () => {
       cancelled = true;
     };
-  }, [reviewsUrl]);
+  }, [normalizedHandle]);
 
   const handleWriteReview = () => {
     if (typeof onWriteReview === "function") {

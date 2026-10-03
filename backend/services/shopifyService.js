@@ -2114,6 +2114,62 @@ const fetchCustomer =
     return data.customer;
   };
 
+const findOrderByTrackingId = async (trackingId) => {
+  const normalizedTrackingId = String(trackingId || "").trim();
+  if (!normalizedTrackingId) return null;
+
+  const data = await adminGraphql(
+    `query OrderByTrackingId($query: String!) {
+      orders(first: 10, query: $query) {
+        nodes {
+          name
+          processedAt
+          currentTotalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+          displayFinancialStatus
+          displayFulfillmentStatus
+          lineItems(first: 10) {
+            nodes {
+              title
+              quantity
+            }
+          }
+          fulfillments {
+            status
+            trackingInfo {
+              company
+              number
+              url
+            }
+          }
+        }
+      }
+    }`,
+    { query: `fulfillment_tracking_number:${normalizedTrackingId}` }
+  );
+
+  const order = data.orders.nodes.find((candidate) =>
+    candidate.fulfillments?.some((fulfillment) =>
+      fulfillment.trackingInfo?.some((tracking) => tracking.number === normalizedTrackingId)
+    )
+  );
+  if (!order) return null;
+
+  return {
+    orderNumber: order.name,
+    processedAt: order.processedAt,
+    currentTotalPrice: order.currentTotalPriceSet?.shopMoney,
+    financialStatus: order.displayFinancialStatus,
+    fulfillmentStatus: order.displayFulfillmentStatus,
+    lineItems: order.lineItems,
+    fulfillments: order.fulfillments,
+  };
+};
+
 /* =========================================================
    UPDATE CUSTOMER
 ========================================================= */
@@ -2232,6 +2288,8 @@ module.exports = {
   resetCustomerByUrl,
 
   fetchCustomer,
+
+  findOrderByTrackingId,
 
   updateCustomer,
 

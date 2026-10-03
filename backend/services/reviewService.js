@@ -105,7 +105,7 @@ const listProductReviews = async (handle) => {
   );
   return (data.metaobjects?.nodes || [])
     .map(mapReview)
-    .filter((review) => !handle || review.productHandle === handle)
+    .filter((review) => !handle || review.productHandle.toLowerCase() === String(handle).toLowerCase())
     .sort((left, right) => new Date(right.date) - new Date(left.date))
     .slice(0, handle ? 100 : 50);
 };

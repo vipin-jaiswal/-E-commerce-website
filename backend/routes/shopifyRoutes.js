@@ -16,6 +16,7 @@ const {
   validateCustomerAccessToken,
   updateCartDeliveryAddress,
   updateCartBuyerIdentity,
+  findOrderByTrackingId,
 } = require("../services/shopifyService");
 
 const router = express.Router();
@@ -50,6 +51,21 @@ const handleError = (res, error) => {
     errors: [error.message].filter(Boolean),
   });
 };
+
+router.get("/track-order", async (req, res) => {
+  const trackingId = String(req.query.trackingId || "").trim();
+  if (!trackingId || trackingId.length > 100) {
+    return res.status(400).json({ success: false, message: "A valid tracking ID is required." });
+  }
+
+  try {
+    const order = await findOrderByTrackingId(trackingId);
+    if (!order) return res.status(404).json({ success: false, message: "No order was found for that tracking ID." });
+    return res.json({ success: true, data: order });
+  } catch (error) {
+    return handleError(res, error);
+  }
+});
 
 router.get("/products", async (req, res) => {
   try {

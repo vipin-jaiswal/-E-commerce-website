@@ -18,7 +18,7 @@ export default function Rating({ value = 0, count, size = 14, showCount = true }
                   className="absolute inset-y-0 left-0 overflow-hidden"
                   style={{ width: `${fillPercentage}%` }}
                 >
-                  <Star size={size} className="fill-gold text-gold" />
+                  <Star size={size} className="fill-[#E6A500] text-[#E6A500]" />
                 </span>
               )}
             </span>

@@ -4,6 +4,7 @@ import HeroSlider from "../components/home/HeroSlider";
 import BestSellerSection from "../components/home/BestSellerSection";
 import ShopByConcern from "../components/home/ShopByConcern";
 import ReviewSection from "../components/review/ReviewSection";
+import { ReviewStatsProvider } from "../context/ReviewStatsContext";
 
 const Home = () => {
   const { hash } = useLocation();
@@ -21,13 +22,15 @@ const Home = () => {
   }, [hash]);
 
   return (
-    <main>
-      <HeroSlider />
+    <ReviewStatsProvider>
+      <main>
+        <HeroSlider />
 
-      <BestSellerSection />
-      <ShopByConcern />
-      <ReviewSection />
-    </main>
+        <BestSellerSection />
+        <ShopByConcern />
+        <ReviewSection />
+      </main>
+    </ReviewStatsProvider>
   );
 };
 

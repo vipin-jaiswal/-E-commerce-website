@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 
 const toSafeHtml = (html) => {
@@ -319,12 +320,12 @@ export default function ShippingReturns() {
               </p>
             </div>
 
-            <a
-              href="mailto:support@dyva.com"
+            <Link
+              to="/contact"
               className="rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-pink-500 dark:bg-white dark:text-black dark:hover:bg-pink-500 dark:hover:text-white"
             >
               Contact Support
-            </a>
+            </Link>
 
           </div>
         </section>
