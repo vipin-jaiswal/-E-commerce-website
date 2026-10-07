@@ -1,6 +1,15 @@
 import React from "react";
 import { useCart } from "../../hooks/useCart";
 import { formatCurrency } from "../../utils/currency";
+import Rating from "../common/Rating";
+import { useReviewStats } from "../../context/ReviewStatsContext";
+
+function ItemReviewCount({ item }) {
+  const stats = useReviewStats(item.handle || item.productId);
+  const count = stats?.count ?? item.reviewCount ?? item.numReviews ?? 0;
+  const rating = stats?.rating ?? item.rating ?? 0;
+  return <Rating value={rating} count={count} size={11} />;
+}
 
 export default function OrderSummary() {
   const { items, cartSubtotal, cartTotal, cartCurrency } = useCart();
@@ -29,6 +38,7 @@ export default function OrderSummary() {
                 <p className="text-xs font-medium text-charcoal line-clamp-1">
                   {item.name}
                 </p>
+                <ItemReviewCount item={item} />
                 {item.weight && <p className="text-xs text-muted">{item.weight}</p>}
                 <p className="text-xs text-muted">Qty: {qty}</p>
               </div>

@@ -5,6 +5,7 @@ const shopifyRoutes = require('./routes/shopifyRoutes');
 const authRoutes = require('./routes/authRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
 
@@ -31,14 +32,11 @@ app.use('/api/shopify', shopifyRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/orders', orderRoutes);
 
-// Direct aliases for auth recovery
+// Direct alias for forgot-password recovery
 app.post('/api/forgot-password', (req, res, next) => {
   req.url = '/forgot-password';
-  return authRoutes(req, res, next);
-});
-app.post('/api/reset-password', (req, res, next) => {
-  req.url = '/reset-password';
   return authRoutes(req, res, next);
 });
 

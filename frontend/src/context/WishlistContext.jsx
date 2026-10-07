@@ -17,6 +17,12 @@ export function WishlistProvider({ children }) {
     localStorage.setItem(LS_KEY, JSON.stringify(items));
   }, [items]);
 
+  useEffect(() => {
+    const resetForCustomer = () => setItems([]);
+    window.addEventListener('dyva:customer-changed', resetForCustomer);
+    return () => window.removeEventListener('dyva:customer-changed', resetForCustomer);
+  }, []);
+
   const toggleWishlist = (product) => {
     setItems((prev) => {
       const exists = prev.some((item) => item.id === product.id);

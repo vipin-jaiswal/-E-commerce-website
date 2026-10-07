@@ -15,6 +15,7 @@ import SearchBar from "../common/SearchBar";
 import { useCart } from "../../hooks/useCart";
 import MobileMenu from "./MobileMenu";
 import { useTheme } from "../../context/ThemeContext";
+import { useSearchOverlay } from "../../context/SearchOverlayContext";
 
 const NAV_LINKS = [
   { label: "Shop", to: "/products" },
@@ -25,20 +26,33 @@ const NAV_LINKS = [
 ];
 
 const Header = () => {
-  const [searchOpen, setSearchOpen] = useState(false);
+  const {
+    openSearch,
+    searchOpen,
+    closeSearch,
+  } = useSearchOverlay();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const { cartCount } = useCart();
   const { theme, toggleTheme } = useTheme();
-  const navLinks = NAV_LINKS;
+
   const isLoggedIn = Boolean(localStorage.getItem("token"));
 
   const handleNavClick = (event, href) => {
+    if (!href) return;
+
     if (href.startsWith("/#")) {
       event.preventDefault();
+
       const id = href.slice(2);
       const element = document.getElementById(id);
+
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       }
     }
   };
@@ -48,47 +62,71 @@ const Header = () => {
       <header className="sticky top-0 z-50 px-4 py-2 pt-1.5 lg:pt-2">
         <div
           className="
-          max-w-[1500px]
-          mx-auto
-          bg-transparent dark:bg-transparent
-          backdrop-blur-xl
-          border border-gray-200 dark:border-[#2A2A2A]
-          rounded-2xl
-          shadow-md
-          px-5
-          h-12 lg:h-16
-          flex
-          items-center
-          justify-between
-        "
+            max-w-[1500px]
+            mx-auto
+            bg-transparent
+            dark:bg-transparent
+            backdrop-blur-xl
+            border
+            border-gray-200
+            dark:border-[#2A2A2A]
+            rounded-2xl
+            shadow-md
+            px-5
+            h-12
+            lg:h-16
+            flex
+            items-center
+            justify-between
+          "
         >
-          {/* Left */}
+          {/* ================= LEFT / LOGO ================= */}
           <div className="flex items-center gap-3">
             <Link
               to="/"
               className="text-2xl font-bold transition"
             >
-              <span className="text-gray-900 dark:text-white">DY</span><span className="text-primary">VA</span>
+              <span className="text-gray-900 dark:text-white">
+                DY
+              </span>
+              <span className="text-primary">
+                VA
+              </span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* ================= DESKTOP NAVIGATION ================= */}
           <nav className="hidden lg:flex items-center gap-8 font-medium">
-            {navLinks.map((link) =>
-              link.to ? (
-                <Link key={link.label} to={link.to} className="rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 hover:-translate-y-1 hover:shadow-lg hover:text-[#d93b7f] dark:hover:text-[#ec5895] transition-all duration-300">
-                  {link.label}
-                </Link>
-              ) : (
-                <a key={link.label} href={link.href} onClick={(e) => handleNavClick(e, link.href)} className="rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 hover:-translate-y-1 hover:shadow-lg hover:text-[#d93b7f] dark:hover:text-[#ec5895] transition-all duration-300">
-                  {link.label}
-                </a>
-              )
-            )}
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.label}
+                to={link.to}
+                onClick={(event) =>
+                  handleNavClick(event, link.to)
+                }
+                className="
+                  rounded-lg
+                  px-3
+                  py-2
+                  text-slate-700
+                  dark:text-slate-200
+                  hover:-translate-y-1
+                  hover:shadow-lg
+                  hover:text-[#d93b7f]
+                  dark:hover:text-[#ec5895]
+                  transition-all
+                  duration-300
+                "
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
-          {/* Right Section */}
+          {/* ================= RIGHT SECTION ================= */}
           <div className="flex items-center gap-4">
+
+            {/* Theme */}
             <button
               type="button"
               onClick={toggleTheme}
@@ -113,92 +151,117 @@ const Header = () => {
                 dark:text-slate-200
                 dark:hover:border-primary
                 dark:hover:text-primary
-                transition duration-200
+                transition
+                duration-200
               "
             >
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              {theme === "dark" ? (
+                <Sun size={18} />
+              ) : (
+                <Moon size={18} />
+              )}
             </button>
 
-            {/* Search */}
+            {/* ================= SEARCH ================= */}
             <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                className="
-                  hidden lg:flex
-                  text-slate-700 dark:text-slate-200
-                  hover:text-primary dark:hover:text-primary
-                  transition
-                  duration-300
-                  flex items-center gap-2
-                "
-              >
-                <Search size={22} />
-                <span className="hidden">Search</span>
+              type="button"
+              onClick={openSearch}
+              aria-label="Open search"
+              className="
+                inline-flex
+                lg:flex
+                items-center
+                gap-2
+                text-slate-700
+                dark:text-slate-200
+                hover:text-primary
+                dark:hover:text-primary
+                transition
+                duration-300
+              "
+            >
+              <Search size={22} />
             </button>
 
-            {/* Wishlist */}
+            {/* ================= ACCOUNT ================= */}
             <Link
-                to={isLoggedIn ? "/account" : "/login"}
-                aria-label="Account"
-                className="hidden lg:flex text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary transition duration-200"
-              >
-                <UserRound size={22} />
+              to={isLoggedIn ? "/account" : "/login"}
+              aria-label="Account"
+              className="
+                hidden
+                lg:flex
+                text-slate-700
+                dark:text-slate-200
+                hover:text-primary
+                dark:hover:text-primary
+                transition
+                duration-200
+              "
+            >
+              <UserRound size={22} />
             </Link>
 
+            {/* ================= WISHLIST ================= */}
             <Link
-                to="/wishlist"
-                className="
-                  hidden lg:flex
-                  text-slate-700 dark:text-slate-200
-                  hover:text-primary dark:hover:text-primary
-                  transition
-                  duration-300
-                  flex items-center gap-2
-                "
-              >
-                <Heart size={22} />
-                <span className="hidden">Wishlist</span>
+              to="/wishlist"
+              aria-label="Wishlist"
+              className="
+                hidden
+                lg:flex
+                text-slate-700
+                dark:text-slate-200
+                hover:text-primary
+                dark:hover:text-primary
+                transition
+                duration-300
+              "
+            >
+              <Heart size={22} />
             </Link>
 
-            {/* Cart */}
+            {/* ================= CART ================= */}
             <Link
-                to="/cart"
-                className="
-                  relative
-                  text-slate-700 dark:text-slate-200
-                  hover:text-primary dark:hover:text-primary
-                  transition
-                  duration-300
-                  flex items-center gap-2
-                "
-              >
-                <ShoppingCart size={22} />
-                <span className="hidden">Cart</span>
+              to="/cart"
+              aria-label="Cart"
+              className="
+                relative
+                text-slate-700
+                dark:text-slate-200
+                hover:text-primary
+                dark:hover:text-primary
+                transition
+                duration-300
+                flex
+                items-center
+              "
+            >
+              <ShoppingCart size={22} />
 
-                {cartCount > 0 && (
-                  <span
-                    className="
-                      absolute
-                      -top-2
-                      -right-2
-                      bg-primary
-                      text-white
-                      text-[10px]
-                      font-semibold
-                      min-w-[18px]
-                      h-[18px]
-                      px-1
-                      rounded-full
-                      flex
-                      items-center
-                      justify-center
-                    "
-                  >
-                    {cartCount}
-                  </span>
-                )}
+              {cartCount > 0 && (
+                <span
+                  className="
+                    absolute
+                    -top-2
+                    -right-2
+                    bg-primary
+                    text-white
+                    text-[10px]
+                    font-semibold
+                    min-w-[18px]
+                    h-[18px]
+                    px-1
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                  "
+                >
+                  {cartCount}
+                </span>
+              )}
             </Link>
 
+            {/* ================= MOBILE MENU ================= */}
             <button
               type="button"
               className="inline-flex lg:hidden"
@@ -211,13 +274,17 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Search Modal */}
-      <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {/* ================= SHARED SEARCH BAR ================= */}
+      <SearchBar
+        open={searchOpen}
+        onClose={closeSearch}
+      />
 
+      {/* ================= MOBILE MENU ================= */}
       <MobileMenu
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        links={navLinks}
+        links={NAV_LINKS}
       />
     </>
   );

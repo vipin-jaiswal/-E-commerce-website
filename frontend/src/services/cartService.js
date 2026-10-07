@@ -27,4 +27,5 @@ export const cartService = {
     api.delete(`/shopify/cart/items${lineQuery(cartId, lineId)}`).then(unwrapCart),
   clear: (cartId) => api.delete(`/shopify/cart${cartQuery(cartId)}`).then(unwrapCart),
   checkout: (cartId, address) => api.post('/shopify/checkout', { cartId, address }).then((response) => response.data?.data ?? response.data),
+  createCodOrder: (payload) => api.post('/orders/cod', payload).then((response) => response.data?.data ?? response.data),
 };

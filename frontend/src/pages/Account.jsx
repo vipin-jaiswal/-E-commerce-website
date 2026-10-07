@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   User,
@@ -23,8 +23,10 @@ import {
   Box,
 } from "lucide-react";
 
-import api from "../services/api";
+import api, { clearCustomerScopedState } from "../services/api";
+import { getCustomerOrders } from "../services/customerOrders";
 import { formatCurrency } from "../utils/currency";
+import { getCustomerOrderStatus, getCustomerPaymentStatus, getCustomerOrderTotal } from "../utils/orderStatus";
 import {
   isFormValid,
   sanitizeAddressData,
@@ -33,6 +35,7 @@ import {
 
 const ADDRESS_KEY = "dyvaSavedAddresses";
 const WISHLIST_KEY = "lumiere_wishlist";
+const PROFILE_KEY = "dyvaProfileDetails";
 
 const emptyAddress = {
   name: "",
@@ -55,8 +58,16 @@ const displayName = (customer) =>
 
 export default function Account() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState(() =>
+    new URLSearchParams(window.location.search).has("orderId") || window.location.pathname === "/orders"
+      ? "orders"
+      : "profile"
+  );
+  const [expandedOrderId, setExpandedOrderId] = useState(() =>
+    new URLSearchParams(window.location.search).get("orderId") || null
+  );
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -66,13 +77,13 @@ export default function Account() {
   const [profileForm, setProfileForm] = useState({
     name: "",
     phone: "",
+    gender: "",
+    image: "",
   });
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Addresses
-  const [addresses, setAddresses] = useState(() =>
-    JSON.parse(localStorage.getItem(ADDRESS_KEY) || "[]")
-  );
+  const [addresses, setAddresses] = useState([]);
   const [editingAddressId, setEditingAddressId] = useState(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressForm, setAddressForm] = useState(emptyAddress);
@@ -103,27 +114,60 @@ export default function Account() {
 
     api
       .get("/auth/me")
-      .then((response) => {
+      .then(async (response) => {
         const nextCustomer = response.data?.data?.customer;
 
         if (!nextCustomer) {
           throw new Error("Unable to retrieve customer profile");
         }
 
+        if (nextCustomer.orders?.nodes) {
+          nextCustomer.orders.nodes = await getCustomerOrders(nextCustomer);
+        }
+
         setCustomer(nextCustomer);
+
+        const owner = String(nextCustomer.id || nextCustomer.email || '').toLowerCase();
+        let savedProfile = {};
+        try {
+          const profileRecord = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
+          if (profileRecord?.owner === owner) savedProfile = profileRecord.profile || {};
+          else if (profileRecord) localStorage.removeItem(PROFILE_KEY);
+        } catch {
+          localStorage.removeItem(PROFILE_KEY);
+        }
 
         setProfileForm({
           name: [nextCustomer.firstName, nextCustomer.lastName]
             .filter(Boolean)
             .join(" "),
           phone: nextCustomer.phone || "",
+          gender: savedProfile.gender || "",
+          image: savedProfile.image || "",
         });
 
-        const savedLocal = JSON.parse(
-          localStorage.getItem(ADDRESS_KEY) || "[]"
-        );
-
-        if (!savedLocal.length && nextCustomer.addresses?.nodes?.length) {
+        if (localStorage.getItem('dyvaAddressOwner') !== owner) {
+          localStorage.removeItem(ADDRESS_KEY);
+          localStorage.removeItem('dyvaCheckoutAddress');
+          localStorage.removeItem('dyvaCheckoutAddressOwner');
+          sessionStorage.removeItem('dyvaCheckoutAddress');
+          sessionStorage.removeItem('dyvaCheckoutAddressOwner');
+          sessionStorage.removeItem('dyvaCheckoutPayment');
+        }
+        localStorage.setItem('dyvaAddressOwner', owner);
+        let savedRecord = null;
+        try { savedRecord = JSON.parse(localStorage.getItem(ADDRESS_KEY) || 'null'); } catch { localStorage.removeItem(ADDRESS_KEY); }
+        const savedLocal = Array.isArray(savedRecord)
+          ? []
+          : savedRecord?.owner === owner && Array.isArray(savedRecord.addresses)
+            ? savedRecord.addresses
+            : [];
+        if (savedRecord && savedRecord.owner !== owner) {
+          localStorage.removeItem(ADDRESS_KEY);
+        }
+        if (savedLocal.length) {
+          setAddresses(savedLocal);
+        } else if (nextCustomer.addresses?.nodes?.length) {
           const shopifyAddresses = nextCustomer.addresses.nodes.map(
             (addr) => ({
               id: addr.id || crypto.randomUUID(),
@@ -144,10 +188,10 @@ export default function Account() {
           );
 
           setAddresses(shopifyAddresses);
-          localStorage.setItem(
-            ADDRESS_KEY,
-            JSON.stringify(shopifyAddresses)
-          );
+          localStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: shopifyAddresses }));
+        } else {
+          setAddresses([]);
+          localStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: [] }));
         }
       })
       .catch((err) => {
@@ -157,6 +201,7 @@ export default function Account() {
           "Session expired";
 
         setError(msg);
+        clearCustomerScopedState();
         localStorage.removeItem("token");
 
         navigate("/login?returnTo=/account", {
@@ -168,10 +213,9 @@ export default function Account() {
 
   const saveAddresses = (nextAddresses) => {
     setAddresses(nextAddresses);
-    localStorage.setItem(
-      ADDRESS_KEY,
-      JSON.stringify(nextAddresses)
-    );
+    const owner = String(customer?.id || customer?.email || '').toLowerCase();
+    localStorage.setItem('dyvaAddressOwner', owner);
+    localStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: nextAddresses }));
   };
 
   const handleProfileSubmit = async (e) => {
@@ -181,7 +225,7 @@ export default function Account() {
     try {
       const response = await api.patch(
         "/auth/profile",
-        profileForm
+        { name: profileForm.name, phone: profileForm.phone }
       );
 
       const updated = response.data?.data?.customer;
@@ -193,6 +237,14 @@ export default function Account() {
         }));
       }
 
+      const owner = String(customer?.id || customer?.email || '').toLowerCase();
+      localStorage.setItem(PROFILE_KEY, JSON.stringify({
+        owner,
+        profile: {
+          gender: profileForm.gender,
+          image: profileForm.image,
+        },
+      }));
       setEditingProfile(false);
       toast.success("Profile updated successfully");
     } catch (err) {
@@ -270,6 +322,12 @@ export default function Account() {
     setAddressForm(addr);
     setEditingAddressId(addr.id);
     setShowAddressForm(true);
+    window.setTimeout(() => {
+      document.getElementById("account-address-form")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
   };
 
   const deleteAddress = (id) => {
@@ -304,7 +362,7 @@ export default function Account() {
     } catch (err) {
       toast.error(
         err.response?.data?.message ||
-          "Unable to send password reset link"
+          "Unable to start password recovery"
       );
     } finally {
       setSendingReset(false);
@@ -312,15 +370,48 @@ export default function Account() {
   };
 
   const handleLogout = () => {
+    clearCustomerScopedState();
+    localStorage.removeItem(PROFILE_KEY);
     localStorage.removeItem("token");
-    localStorage.removeItem("account");
 
     toast.success("Logged out successfully");
 
     navigate("/login");
   };
 
+
   const orders = customer?.orders?.nodes || [];
+
+  const openAccountSection = (section) => {
+    setActiveTab(section);
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      window.setTimeout(() => {
+        document.getElementById(`account-section-${section}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 0);
+    }
+  };
+
+  useEffect(() => {
+    if (location.pathname === "/orders") {
+      setActiveTab("orders");
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const orderId = new URLSearchParams(location.search).get("orderId");
+    if (!orderId) return;
+    setActiveTab("orders");
+    setExpandedOrderId(orderId);
+    window.setTimeout(() => {
+      document.getElementById(`account-order-${encodeURIComponent(orderId)}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+  }, [location.search, orders.length]);
 
   const stats = useMemo(
     () => [
@@ -440,7 +531,7 @@ export default function Account() {
               <button
                 type="button"
                 onClick={() => {
-                  setActiveTab("profile");
+                  openAccountSection("profile");
                   setEditingProfile(true);
                 }}
                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-[#F52B87] bg-transparent px-4 py-3 text-sm font-semibold text-[#F52B87] transition hover:bg-[#F52B87] hover:text-white"
@@ -456,19 +547,11 @@ export default function Account() {
             <div className="p-3">
 
               <SidebarButton
-                active={activeTab === "profile"}
-                icon={User}
-                title="My Profile"
-                subtitle="Personal information"
-                onClick={() => setActiveTab("profile")}
-              />
-
-              <SidebarButton
                 active={activeTab === "orders"}
                 icon={ShoppingBag}
                 title="My Orders"
                 subtitle="Track your orders"
-                onClick={() => setActiveTab("orders")}
+                onClick={() => openAccountSection("orders")}
               />
 
               <SidebarButton
@@ -484,19 +567,15 @@ export default function Account() {
                 icon={MapPin}
                 title="Addresses"
                 subtitle="Manage delivery addresses"
-                onClick={() =>
-                  setActiveTab("addresses")
-                }
+                onClick={() => openAccountSection("addresses")}
               />
 
               <SidebarButton
-                active={false}
+                active={activeTab === "settings"}
                 icon={Settings}
                 title="Account Settings"
-                subtitle="Password & preferences"
-                onClick={() =>
-                  setActiveTab("profile")
-                }
+                subtitle="Password settings"
+                onClick={() => openAccountSection("settings")}
               />
             </div>
 
@@ -590,7 +669,7 @@ export default function Account() {
 
             {/* PROFILE */}
             {activeTab === "profile" && (
-              <div className="grid gap-5 md:grid-cols-2">
+              <div id="account-section-profile" className="scroll-mt-6">
 
                 {/* Personal Details */}
                 <section className="rounded-3xl border border-white/[0.08] bg-[#111111] p-6 sm:p-7">
@@ -626,39 +705,85 @@ export default function Account() {
                       onSubmit={handleProfileSubmit}
                       className="mt-6 space-y-4"
                     >
-                      <label className="block text-sm font-medium text-white/70">
-                        Full Name
+                      <div className="flex items-center gap-4">
+                        {profileForm.image ? (
+                          <img src={profileForm.image} alt="Profile" className="h-16 w-16 rounded-full object-cover" />
+                        ) : (
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F52B87]/15 text-xl font-bold text-[#F52B87]">
+                            {displayName({ firstName: profileForm.name.split(/\s+/)[0] }).charAt(0).toUpperCase()}
+                          </div>
+                        )}
 
-                        <input
-                          type="text"
-                          value={profileForm.name}
-                          onChange={(e) =>
-                            setProfileForm({
-                              ...profileForm,
-                              name: e.target.value,
-                            })
-                          }
-                          required
-                          className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0b0b] px-4 py-3 text-sm text-white outline-none transition focus:border-[#F52B87]"
-                        />
-                      </label>
+                        <label className="text-sm font-medium text-white/70">
+                          Profile image
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            className="mt-2 block w-full text-xs text-white/60 file:mr-3 file:rounded-lg file:border-0 file:bg-[#F52B87] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white"
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) {
+                                toast.error("Profile image must be 2 MB or smaller.");
+                                return;
+                              }
+                              const reader = new FileReader();
+                              reader.onload = () => setProfileForm((current) => ({ ...current, image: String(reader.result) }));
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                      </div>
 
-                      <label className="block text-sm font-medium text-white/70">
-                        Mobile Number
+                      <div className="flex flex-wrap gap-3">
+                        <label className="min-w-[200px] flex-[1.4] text-sm font-medium text-white/70">
+                          Full Name
 
-                        <input
-                          type="tel"
-                          value={profileForm.phone}
-                          onChange={(e) =>
-                            setProfileForm({
-                              ...profileForm,
-                              phone: e.target.value,
-                            })
-                          }
-                          placeholder="+91"
-                          className="mt-2 w-full rounded-xl border border-white/10 bg-[#0b0b0b] px-4 py-3 text-sm text-white outline-none transition focus:border-[#F52B87]"
-                        />
-                      </label>
+                          <input
+                            type="text"
+                            value={profileForm.name}
+                            onChange={(e) =>
+                              setProfileForm({
+                                ...profileForm,
+                                name: e.target.value,
+                              })
+                            }
+                            required
+                            className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-[#0b0b0b] px-4 py-2 text-sm text-white outline-none transition focus:border-[#F52B87]"
+                          />
+                        </label>
+
+                        <label className="min-w-[160px] flex-1 text-sm font-medium text-white/70">
+                          Gender
+                          <select
+                            value={profileForm.gender}
+                            onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
+                            className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-[#0b0b0b] px-4 py-2 text-sm text-white outline-none transition focus:border-[#F52B87]"
+                          >
+                            <option value="">Prefer not to say</option>
+                            <option value="female">Female</option>
+                            <option value="male">Male</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </label>
+
+                        <label className="min-w-[200px] flex-[1.2] text-sm font-medium text-white/70">
+                          Mobile Number
+
+                          <input
+                            type="tel"
+                            value={profileForm.phone}
+                            onChange={(e) =>
+                              setProfileForm({
+                                ...profileForm,
+                                phone: e.target.value,
+                              })
+                            }
+                            placeholder="+91"
+                            className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-[#0b0b0b] px-4 py-2 text-sm text-white outline-none transition focus:border-[#F52B87]"
+                          />
+                        </label>
+                      </div>
 
                       <div className="flex gap-3 pt-2">
                         <button
@@ -683,7 +808,13 @@ export default function Account() {
                       </div>
                     </form>
                   ) : (
-                    <div className="mt-6 divide-y divide-white/[0.06]">
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      {profileForm.image && (
+                        <div className="mb-5 flex items-center gap-3">
+                          <img src={profileForm.image} alt="Profile" className="h-14 w-14 rounded-full object-cover" />
+                          <span className="text-sm text-white/60">Profile image</span>
+                        </div>
+                      )}
                       <InfoRow
                         label="Full Name"
                         value={displayName(customer)}
@@ -704,97 +835,71 @@ export default function Account() {
                           "Not specified"
                         }
                       />
+                      <InfoRow
+                        label="Gender"
+                        value={profileForm.gender || "Prefer not to say"}
+                      />
                     </div>
                   )}
                 </section>
 
-                {/* Security */}
-                <section className="rounded-3xl border border-white/[0.08] bg-[#111111] p-6 sm:p-7">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F52B87]/10">
-                      <KeyRound
-                        size={20}
-                        className="text-[#F52B87]"
-                      />
-                    </div>
+              </div>
+            )}
 
-                    <div>
-                      <h2 className="text-xl font-bold text-white">
-                        Password & Security
-                      </h2>
+            {activeTab === "settings" && (
+              <section id="account-section-settings" className="scroll-mt-6 rounded-3xl border border-white/[0.08] bg-[#111111] p-6 sm:p-7">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F52B87]/10">
+                    <KeyRound size={20} className="text-[#F52B87]" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Password Settings</h2>
+                    <p className="text-xs text-white/40">Manage your account password</p>
+                  </div>
+                </div>
 
-                      <p className="text-xs text-white/40">
-                        Shopify account credentials
+                <div className="mt-6 max-w-xl space-y-4">
+                  <p className="text-sm leading-6 text-white/50">
+                    Verify your email address with an OTP, then choose a new password.
+                  </p>
+                  {resetRequested ? (
+                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={18} className="text-emerald-400" />
+                        <p className="text-sm font-semibold text-emerald-400">Verification code sent</p>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-emerald-400/70">
+                        Check your inbox at <strong>{customer?.email}</strong> to continue password recovery.
                       </p>
                     </div>
-                  </div>
-
-                  <div className="mt-6 space-y-4">
-                    <p className="text-sm leading-6 text-white/50">
-                      Your account is secured via Shopify
-                      Storefront authentication. If you need
-                      to change or reset your password, you can
-                      request a secure reset link.
-                    </p>
-
-                    {resetRequested ? (
-                      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2
-                            size={18}
-                            className="text-emerald-400"
-                          />
-
-                          <p className="text-sm font-semibold text-emerald-400">
-                            Reset Link Sent
-                          </p>
-                        </div>
-
-                        <p className="mt-2 text-xs leading-5 text-emerald-400/70">
-                          Please check your inbox at{" "}
-                          <strong>
-                            {customer?.email}
-                          </strong>{" "}
-                          and follow the link to choose a new
-                          password.
-                        </p>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleSendResetLink}
-                        disabled={sendingReset}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#F52B87] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ff3d93] disabled:opacity-50"
-                      >
-                        <KeyRound size={16} />
-
-                        {sendingReset
-                          ? "Sending link..."
-                          : "Request Password Reset"}
-                      </button>
-                    )}
-
-                    <div className="border-t border-white/[0.06] pt-4">
-                      <Link
-                        to="/forgot-password"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50 transition hover:text-[#F52B87]"
-                      >
-                        Forgot password page
-                        <ExternalLink size={12} />
-                      </Link>
-                    </div>
-                  </div>
-                </section>
-              </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/forgot-password")}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#F52B87] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ff3d93] disabled:opacity-50"
+                    >
+                      <KeyRound size={16} />
+                      Change Password
+                    </button>
+                  )}
+                  <Link
+                    to="/forgot-password"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/50 transition hover:text-[#F52B87]"
+                  >
+                    Open password recovery
+                    <ExternalLink size={12} />
+                  </Link>
+                </div>
+              </section>
             )}
 
             {/* ORDERS */}
             {activeTab === "orders" && (
-              <section className="rounded-3xl border border-white/[0.08] bg-[#111111] p-6 sm:p-7">
+              <section id="account-section-orders" className="scroll-mt-6 rounded-3xl border border-white/[0.08] bg-[#111111] p-6 sm:p-7">
                 <div className="mb-6 flex items-center justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-bold text-white">
-                      Recent Orders
+                      Previous Orders
                     </h2>
 
                     <p className="mt-1 text-xs text-white/40">
@@ -802,13 +907,6 @@ export default function Account() {
                     </p>
                   </div>
 
-                  <Link
-                    to="/products"
-                    className="flex items-center gap-1 text-xs font-semibold text-[#F52B87]"
-                  >
-                    Browse Products
-                    <ArrowRight size={14} />
-                  </Link>
                 </div>
 
                 {orders.length === 0 ? (
@@ -835,59 +933,87 @@ export default function Account() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="max-h-[65vh] space-y-3 overflow-y-auto overscroll-contain pr-2">
                     {orders.map((order) => {
-                      const isFulfilled =
-                        String(
-                          order.fulfillmentStatus
-                        ).toUpperCase() === "FULFILLED";
+                      const detailOrderId = String(order.orderId || order.id || "")
+                        .split("?")[0]
+                        .split("/")
+                        .pop()
+                        .replace(/^#/, "");
+                      const trackingId = order.fulfillments
+                        ?.flatMap((fulfillment) => fulfillment.trackingInfo || [])
+                        .map((tracking) => tracking.number)
+                        .find(Boolean);
+                      const customerOrderStatus = getCustomerOrderStatus({
+                        status: order.status || order.orderStatus,
+                        fulfillmentStatus: order.fulfillmentStatus,
+                        paymentStatus: order.paymentStatus ?? order.financialStatus,
+                        cancelledAt: order.cancelledAt,
+                      });
+                      const customerPaymentStatus = getCustomerPaymentStatus({
+                        financialStatus: order.paymentStatus || order.financialStatus,
+                        paymentStatus: order.paymentStatus || order.financialStatus,
+                        cancelledAt: order.cancelledAt,
+                        paymentGatewayNames: order.paymentGatewayNames,
+                      });
+                      const isFulfilled = ["Delivered", "Shipped"].includes(customerOrderStatus);
 
                       const isPaid =
                         String(
                           order.financialStatus
                         ).toUpperCase() === "PAID";
+                      const orderTotal = getCustomerOrderTotal(order);
+                      const orderImage = order.lineItems?.nodes?.[0]?.variant?.image;
 
                       return (
                         <article
                           key={order.id}
+                          id={`account-order-${encodeURIComponent(order.id)}`}
                           className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d] p-4 transition hover:border-[#F52B87]/30 sm:p-5"
                         >
                           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-4">
                               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#F52B87]/10">
-                                <Box
-                                  size={21}
-                                  className="text-[#F52B87]"
-                                />
+                                {orderImage?.url ? (
+                                  <img
+                                    src={orderImage.url}
+                                    alt={orderImage.altText || order.lineItems.nodes[0].title}
+                                    className="h-full w-full rounded-xl object-cover"
+                                  />
+                                ) : (
+                                  <Box size={21} className="text-[#F52B87]" />
+                                )}
                               </div>
 
                               <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
+                                <div>
                                   <span className="font-bold text-white">
-                                    #{order.orderNumber}
+                                    Order No: {detailOrderId || "Unavailable"}
                                   </span>
 
-                                  <span
-                                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                                      isFulfilled
-                                        ? "bg-emerald-500/10 text-emerald-400"
-                                        : "bg-yellow-500/10 text-yellow-400"
-                                    }`}
-                                  >
-                                    {order.fulfillmentStatus ||
-                                      "Processing"}
-                                  </span>
+                                  <div className="mt-2 flex flex-row flex-wrap items-center gap-2">
+                                    <span
+                                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                                        customerOrderStatus === "Cancelled"
+                                          ? "bg-red-500/10 text-red-400"
+                                          : isFulfilled
+                                          ? "bg-emerald-500/10 text-emerald-400"
+                                          : "bg-yellow-500/10 text-yellow-400"
+                                      }`}
+                                    >
+                                      {customerOrderStatus}
+                                    </span>
 
-                                  <span
-                                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                                      isPaid
-                                        ? "bg-emerald-500/10 text-emerald-400"
-                                        : "bg-white/5 text-white/40"
-                                    }`}
-                                  >
-                                    {order.financialStatus ||
-                                      "Payment Pending"}
-                                  </span>
+                                    <span
+                                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                                        isPaid
+                                          ? "bg-emerald-500/10 text-emerald-400"
+                                          : "bg-white/5 text-white/40"
+                                      }`}
+                                    >
+                                      {customerPaymentStatus}
+                                    </span>
+                                  </div>
                                 </div>
 
                                 <p className="mt-1 flex items-center gap-1.5 text-xs text-white/35">
@@ -914,16 +1040,30 @@ export default function Account() {
 
                               <p className="mt-1 text-lg font-bold text-white">
                                 {formatCurrency(
-                                  Number(
-                                    order.currentTotalPrice
-                                      ?.amount || 0
-                                  )
+                                  Number(orderTotal?.amount || 0)
                                 )}
                               </p>
                             </div>
                           </div>
 
                           <div className="mt-4 border-t border-white/[0.06] pt-4">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/order-details?orderId=${encodeURIComponent(detailOrderId)}`)}
+                              className="mb-2 cursor-pointer text-xs font-semibold text-[#F52B87]"
+                            >
+                              View order summary
+                            </button>
+                            {expandedOrderId === order.id && (
+                              <div className="mb-4 rounded-xl bg-white/[0.04] p-4 text-xs text-white/55">
+                                <p>Status: {customerOrderStatus} · Payment: {customerPaymentStatus}</p>
+                                {order.shippingAddress && (
+                                  <p className="mt-2">
+                                    Ship to: {[order.shippingAddress.address1, order.shippingAddress.address2, order.shippingAddress.city, order.shippingAddress.province, order.shippingAddress.zip, order.shippingAddress.country].filter(Boolean).join(", ")}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">
                               Items
                             </p>
@@ -956,7 +1096,7 @@ export default function Account() {
 
             {/* ADDRESSES */}
             {activeTab === "addresses" && (
-              <section className="rounded-3xl border border-white/[0.08] bg-[#111111] p-6 sm:p-7">
+              <section id="account-section-addresses" className="scroll-mt-6 rounded-3xl border border-white/[0.08] bg-[#111111] p-6 sm:p-7">
                 <div className="mb-6 flex items-center justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-bold text-white">
@@ -986,6 +1126,7 @@ export default function Account() {
 
                 {showAddressForm && (
                   <form
+                    id="account-address-form"
                     onSubmit={handleAddressSubmit}
                     className="mb-8 rounded-2xl border border-white/[0.08] bg-[#0b0b0b] p-5 sm:p-6"
                   >
@@ -1213,7 +1354,7 @@ function SidebarButton({
       className={`group relative mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition ${
         active
           ? "bg-[#F52B87]/10 text-white"
-          : "text-white/65 hover:bg-white/[0.035] hover:text-white"
+          : "text-white/65 hover:bg-[#F52B87]/10 hover:text-[#F52B87]"
       }`}
     >
       {active && (
@@ -1253,7 +1394,7 @@ function SidebarButton({
 
 function InfoRow({ label, value }) {
   return (
-    <div className="py-4 first:pt-0 last:pb-0">
+    <div className="min-w-[220px] flex-1 rounded-2xl border border-white/[0.06] bg-[#0b0b0b] px-4 py-3">
       <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/30">
         {label}
       </span>

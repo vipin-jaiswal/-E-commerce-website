@@ -5,10 +5,10 @@ const METHODS = [
   { id: 'card',   label: 'Credit / Debit Card', icon: CreditCard,   sub: 'Visa, Mastercard, RuPay' },
   { id: 'upi',    label: 'UPI',                  icon: Smartphone,   sub: 'GPay, PhonePe, Paytm, BHIM' },
   { id: 'netbank',label: 'Net Banking',           icon: Building2,    sub: 'All major banks supported' },
-  { id: 'cod',    label: 'Cash on Delivery',      icon: Banknote,     sub: 'Available when enabled at Shopify checkout' },
+  { id: 'cod',    label: 'Cash on Delivery',      icon: Banknote,     sub: 'Pay in cash when your order arrives' },
 ];
 
-export default function PaymentMethod({ selected, onSelect }) {
+export default function PaymentMethod({ selected = 'card', onSelect = () => {} }) {
   return (
     <div className="space-y-3">
       {METHODS.map(({ id, label, icon: Icon, sub }) => (

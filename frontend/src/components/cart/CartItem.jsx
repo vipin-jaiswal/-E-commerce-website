@@ -9,6 +9,8 @@ import { Link } from "react-router-dom";
 
 import { useCart } from "../../hooks/useCart";
 import { formatCurrency } from "../../utils/currency";
+import Rating from "../common/Rating";
+import { useReviewStats } from "../../context/ReviewStatsContext";
 
 export default function CartItem({ item }) {
   const {
@@ -22,6 +24,9 @@ export default function CartItem({ item }) {
 
   const name = item.name || "Product";
   const brand = item.brand || "";
+  const reviewStats = useReviewStats(item.handle || item.productId);
+  const reviewCount = reviewStats?.count ?? item.reviewCount ?? item.numReviews ?? 0;
+  const reviewRating = reviewStats?.rating ?? item.rating ?? 0;
 
   const images = Array.isArray(item.images)
     ? item.images
@@ -80,6 +85,10 @@ export default function CartItem({ item }) {
             {name}
           </h3>
         </Link>
+
+        <div className="mt-2">
+          <Rating value={reviewRating} count={reviewCount} size={13} />
+        </div>
 
         {/* FEATURES */}
         <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-300">

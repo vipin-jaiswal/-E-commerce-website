@@ -6,11 +6,13 @@ import { useCart } from '../../hooks/useCart';
 import { useWishlist } from '../../hooks/useWishlist';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../../utils/currency';
+import { useReviewStats } from '../../context/ReviewStatsContext';
 
 export default function ProductInfo({ product, reviews = [] }) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
+  const reviewStats = useReviewStats(product?.handle);
 
   const variants = Array.isArray(product?.variants) && product.variants.length > 0 ? product.variants : [];
   const [selectedVariantId, setSelectedVariantId] = useState(() => variants[0]?.id || null);
@@ -34,10 +36,10 @@ export default function ProductInfo({ product, reviews = [] }) {
     ? Number(selectedVariant.compareAtPrice)
     : (product.salePrice && product.price && product.salePrice !== product.price ? Number(product.price) : null);
 
-  const reviewCount = reviews.length || product.reviewCount || 0;
-  const reviewRating = reviews.length
+  const reviewCount = reviewStats?.count ?? (reviews.length || product.reviewCount || product.numReviews || 0);
+  const reviewRating = reviewStats?.rating ?? (reviews.length
     ? reviews.reduce((total, review) => total + (Number(review.rating) || 0), 0) / reviews.length
-    : (product.rating || 0);
+    : (product.rating || 0));
 
   const handleAddToCart = async () => {
     if (isComingSoon || isOutOfStock) return;

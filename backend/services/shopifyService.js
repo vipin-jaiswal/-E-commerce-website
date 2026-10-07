@@ -1,3 +1,5 @@
+const crypto = require("crypto");
+
 const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
 const SHOPIFY_STOREFRONT_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
 const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || "2026-07";
@@ -22,6 +24,7 @@ const SHOPIFY_EXCLUDED_PRODUCT_HANDLES = new Set(
 );
 
 let adminTokenPromise;
+const codOrderRequests = new Map();
 
 let storefrontContentCache = {
   expiresAt: 0,
@@ -71,8 +74,10 @@ const requestGraphql = async (
     );
   }
 
-  if (!response.ok || payload.errors?.length) {
-    const graphQLErrors = payload.errors || [];
+  if (!response.ok || payload.errors) {
+    const graphQLErrors = Array.isArray(payload.errors)
+      ? payload.errors
+      : [payload.errors];
 
     if (graphQLErrors.length) {
       const apiName = new URL(url).pathname.includes("/admin/")
@@ -82,21 +87,29 @@ const requestGraphql = async (
       console.error(
         `[shopify] ${apiName} GraphQL error:`,
         JSON.stringify(
-          graphQLErrors.map(
-            ({ message, path, extensions }) => ({
-              message,
-              path,
-              extensions,
-            })
+          graphQLErrors.map((error) =>
+            typeof error === "string"
+              ? { message: error }
+              : {
+                  message: error?.message,
+                  path: error?.path,
+                  extensions: error?.extensions,
+                }
           )
         )
       );
     }
 
     const messages = graphQLErrors
-      .map((error) => error.message)
+      .map((error) => typeof error === "string" ? error : error?.message)
       .filter(Boolean)
       .join(", ");
+
+    if (response.status === 402 || /unavailable shop/i.test(messages)) {
+      throw new Error(
+        "Shopify store is unavailable (HTTP 402). Reactivate the store or resolve its billing issue in Shopify Admin."
+      );
+    }
 
     throw new Error(
       messages ||
@@ -1268,6 +1281,10 @@ const normalizeCart = (cart) => ({
   })),
 });
 
+const isShopifyCartId = (cartId) =>
+  typeof cartId === "string" &&
+  /^gid:\/\/shopify\/Cart\/[^/\s]+$/.test(cartId.trim());
+
 const logCartDiagnostics = (
   operation,
   cart,
@@ -1298,6 +1315,12 @@ const logCartDiagnostics = (
 const fetchCart = async (
   cartId
 ) => {
+  if (!isShopifyCartId(cartId)) {
+    const error = new Error("Cart ID is required and must be a valid Shopify Cart ID.");
+    error.code = "INVALID_CART_ID";
+    throw error;
+  }
+
   const data =
     await storefrontGraphql(
       `query Cart($id: ID!) {
@@ -1362,15 +1385,12 @@ const validateCartInventory =
       new Map(
         (data.nodes || [])
           .filter(Boolean)
-          .map(
-            (variant) => [
-              variant.id,
-              Number(
-                variant.inventoryQuantity ??
-                  0
-              ),
-            ]
-          )
+          .map((variant) => [
+            variant.id,
+            variant.inventoryQuantity === null
+              ? null
+              : Number(variant.inventoryQuantity),
+          ])
       );
 
     const issues =
@@ -1381,11 +1401,15 @@ const validateCartInventory =
               item.variantId
             );
 
-          if (
-            available === undefined ||
-            item.quantity <=
-              available
-          ) {
+          if (available === undefined) {
+            return [{
+              variantId: item.variantId,
+              requested: item.quantity,
+              available: 0,
+              reason: "VARIANT_UNAVAILABLE",
+            }];
+          }
+          if (available === null || item.quantity <= available) {
             return [];
           }
 
@@ -1436,6 +1460,429 @@ const getVariantInventory =
         )
       : null;
   };
+
+const codOrderTag = (cartId) =>
+  `dyva-cod-${crypto.createHash("sha256").update(String(cartId)).digest("hex").slice(0, 24)}`;
+
+const orderFromAdmin = (order) => ({
+  id: order.id,
+  // Shopify assigns this numeric ID when the order is created; it matches the
+  // final number in the Shopify Admin order URL.
+  orderId: String(order.legacyResourceId || order.id?.split("/").pop() || ""),
+  orderNumber: order.name,
+  createdAt: order.createdAt || null,
+  processedAt: order.processedAt || null,
+  amount: order.currentTotalPriceSet?.shopMoney || null,
+  originalAmount: order.originalTotalPriceSet?.shopMoney || null,
+  originalSubtotal: order.subtotalPriceSet?.shopMoney || null,
+  subtotal: order.subtotalPriceSet?.shopMoney || null,
+  shipping: order.totalShippingPriceSet?.shopMoney || null,
+  discount: order.totalDiscountsSet?.shopMoney || null,
+  paymentStatus: order.displayFinancialStatus || "PENDING",
+  fulfillmentStatus: order.displayFulfillmentStatus || "UNFULFILLED",
+  cancelledAt: order.cancelledAt || null,
+  paymentGatewayNames: order.paymentGatewayNames || [],
+  customer: {
+    firstName: order.customer?.firstName || order.shippingAddress?.firstName || "",
+    lastName: order.customer?.lastName || order.shippingAddress?.lastName || "",
+    email: order.email || "",
+    phone: order.phone || "",
+  },
+  shippingAddress: order.shippingAddress || null,
+  billingAddress: order.billingAddress || null,
+  lineItems: order.lineItems || { nodes: [] },
+  fulfillments: order.fulfillments || [],
+});
+
+const getCustomerOrderIdMap = async (customerAccessToken) => {
+  const customer = await fetchCustomer(customerAccessToken);
+  if (!customer) return { authenticated: false, ids: {} };
+  const customerOrders = customer.orders?.nodes || [];
+  if (!customerOrders.length) return { authenticated: true, ids: {} };
+  const ids = {};
+  for (let index = 0; index < customerOrders.length; index += 250) {
+    const data = await adminGraphql(
+      `query CustomerOrderIds($ids: [ID!]!) {
+        nodes(ids: $ids) {
+          ... on Order {
+            id
+            legacyResourceId
+            cancelledAt
+            originalTotalPriceSet { shopMoney { amount currencyCode } }
+            subtotalPriceSet { shopMoney { amount currencyCode } }
+            totalShippingPriceSet { shopMoney { amount currencyCode } }
+            currentTotalPriceSet { shopMoney { amount currencyCode } }
+            displayFinancialStatus
+            displayFulfillmentStatus
+            paymentGatewayNames
+            fulfillments {
+              trackingInfo {
+                company
+                number
+                url
+              }
+            }
+          }
+        }
+      }`,
+      { ids: customerOrders.slice(index, index + 250).map((order) => order.id) }
+    );
+    Object.assign(ids, Object.fromEntries(
+      (data.nodes || []).filter(Boolean).map((order) => [
+        order.id,
+        {
+          orderId: String(order.legacyResourceId),
+          cancelledAt: order.cancelledAt || null,
+          originalAmount: order.originalTotalPriceSet?.shopMoney || null,
+          originalSubtotal: order.subtotalPriceSet?.shopMoney || null,
+          subtotal: order.subtotalPriceSet?.shopMoney || null,
+          shipping: order.totalShippingPriceSet?.shopMoney || null,
+          amount: order.currentTotalPriceSet?.shopMoney || null,
+          paymentStatus: order.displayFinancialStatus || null,
+          fulfillmentStatus: order.displayFulfillmentStatus || null,
+          paymentGatewayNames: order.paymentGatewayNames || [],
+          fulfillments: order.fulfillments || [],
+        },
+      ])
+    ));
+  }
+  return { authenticated: true, ids };
+};
+
+const getCustomerOrder = async (customerAccessToken, orderId) => {
+  const customer = await fetchCustomer(customerAccessToken);
+  if (!customer) return { authenticated: false, order: null };
+
+  const customerOrders = customer.orders?.nodes || [];
+  const requestedId = String(orderId).replace(/^#/, "");
+  let customerOrder = customerOrders.find((order) => order.id === orderId);
+  if (!customerOrder && /^\d+$/.test(requestedId)) {
+    const idMap = await getCustomerOrderIdMap(customerAccessToken);
+    const gid = Object.entries(idMap.ids).find(([, order]) =>
+      String(order?.orderId || order) === requestedId
+    )?.[0];
+    customerOrder = customerOrders.find((order) => order.id === gid);
+  }
+  if (!customerOrder && /^\d+$/.test(requestedId)) {
+    // Draft orders completed as COD orders may not appear in the customer's
+    // Storefront order connection unless Shopify linked the draft to them.
+    // Look up by Admin Order ID, then verify ownership before returning details.
+    const data = await adminGraphql(
+      `query CustomerOrderDetailsById($id: ID!) {
+        order(id: $id) {
+          id
+          legacyResourceId
+          name
+          createdAt
+          processedAt
+          email
+          phone
+          displayFinancialStatus
+          displayFulfillmentStatus
+          cancelledAt
+          paymentGatewayNames
+          currentTotalPriceSet { shopMoney { amount currencyCode } }
+          originalTotalPriceSet { shopMoney { amount currencyCode } }
+          subtotalPriceSet { shopMoney { amount currencyCode } }
+          totalShippingPriceSet { shopMoney { amount currencyCode } }
+          totalDiscountsSet { shopMoney { amount currencyCode } }
+          customer { id firstName lastName email }
+          shippingAddress { firstName lastName address1 address2 city province zip country phone }
+          billingAddress { firstName lastName address1 address2 city province zip country phone }
+          lineItems(first: 100) {
+            nodes {
+              title
+              quantity
+              image { url altText }
+              originalUnitPriceSet { shopMoney { amount currencyCode } }
+              discountedTotalSet { shopMoney { amount currencyCode } }
+            }
+          }
+          fulfillments {
+            status
+            estimatedDeliveryAt
+            trackingInfo { company number url }
+          }
+        }
+      }`,
+      { id: `gid://shopify/Order/${requestedId}` }
+    );
+
+    const adminOrder = data.order;
+    const linkedCustomer = adminOrder?.customer?.id === customer.id;
+    if (adminOrder && linkedCustomer) {
+      return { authenticated: true, order: orderFromAdmin(adminOrder) };
+    }
+
+    return { authenticated: true, order: null };
+  }
+  if (!customerOrder) return { authenticated: true, order: null };
+  // Storefront order IDs can include an access-key query suffix. Admin GraphQL
+  // expects the canonical Order GID, so rebuild it from the verified numeric ID.
+  const shopifyOrderId = /^\d+$/.test(requestedId)
+    ? `gid://shopify/Order/${requestedId}`
+    : customerOrder.id;
+
+  const data = await adminGraphql(
+    `query CodOrderDetails($id: ID!) {
+      order(id: $id) {
+        id
+        legacyResourceId
+        name
+        createdAt
+        processedAt
+        email
+        phone
+        displayFinancialStatus
+        displayFulfillmentStatus
+        cancelledAt
+        paymentGatewayNames
+        currentTotalPriceSet { shopMoney { amount currencyCode } }
+        originalTotalPriceSet { shopMoney { amount currencyCode } }
+        subtotalPriceSet { shopMoney { amount currencyCode } }
+        totalShippingPriceSet { shopMoney { amount currencyCode } }
+        totalDiscountsSet { shopMoney { amount currencyCode } }
+        customer { firstName lastName }
+        shippingAddress {
+          firstName lastName address1 address2 city province zip country phone
+        }
+        billingAddress {
+          firstName lastName address1 address2 city province zip country phone
+        }
+        lineItems(first: 100) {
+          nodes {
+            title
+            quantity
+            image { url altText }
+            originalUnitPriceSet { shopMoney { amount currencyCode } }
+            discountedTotalSet { shopMoney { amount currencyCode } }
+          }
+        }
+        fulfillments {
+          status
+          estimatedDeliveryAt
+          trackingInfo { company number url }
+        }
+      }
+    }`,
+    { id: shopifyOrderId }
+  );
+
+  return { authenticated: true, order: data.order ? orderFromAdmin(data.order) : null };
+};
+
+const findCodOrder = async (tag) => {
+  const data = await adminGraphql(
+    `query CodOrderByTag($query: String!) {
+      orders(first: 10, query: $query) {
+        nodes {
+        id
+        legacyResourceId
+        name
+        email
+        phone
+        displayFinancialStatus
+        currentTotalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        originalTotalPriceSet { shopMoney { amount currencyCode } }
+        shippingAddress {
+          firstName
+          lastName
+          address1
+          address2
+          city
+          province
+          zip
+          country
+          phone
+        }
+        lineItems(first: 100) {
+          nodes {
+            title
+            quantity
+            originalUnitPriceSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+          }
+        }
+        }
+      }
+    }`,
+    { query: `tag:${tag}` }
+  );
+  return data.orders?.nodes?.[0] ? orderFromAdmin(data.orders.nodes[0]) : null;
+};
+
+const findCodDraft = async (tag) => {
+  const data = await adminGraphql(
+    `query CodDraftByTag($query: String!) {
+      draftOrders(first: 10, query: $query) {
+        nodes {
+        id
+        status
+        }
+      }
+    }`,
+    { query: `tag:${tag}` }
+  );
+  return data.draftOrders?.nodes?.find((draft) => draft.status === "OPEN") || null;
+};
+
+const createCodOrder = async ({ cartId, customer, shippingAddress }) => {
+  console.info(`[COD][shopify] cartId: ${cartId || null}`);
+  console.info(`[COD] phone received: ${customer?.phone ? `******${String(customer.phone).slice(-4)}` : null}`);
+  if (!isShopifyCartId(cartId)) {
+    console.info("[COD] cartId valid: false");
+    const error = new Error("Cart ID is required for COD order creation");
+    error.code = "INVALID_CART_ID";
+    throw error;
+  }
+  console.info("[COD] cartId valid: true");
+
+  const requestKey = codOrderTag(cartId);
+  const existingRequest = codOrderRequests.get(requestKey);
+  if (existingRequest) return existingRequest;
+
+  const request = (async () => {
+    const existingOrder = await findCodOrder(requestKey);
+    if (existingOrder) return existingOrder;
+
+    const inventory = await validateCartInventory(cartId);
+    console.info(`[COD] cart response: ${inventory.cart ? "received" : "empty"}`);
+    if (!inventory.cart) {
+      const error = new Error("Shopify cart not found");
+      error.code = "CART_NOT_FOUND";
+      throw error;
+    }
+    if (!inventory.cart.items.length) {
+      const error = new Error("Your Shopify cart is empty.");
+      error.code = "EMPTY_CART";
+      throw error;
+    }
+    if (inventory.issues.length) {
+      const error = new Error("Some products are unavailable in the requested quantity.");
+      error.code = "INVENTORY_UNAVAILABLE";
+      error.issues = inventory.issues;
+      throw error;
+    }
+
+    const address = {
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      address1: shippingAddress.address1,
+      address2: shippingAddress.address2 || "",
+      city: shippingAddress.city,
+      province: shippingAddress.state,
+      zip: shippingAddress.postalCode,
+      country: shippingAddress.country || "IN",
+      phone: customer.phone,
+    };
+    const lineItems = inventory.cart.items.map((item) => ({
+      variantId: item.variantId,
+      quantity: item.quantity,
+    }));
+
+    let draft = await findCodDraft(requestKey);
+    if (!draft) {
+      const draftData = await adminGraphql(
+        `mutation CodDraftOrderCreate($input: DraftOrderInput!) {
+        draftOrderCreate(input: $input) {
+          draftOrder { id status }
+          userErrors { field message }
+        }
+        }`,
+        {
+        input: {
+          email: customer.email,
+          phone: customer.phone,
+          lineItems,
+          shippingAddress: address,
+          billingAddress: address,
+          note: `Dyva COD order (${requestKey})`,
+          tags: ["dyva-cod", requestKey],
+          customAttributes: [
+            { key: "dyva_cod_request", value: requestKey },
+            ...(shippingAddress.alternativePhone
+              ? [{ key: "alternative_phone", value: shippingAddress.alternativePhone }]
+              : []),
+          ],
+        },
+        }
+      );
+      const result = draftData.draftOrderCreate;
+      if (result.userErrors?.length) {
+        throw new Error(result.userErrors.map((error) => error.message).join(", "));
+      }
+      draft = result.draftOrder;
+      console.info("[COD] draft order created:", draft?.id || "unknown");
+    }
+
+    const completed = await adminGraphql(
+      `mutation CodDraftOrderComplete($id: ID!, $paymentPending: Boolean!) {
+        draftOrderComplete(id: $id, paymentPending: $paymentPending) {
+          draftOrder {
+            id
+            order {
+              id
+              legacyResourceId
+              name
+              email
+              phone
+              displayFinancialStatus
+              currentTotalPriceSet {
+                shopMoney { amount currencyCode }
+              }
+              originalTotalPriceSet { shopMoney { amount currencyCode } }
+              shippingAddress {
+                firstName
+                lastName
+                address1
+                address2
+                city
+                province
+                zip
+                country
+                phone
+              }
+              lineItems(first: 100) {
+                nodes {
+                  title
+                  quantity
+                  originalUnitPriceSet { shopMoney { amount currencyCode } }
+                }
+              }
+            }
+          }
+          userErrors { field message }
+        }
+      }`,
+      { id: draft.id, paymentPending: true }
+    );
+    const result = completed.draftOrderComplete;
+    if (result.userErrors?.length) {
+      throw new Error(result.userErrors.map((error) => error.message).join(", "));
+    }
+    console.info("[COD] draft order completed:", result.draftOrder?.id || draft.id);
+    if (!result.draftOrder?.order) throw new Error("Shopify did not return the created COD order.");
+    const order = orderFromAdmin(result.draftOrder.order);
+    console.info("[COD] final Shopify order ID:", order.id || "unknown");
+    return order;
+  })();
+
+  codOrderRequests.set(requestKey, request);
+  try {
+    return await request;
+  } finally {
+    codOrderRequests.delete(requestKey);
+  }
+};
 
 /* =========================================================
    CUSTOMER TOKEN
@@ -1874,6 +2321,7 @@ const registerCustomer =
     lastName,
     email,
     password,
+    phone,
   }) => {
     const data =
       await storefrontGraphql(
@@ -1903,6 +2351,7 @@ const registerCustomer =
             lastName,
             email,
             password,
+            phone,
           },
         }
       );
@@ -1950,74 +2399,16 @@ const loginCustomer =
     return data.customerAccessTokenCreate;
   };
 
-/* =========================================================
-   CUSTOMER RECOVER
-========================================================= */
 
-const recoverCustomer =
-  async (email) => {
-    const data =
-      await storefrontGraphql(
-        `mutation CustomerRecover(
-          $email: String!
-        ) {
-          customerRecover(
-            email: $email
-          ) {
-            customerUserErrors {
-              field
-              message
-              code
-            }
-          }
-        }`,
-        {
-          email,
-        }
-      );
-
-    return data.customerRecover;
-  };
-
-/* =========================================================
-   CUSTOMER RESET
-========================================================= */
-
-const resetCustomerByUrl =
-  async ({
-    resetUrl,
-    password,
-  }) => {
-    const data =
-      await storefrontGraphql(
-        `mutation CustomerResetByUrl(
-          $resetUrl: URL!
-          $password: String!
-        ) {
-          customerResetByUrl(
-            resetUrl: $resetUrl
-            password: $password
-          ) {
-            customerAccessToken {
-              accessToken
-              expiresAt
-            }
-
-            customerUserErrors {
-              field
-              message
-              code
-            }
-          }
-        }`,
-        {
-          resetUrl,
-          password,
-        }
-      );
-
-    return data.customerResetByUrl;
-  };
+const findCustomerByEmail = async (email) => {
+  const data = await adminGraphql(
+    `query CustomerByEmail($query: String!) {
+      customers(first: 2, query: $query) { nodes { id email firstName lastName } }
+    }`,
+    { query: `email:${String(email).replace(/["\\]/g, "")}` }
+  );
+  return (data.customers?.nodes || []).find((customer) => String(customer.email || "").toLowerCase() === String(email).toLowerCase()) || null;
+};
 
 /* =========================================================
    CUSTOMER FIELDS
@@ -2059,10 +2450,11 @@ const customerFields = `
   }
 
   orders(
-    first: 20
+    first: 50
     sortKey: PROCESSED_AT
     reverse: true
   ) {
+    pageInfo { hasNextPage endCursor }
     nodes {
       id
       orderNumber
@@ -2080,6 +2472,7 @@ const customerFields = `
         nodes {
           title
           quantity
+          variant { image { url altText } }
         }
       }
     }
@@ -2111,17 +2504,57 @@ const fetchCustomer =
         }
       );
 
-    return data.customer;
+    const customer = data.customer;
+    if (!customer?.orders?.pageInfo?.hasNextPage) return customer;
+
+    const allOrders = [...(customer.orders.nodes || [])];
+    let cursor = customer.orders.pageInfo.endCursor;
+    let hasNextPage = customer.orders.pageInfo.hasNextPage;
+    while (hasNextPage && cursor) {
+      const nextPage = await storefrontGraphql(
+        `query CustomerOrderHistoryPage($customerAccessToken: String!, $cursor: String) {
+          customer(customerAccessToken: $customerAccessToken) {
+            orders(first: 50, after: $cursor, sortKey: PROCESSED_AT, reverse: true) {
+              pageInfo { hasNextPage endCursor }
+              nodes {
+                id
+                orderNumber
+                processedAt
+                currentTotalPrice { amount currencyCode }
+                financialStatus
+                fulfillmentStatus
+                lineItems(first: 10) {
+                  nodes { title quantity variant { image { url altText } } }
+                }
+              }
+            }
+          }
+        }`,
+        { customerAccessToken, cursor }
+      );
+      const connection = nextPage.customer?.orders;
+      allOrders.push(...(connection?.nodes || []));
+      cursor = connection?.pageInfo?.endCursor;
+      hasNextPage = Boolean(connection?.pageInfo?.hasNextPage);
+    }
+    customer.orders.nodes = allOrders;
+    return customer;
   };
 
 const findOrderByTrackingId = async (trackingId) => {
   const normalizedTrackingId = String(trackingId || "").trim();
   if (!normalizedTrackingId) return null;
+  const orderNumber = normalizedTrackingId.replace(/^#/, "");
+  const searchQuery = /^\d+$/.test(orderNumber)
+    ? `id:${orderNumber}`
+    : `fulfillment_tracking_number:${normalizedTrackingId}`;
 
   const data = await adminGraphql(
     `query OrderByTrackingId($query: String!) {
       orders(first: 10, query: $query) {
         nodes {
+          id
+          legacyResourceId
           name
           processedAt
           currentTotalPriceSet {
@@ -2132,6 +2565,7 @@ const findOrderByTrackingId = async (trackingId) => {
           }
           displayFinancialStatus
           displayFulfillmentStatus
+          cancelledAt
           lineItems(first: 10) {
             nodes {
               title
@@ -2149,22 +2583,28 @@ const findOrderByTrackingId = async (trackingId) => {
         }
       }
     }`,
-    { query: `fulfillment_tracking_number:${normalizedTrackingId}` }
+    { query: searchQuery }
   );
 
-  const order = data.orders.nodes.find((candidate) =>
-    candidate.fulfillments?.some((fulfillment) =>
-      fulfillment.trackingInfo?.some((tracking) => tracking.number === normalizedTrackingId)
-    )
-  );
+  let order = /^\d+$/.test(orderNumber)
+    ? data.orders.nodes.find((candidate) => String(candidate.legacyResourceId) === orderNumber)
+    : null;
+  if (!order) order = data.orders.nodes.find((candidate) =>
+        candidate.fulfillments?.some((fulfillment) =>
+          fulfillment.trackingInfo?.some((tracking) => tracking.number === normalizedTrackingId)
+        )
+      );
   if (!order) return null;
 
   return {
+    id: order.id,
+    legacyResourceId: String(order.legacyResourceId),
     orderNumber: order.name,
     processedAt: order.processedAt,
     currentTotalPrice: order.currentTotalPriceSet?.shopMoney,
     financialStatus: order.displayFinancialStatus,
     fulfillmentStatus: order.displayFulfillmentStatus,
+    cancelledAt: order.cancelledAt || null,
     lineItems: order.lineItems,
     fulfillments: order.fulfillments,
   };
@@ -2260,9 +2700,17 @@ module.exports = {
 
   fetchCart,
 
+  isShopifyCartId,
+
   validateCartInventory,
 
   getVariantInventory,
+
+  createCodOrder,
+
+  getCustomerOrder,
+
+  getCustomerOrderIdMap,
 
   validateCustomerAccessToken,
 
@@ -2282,10 +2730,7 @@ module.exports = {
   registerCustomer,
 
   loginCustomer,
-
-  recoverCustomer,
-
-  resetCustomerByUrl,
+  findCustomerByEmail,
 
   fetchCustomer,
 

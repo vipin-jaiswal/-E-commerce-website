@@ -1,5 +1,15 @@
-const PHONE_REGEX = /^[6-9]\d{9}$/;
+const PHONE_REGEX = /^\+91[6-9]\d{9}$/;
 const PINCODE_REGEX = /^[1-9][0-9]{5}$/;
+
+export function normalizeIndianPhone(value) {
+  const digits = String(value || '').trim().replace(/[^\d+]/g, '');
+  let nationalNumber = '';
+  if (/^\+91[6-9]\d{9}$/.test(digits)) nationalNumber = digits.slice(3);
+  else if (/^91[6-9]\d{9}$/.test(digits)) nationalNumber = digits.slice(2);
+  else if (/^0[6-9]\d{9}$/.test(digits)) nationalNumber = digits.slice(1);
+  else if (/^[6-9]\d{9}$/.test(digits)) nationalNumber = digits;
+  return nationalNumber ? `+91${nationalNumber}` : null;
+}
 
 /**
  * Validates the address form fields. Returns an errors object keyed
@@ -12,7 +22,11 @@ export function validateAddressForm(data) {
   else if (data.name.trim().length > 100) errors.name = 'Name is too long';
 
   if (!data.phone?.trim()) errors.phone = 'Phone number is required';
-  else if (!PHONE_REGEX.test(data.phone.trim())) errors.phone = 'Enter a valid 10-digit phone number';
+  else if (!normalizeIndianPhone(data.phone)) errors.phone = 'Please enter a valid 10-digit Indian mobile number.';
+
+  if (data.alternativePhone?.trim() && !normalizeIndianPhone(data.alternativePhone)) {
+    errors.alternativePhone = 'Please enter a valid 10-digit Indian mobile number.';
+  }
 
   if (!data.address1?.trim()) errors.address1 = 'Address line 1 is required';
   else if (data.address1.trim().length > 200) errors.address1 = 'Address line 1 is too long';

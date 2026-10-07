@@ -3,11 +3,13 @@ import { Star, X } from "lucide-react";
 import ReviewCard from "./ReviewCard";
 import { API_BASE } from "../../utils/constants";
 import api from "../../services/api";
+import { useRefreshReviewStats } from "../../context/ReviewStatsContext";
 
 export default function ReviewSection({
   productHandle = "",
   onWriteReview,
 }) {
+  const refreshReviewStats = useRefreshReviewStats();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -122,6 +124,7 @@ export default function ReviewSection({
       }
 
       setReviews((current) => [payload.data, ...current]);
+      refreshReviewStats();
       setForm({ productHandle: normalizedHandle, author: "", rating: 5, title: "", body: "" });
       setIsFormOpen(false);
     } catch (err) {

@@ -4,6 +4,8 @@ import { cartService } from '../services/cartService';
 export const CartContext = createContext(null);
 
 const CART_ID_KEY = 'shopifyCartId';
+const isShopifyCartId = (value) =>
+  typeof value === 'string' && value.startsWith('gid://shopify/Cart/');
 
 const getVariantId = (product, weight = '') => {
   const variants = Array.isArray(product?.variants) ? product.variants : [];
@@ -17,7 +19,10 @@ const getSelectedVariant = (product, weight = '') => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartId, setCartId] = useState(() => localStorage.getItem(CART_ID_KEY));
+  const [cartId, setCartId] = useState(() => {
+    const storedCartId = localStorage.getItem(CART_ID_KEY);
+    return isShopifyCartId(storedCartId) ? storedCartId : null;
+  });
   const [cart, setCart] = useState({ items: [], subtotalPrice: 0, totalPrice: 0, currencyCode: 'INR' });
 
   useEffect(() => {
@@ -35,9 +40,10 @@ export const CartProvider = ({ children }) => {
 
   const rememberCart = (nextCart) => {
     setCart(nextCart);
-    if (nextCart?.cartId) {
-      localStorage.setItem(CART_ID_KEY, nextCart.cartId);
-      setCartId(nextCart.cartId);
+    const nextCartId = nextCart?.cartId || nextCart?.id;
+    if (isShopifyCartId(nextCartId)) {
+      localStorage.setItem(CART_ID_KEY, nextCartId);
+      setCartId(nextCartId);
     }
     return nextCart;
   };

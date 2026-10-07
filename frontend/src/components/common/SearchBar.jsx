@@ -118,10 +118,11 @@ export default function SearchBar({ open, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close search"
-              className="rounded-full p-2 text-gray-400 transition hover:bg-primary-soft hover:text-primary dark:text-slate-400 dark:hover:bg-primary/10"
+            aria-label="Cancel search"
+            className="inline-flex items-center gap-1 rounded-full p-2 text-sm font-medium text-gray-500 transition hover:bg-primary-soft hover:text-primary dark:text-slate-400 dark:hover:bg-primary/10"
           >
             <X size={22} />
+            <span>Cancel</span>
           </button>
         </form>
 

@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { API_BASE } from '../utils/constants';
 
+export const clearCustomerScopedState = () => {
+  for (const key of ['dyvaSavedAddresses', 'dyvaAddressOwner', 'dyvaCheckoutAddress', 'dyvaCheckoutAddressOwner', 'dyvaCheckoutPayment', 'shopifyCartId', 'dyvaProfileDetails', 'account', 'lumiere_wishlist']) localStorage.removeItem(key);
+  for (const key of ['dyvaCheckoutAddress', 'dyvaCheckoutAddressOwner', 'dyvaCheckoutPayment', 'dyvaCodOrder']) sessionStorage.removeItem(key);
+  window.dispatchEvent(new Event('dyva:customer-changed'));
+};
+
 const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
@@ -29,8 +35,9 @@ api.interceptors.response.use(
 
     if (err.response?.status === 401) {
       if (!isCustomerAuth) {
+        clearCustomerScopedState();
         localStorage.removeItem('token');
-        if (!['/login', '/register', '/forgot-password', '/reset-password'].includes(window.location.pathname)) {
+        if (!['/login', '/register', '/forgot-password'].includes(window.location.pathname)) {
           window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
         }
       }

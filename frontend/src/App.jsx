@@ -4,6 +4,8 @@ import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ReviewStatsProvider } from './context/ReviewStatsContext';
+import { SearchOverlayProvider } from './context/SearchOverlayContext';
 
 // Layout components
 import Header from './components/layout/Header';
@@ -28,7 +30,9 @@ import Terms from './pages/Terms';
 import AllConcernsPage from './pages/AllConcernsPage';
 import Account from './pages/Account';
 import { Login, Register } from './pages/AuthPages';
-import { ForgotPassword, ResetPassword } from './pages/AuthRecovery';
+import { ForgotPassword } from './pages/AuthRecovery';
+import OrderSuccess from './pages/OrderSuccess';
+import OrderDetails from './pages/OrderDetails';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -62,6 +66,8 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <ThemeProvider>
+      <SearchOverlayProvider>
+      <ReviewStatsProvider>
       <CartProvider>
         <WishlistProvider>
           <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
@@ -70,7 +76,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<AppLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<Products />} />
@@ -78,6 +83,8 @@ function App() {
               <Route path="/products/:id" element={<ProductDetails />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/order-success" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
+              <Route path="/order-details" element={<ProtectedRoute><OrderDetails /></ProtectedRoute>} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/shipping-returns" element={<ShippingReturns />} />
               <Route path="/faq" element={<FAQ />} />
@@ -95,6 +102,8 @@ function App() {
           </Routes>
         </WishlistProvider>
       </CartProvider>
+          </ReviewStatsProvider>
+          </SearchOverlayProvider>
     </ThemeProvider>
   );
 }
