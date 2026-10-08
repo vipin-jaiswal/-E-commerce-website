@@ -190,7 +190,7 @@ export function Register() {
         <h1 className="mt-8 text-4xl font-semibold tracking-tight text-slate-950">Create your account</h1>
         <p className="mt-3 text-sm leading-6 text-slate-500">A considered routine starts here.</p>
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          <label className="block text-sm font-medium text-slate-700">Full name<input className={inputClassName} type="text" name="name" value={form.name} onChange={updateField} required autoComplete="name" /></label>
+          <label className="block text-sm font-medium text-slate-700">Name<input className={inputClassName} type="text" name="name" value={form.name} onChange={updateField} required autoComplete="name" /></label>
           <label className="block text-sm font-medium text-slate-700">Email address<input className={inputClassName} type="email" name="email" value={form.email} onChange={updateField} required autoComplete="email" /></label>
           <label className="block text-sm font-medium text-slate-700">Password<span className="relative block"><input className={`${inputClassName} pr-12`} type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={updateField} required minLength={8} autoComplete="new-password" /><PasswordToggle visible={showPassword} onClick={() => setShowPassword((value) => !value)} /></span></label>
           {otpSent && <label className="block text-sm font-medium text-slate-700">Email verification code<input className={inputClassName} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} required /></label>}
@@ -232,7 +232,7 @@ function MobileAuthPage({ mode, form, updateField, submit, sendOtp, verifyOtp, c
           <p className="mt-3 text-[15px] leading-6 text-slate-500">{isLogin ? 'Sign in to your account and continue your routine.' : 'A considered routine starts here.'}</p>
         </div>
         <form className="mt-9 flex flex-1 flex-col" onSubmit={submitMobileForm}>
-          {!isLogin && !otpSent && <MobileField label="Full name"><input className={mobileInputClass} type="text" name="name" value={form.name} onChange={updateField} required autoComplete="name" placeholder="Full name" /></MobileField>}
+          {!isLogin && !otpSent && <MobileField label="Name"><input className={mobileInputClass} type="text" name="name" value={form.name} onChange={updateField} required autoComplete="name" placeholder="Your name" /></MobileField>}
           {!isOtpStep && <MobileField label="Email address"><input className={mobileInputClass} type="email" name="email" value={form.email} onChange={updateField} required autoComplete={isLogin ? 'username' : 'email'} placeholder="Email address" /></MobileField>}
           {!otpSent && <MobileField label="Password"><span className="relative block"><input className={`${mobileInputClass} pr-12`} type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={updateField} required minLength={8} autoComplete={isLogin ? 'current-password' : 'new-password'} placeholder="Password" /><PasswordToggle visible={showPassword} onClick={togglePassword} /></span></MobileField>}
           {isOtpStep && <MobileField label="Verification code"><input className={mobileInputClass} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} required placeholder="Enter verification code" /></MobileField>}

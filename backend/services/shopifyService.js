@@ -2348,10 +2348,10 @@ const registerCustomer =
         {
           input: {
             firstName,
-            lastName,
             email,
             password,
             phone,
+            ...(lastName ? { lastName } : {}),
           },
         }
       );
