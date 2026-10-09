@@ -1,21 +1,11 @@
 const express = require("express");
-const { createCodOrder, getCustomerOrder, getCustomerOrderIdMap, isShopifyCartId, validateCustomerAccessToken } = require("../services/shopifyService");
+const { createCodOrder, getCustomerOrder, getCustomerOrderIdMap, isShopifyCartId } = require("../services/shopifyService");
+const authMiddleware = require("../middleware/authMiddleware");
+const CartOwnership = require("../models/CartOwnership");
 
 const router = express.Router();
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^\+91[6-9]\d{9}$/;
-
-function maskPhone(phone) {
-  if (!phone) return "[empty]";
-
-  const value = String(phone);
-
-  if (value.length <= 4) {
-    return "****";
-  }
-
-  return "*".repeat(value.length - 4) + value.slice(-4);
-}
 
 function normalizeIndianPhone(phone) {
   if (phone === null || phone === undefined) {
@@ -45,14 +35,9 @@ function normalizeIndianPhone(phone) {
   return null;
 }
 
-const getCustomerToken = (request) =>
-  request.headers.authorization?.replace(/^Bearer\s+/i, "");
-
-router.get("/ids", async (req, res) => {
-  const token = getCustomerToken(req);
-  if (!token) return res.status(401).json({ success: false, message: "Please sign in." });
+router.get("/ids", authMiddleware, async (req, res) => {
   try {
-    const result = await getCustomerOrderIdMap(token);
+    const result = await getCustomerOrderIdMap(req.user.shopifyCustomerId);
     if (!result.authenticated) return res.status(401).json({ success: false, message: "Your session has expired. Please sign in again." });
     return res.json({ success: true, ids: result.ids });
   } catch (error) {
@@ -61,9 +46,7 @@ router.get("/ids", async (req, res) => {
   }
 });
 
-router.get("/details", async (req, res) => {
-  const token = getCustomerToken(req);
-  if (!token) return res.status(401).json({ success: false, message: "Please sign in." });
+router.get("/details", authMiddleware, async (req, res) => {
   const orderId = String(req.query.orderId || "");
   console.info("[orders][details] received orderId:", orderId || "[empty]");
   if (!/^#?\d+$/.test(orderId)) {
@@ -71,7 +54,7 @@ router.get("/details", async (req, res) => {
   }
 
   try {
-    const result = await getCustomerOrder(token, orderId);
+    const result = await getCustomerOrder(req.user.shopifyCustomerId, orderId);
     if (!result.authenticated) {
       return res.status(401).json({ success: false, message: "Your session has expired. Please sign in again." });
     }
@@ -134,26 +117,37 @@ const validateRequest = (body) => {
   };
 };
 
-router.post("/cod", async (req, res) => {
-  console.info(`[COD][route] body.cartId: ${req.body?.cartId || null}`);
-  console.log("[COD] phone received:", maskPhone(req.body?.customer?.phone));
-  const token = getCustomerToken(req);
-  let authenticated = false;
-  try {
-    authenticated = await validateCustomerAccessToken(token);
-  } catch (error) {
-    console.error("[orders][cod] customer validation failed:", error.message);
-    return res.status(503).json({ success: false, message: "Checkout is temporarily unavailable. Please try again." });
+router.post("/cod", authMiddleware, async (req, res) => {
+  const requestedCartId = req.body?.cartId;
+  if (requestedCartId) {
+    try {
+      if (!await CartOwnership.isOwnedBy(requestedCartId, req.user._id)) {
+        return res.status(403).json({ success: false, message: "This cart is not available to this account." });
+      }
+    } catch {
+      return res.status(503).json({ success: false, message: "Unable to verify cart ownership right now." });
+    }
   }
-  if (!authenticated) {
-    return res.status(401).json({ success: false, message: "Please sign in before placing your order." });
-  }
-
-  const validated = validateRequest(req.body);
+  const [firstName, ...lastNameParts] = String(req.user.name || '').trim().split(/\s+/);
+  const trustedBody = {
+    ...req.body,
+    customer: {
+      ...req.body?.customer,
+      firstName: firstName || '',
+      lastName: lastNameParts.join(' '),
+      email: req.user.email,
+      phone: req.user.phone || null,
+      shopifyCustomerId: req.user.shopifyCustomerId || null,
+    },
+    shippingAddress: {
+      ...req.body?.shippingAddress,
+      phone: req.user.phone || null,
+    },
+  };
+  const validated = validateRequest(trustedBody);
   if (validated.errors.length) {
     return res.status(400).json({ success: false, message: validated.errors[0], errors: validated.errors });
   }
-  console.info(`[COD][controller] cartId: ${validated.cartId}`);
   if (String(process.env.COD_ENABLED || "true").toLowerCase() === "false") {
     return res.status(403).json({ success: false, message: "Cash on Delivery is currently unavailable." });
   }
@@ -179,6 +173,7 @@ router.post("/cod", async (req, res) => {
   } catch (error) {
     console.error("[orders][cod] request failed:", error.message);
     const status = error.code === "INVALID_CART_ID" ? 400
+      : error.code === "CART_ORDER_OWNERSHIP" ? 403
       : error.code === "CART_NOT_FOUND" ? 404
       : error.code === "EMPTY_CART" ? 409
       : error.code === "INVENTORY_UNAVAILABLE" ? 409

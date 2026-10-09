@@ -1294,8 +1294,6 @@ const logCartDiagnostics = (
   console.info(
     `[shopify][cart] ${JSON.stringify({
       operation,
-      cartId: cart?.id || null,
-      checkoutUrl: cart?.checkoutUrl || null,
       graphQLErrors: graphQLErrors.map((error) =>
         typeof error === "string" ? error : error?.message || String(error)
       ),
@@ -1494,9 +1492,10 @@ const orderFromAdmin = (order) => ({
   fulfillments: order.fulfillments || [],
 });
 
-const getCustomerOrderIdMap = async (customerAccessToken) => {
-  const customer = await fetchCustomer(customerAccessToken);
-  if (!customer) return { authenticated: false, ids: {} };
+const getCustomerOrderIdMap = async (shopifyCustomerId) => {
+  if (!shopifyCustomerId) return { authenticated: true, ids: {} };
+  const customer = await fetchCustomer(shopifyCustomerId);
+  if (!customer) return { authenticated: true, ids: {} };
   const customerOrders = customer.orders?.nodes || [];
   if (!customerOrders.length) return { authenticated: true, ids: {} };
   const ids = {};
@@ -1549,15 +1548,16 @@ const getCustomerOrderIdMap = async (customerAccessToken) => {
   return { authenticated: true, ids };
 };
 
-const getCustomerOrder = async (customerAccessToken, orderId) => {
-  const customer = await fetchCustomer(customerAccessToken);
-  if (!customer) return { authenticated: false, order: null };
+const getCustomerOrder = async (shopifyCustomerId, orderId) => {
+  if (!shopifyCustomerId) return { authenticated: true, order: null };
+  const customer = await fetchCustomer(shopifyCustomerId);
+  if (!customer) return { authenticated: true, order: null };
 
   const customerOrders = customer.orders?.nodes || [];
   const requestedId = String(orderId).replace(/^#/, "");
   let customerOrder = customerOrders.find((order) => order.id === orderId);
   if (!customerOrder && /^\d+$/.test(requestedId)) {
-    const idMap = await getCustomerOrderIdMap(customerAccessToken);
+    const idMap = await getCustomerOrderIdMap(shopifyCustomerId);
     const gid = Object.entries(idMap.ids).find(([, order]) =>
       String(order?.orderId || order) === requestedId
     )?.[0];
@@ -1681,6 +1681,7 @@ const findCodOrder = async (tag) => {
         name
         email
         phone
+        customer { id }
         displayFinancialStatus
         currentTotalPriceSet {
           shopMoney {
@@ -1717,7 +1718,8 @@ const findCodOrder = async (tag) => {
     }`,
     { query: `tag:${tag}` }
   );
-  return data.orders?.nodes?.[0] ? orderFromAdmin(data.orders.nodes[0]) : null;
+  const existing = data.orders?.nodes?.[0];
+  return existing ? { ...orderFromAdmin(existing), linkedShopifyCustomerId: existing.customer?.id || null } : null;
 };
 
 const findCodDraft = async (tag) => {
@@ -1736,23 +1738,33 @@ const findCodDraft = async (tag) => {
 };
 
 const createCodOrder = async ({ cartId, customer, shippingAddress }) => {
-  console.info(`[COD][shopify] cartId: ${cartId || null}`);
   console.info(`[COD] phone received: ${customer?.phone ? `******${String(customer.phone).slice(-4)}` : null}`);
   if (!isShopifyCartId(cartId)) {
-    console.info("[COD] cartId valid: false");
     const error = new Error("Cart ID is required for COD order creation");
     error.code = "INVALID_CART_ID";
     throw error;
   }
-  console.info("[COD] cartId valid: true");
-
   const requestKey = codOrderTag(cartId);
-  const existingRequest = codOrderRequests.get(requestKey);
+  const requestLockKey = `${requestKey}:${customer.shopifyCustomerId || customer.email}`;
+  const existingRequest = codOrderRequests.get(requestLockKey);
   if (existingRequest) return existingRequest;
 
   const request = (async () => {
     const existingOrder = await findCodOrder(requestKey);
-    if (existingOrder) return existingOrder;
+    if (existingOrder) {
+      const sameLinkedCustomer = customer.shopifyCustomerId
+        && existingOrder.linkedShopifyCustomerId === customer.shopifyCustomerId;
+      const sameUnlinkedEmail = !customer.shopifyCustomerId
+        && !existingOrder.linkedShopifyCustomerId
+        && String(existingOrder.customer?.email || existingOrder.email || '').toLowerCase() === String(customer.email || '').toLowerCase();
+      if (!sameLinkedCustomer && !sameUnlinkedEmail) {
+        const error = new Error('This cart is already associated with another customer.');
+        error.code = 'CART_ORDER_OWNERSHIP';
+        throw error;
+      }
+      const { linkedShopifyCustomerId, ...safeOrder } = existingOrder;
+      return safeOrder;
+    }
 
     const inventory = await validateCartInventory(cartId);
     console.info(`[COD] cart response: ${inventory.cart ? "received" : "empty"}`);
@@ -1802,6 +1814,7 @@ const createCodOrder = async ({ cartId, customer, shippingAddress }) => {
         input: {
           email: customer.email,
           phone: customer.phone,
+          ...(customer.shopifyCustomerId ? { customerId: customer.shopifyCustomerId } : {}),
           lineItems,
           shippingAddress: address,
           billingAddress: address,
@@ -1876,11 +1889,11 @@ const createCodOrder = async ({ cartId, customer, shippingAddress }) => {
     return order;
   })();
 
-  codOrderRequests.set(requestKey, request);
+  codOrderRequests.set(requestLockKey, request);
   try {
     return await request;
   } finally {
-    codOrderRequests.delete(requestKey);
+    codOrderRequests.delete(requestLockKey);
   }
 };
 
@@ -1888,33 +1901,6 @@ const createCodOrder = async ({ cartId, customer, shippingAddress }) => {
    CUSTOMER TOKEN
 ========================================================= */
 
-const validateCustomerAccessToken =
-  async (
-    customerAccessToken
-  ) => {
-    if (!customerAccessToken) {
-      return false;
-    }
-
-    const data =
-      await storefrontGraphql(
-        `query Customer($customerAccessToken: String!) {
-          customer(
-            customerAccessToken:
-              $customerAccessToken
-          ) {
-            id
-          }
-        }`,
-        {
-          customerAccessToken,
-        }
-      );
-
-    return Boolean(
-      data.customer
-    );
-  };
 
 /* =========================================================
    CART DELIVERY ADDRESS
@@ -2022,7 +2008,7 @@ const updateCartDeliveryAddress =
 const updateCartBuyerIdentity =
   async (
     cartId,
-    customerAccessToken
+    customer
   ) => {
     const data =
       await storefrontGraphql(
@@ -2048,7 +2034,8 @@ const updateCartBuyerIdentity =
           cartId,
 
           buyerIdentity: {
-            customerAccessToken,
+            email: customer.email,
+            ...(customer.phone ? { phone: customer.phone } : {}),
 
             countryCode: "IN",
           },
@@ -2315,90 +2302,19 @@ const removeCartLines = (
    CUSTOMER REGISTER
 ========================================================= */
 
-const registerCustomer =
-  async ({
-    firstName,
-    lastName,
-    email,
-    password,
-    phone,
-  }) => {
-    const data =
-      await storefrontGraphql(
-        `mutation CustomerCreate(
-          $input: CustomerCreateInput!
-        ) {
-          customerCreate(
-            input: $input
-          ) {
-            customer {
-              id
-              email
-              firstName
-              lastName
-            }
-
-            customerUserErrors {
-              field
-              message
-              code
-            }
-          }
-        }`,
-        {
-          input: {
-            firstName,
-            email,
-            password,
-            phone,
-            ...(lastName ? { lastName } : {}),
-          },
-        }
-      );
-
-    return data.customerCreate;
-  };
-
-/* =========================================================
-   CUSTOMER LOGIN
-========================================================= */
-
-const loginCustomer =
-  async ({
-    email,
-    password,
-  }) => {
-    const data =
-      await storefrontGraphql(
-        `mutation CustomerAccessTokenCreate(
-          $input: CustomerAccessTokenCreateInput!
-        ) {
-          customerAccessTokenCreate(
-            input: $input
-          ) {
-            customerAccessToken {
-              accessToken
-              expiresAt
-            }
-
-            customerUserErrors {
-              field
-              message
-              code
-            }
-          }
-        }`,
-        {
-          input: {
-            email,
-            password,
-          },
-        }
-      );
-
-    return data.customerAccessTokenCreate;
-  };
-
+const registerCustomer = async ({ firstName, lastName, email, phone }) => {
+  const data = await adminGraphql(
+    `mutation CustomerCreate($input: CustomerInput!) {
+      customerCreate(input: $input) {
+        customer { id email firstName lastName phone }
+        userErrors { field message }
+      }
+    }`,
+    { input: { firstName, email, phone, ...(lastName ? { lastName } : {}) } }
+  );
+  const result = data.customerCreate;
+  return { customer: result.customer, customerUserErrors: result.userErrors || [] };
+};
 
 const findCustomerByEmail = async (email) => {
   const data = await adminGraphql(
@@ -2411,137 +2327,110 @@ const findCustomerByEmail = async (email) => {
 };
 
 /* =========================================================
-   CUSTOMER FIELDS
+   FETCH CUSTOMER
 ========================================================= */
 
-const customerFields = `
+const adminCustomerFields = `
   id
   email
   firstName
   lastName
   phone
-
-  defaultAddress {
-    id
-    address1
-    address2
-    city
-    province
-    zip
-    country
-    phone
-    firstName
-    lastName
+  defaultAddress { id address1 address2 city province zip country phone firstName lastName }
+  addresses: addressesV2(first: 20) {
+    nodes { id address1 address2 city province zip country phone firstName lastName }
   }
-
-  addresses(first: 20) {
-    nodes {
-      id
-      address1
-      address2
-      city
-      province
-      zip
-      country
-      phone
-      firstName
-      lastName
-    }
-  }
-
-  orders(
-    first: 50
-    sortKey: PROCESSED_AT
-    reverse: true
-  ) {
+  orders(first: 50, sortKey: CREATED_AT, reverse: true) {
     pageInfo { hasNextPage endCursor }
     nodes {
       id
-      orderNumber
+      legacyResourceId
+      name
+      createdAt
       processedAt
-
-      currentTotalPrice {
-        amount
-        currencyCode
-      }
-
-      financialStatus
-      fulfillmentStatus
-
+      currentTotalPriceSet { shopMoney { amount currencyCode } }
+      displayFinancialStatus
+      displayFulfillmentStatus
       lineItems(first: 10) {
-        nodes {
-          title
-          quantity
-          variant { image { url altText } }
-        }
+        nodes { title quantity image { url altText } }
       }
     }
   }
 `;
 
-/* =========================================================
-   FETCH CUSTOMER
-========================================================= */
+const normalizeAdminCustomer = (customer) => {
+  if (!customer) return null;
+  const normalizeOrder = (order) => ({
+    ...order,
+    orderNumber: order.name,
+    orderId: String(order.legacyResourceId || ""),
+    currentTotalPrice: order.currentTotalPriceSet?.shopMoney || null,
+    financialStatus: order.displayFinancialStatus || null,
+    fulfillmentStatus: order.displayFulfillmentStatus || null,
+    lineItems: {
+      nodes: (order.lineItems?.nodes || []).map((item) => ({
+        ...item,
+        variant: { image: item.image || null },
+      })),
+    },
+  });
+  return {
+    ...customer,
+    addresses: customer.addresses || { nodes: [] },
+    orders: {
+      ...customer.orders,
+      nodes: (customer.orders?.nodes || []).map(normalizeOrder),
+    },
+  };
+};
 
-const fetchCustomer =
-  async (
-    customerAccessToken
-  ) => {
-    const data =
-      await storefrontGraphql(
-        `query CustomerDetails(
-          $customerAccessToken: String!
-        ) {
-          customer(
-            customerAccessToken:
-              $customerAccessToken
-          ) {
-            ${customerFields}
-          }
-        }`,
-        {
-          customerAccessToken,
-        }
-      );
+const fetchCustomer = async (shopifyCustomerId) => {
+  if (!shopifyCustomerId) return null;
+  const data = await adminGraphql(
+    `query CustomerDetails($id: ID!) {
+      customer(id: $id) { ${adminCustomerFields} }
+    }`,
+    { id: shopifyCustomerId }
+  );
+  const customer = data.customer;
+  if (!customer?.orders?.pageInfo?.hasNextPage) return normalizeAdminCustomer(customer);
 
-    const customer = data.customer;
-    if (!customer?.orders?.pageInfo?.hasNextPage) return customer;
-
-    const allOrders = [...(customer.orders.nodes || [])];
-    let cursor = customer.orders.pageInfo.endCursor;
-    let hasNextPage = customer.orders.pageInfo.hasNextPage;
-    while (hasNextPage && cursor) {
-      const nextPage = await storefrontGraphql(
-        `query CustomerOrderHistoryPage($customerAccessToken: String!, $cursor: String) {
-          customer(customerAccessToken: $customerAccessToken) {
-            orders(first: 50, after: $cursor, sortKey: PROCESSED_AT, reverse: true) {
-              pageInfo { hasNextPage endCursor }
-              nodes {
-                id
-                orderNumber
-                processedAt
-                currentTotalPrice { amount currencyCode }
-                financialStatus
-                fulfillmentStatus
-                lineItems(first: 10) {
-                  nodes { title quantity variant { image { url altText } } }
-                }
-              }
+  const allOrders = [...(customer.orders.nodes || [])];
+  let cursor = customer.orders.pageInfo.endCursor;
+  let hasNextPage = customer.orders.pageInfo.hasNextPage;
+  while (hasNextPage && cursor) {
+    const nextPage = await adminGraphql(
+      `query CustomerOrderHistoryPage($id: ID!, $cursor: String) {
+        customer(id: $id) {
+          orders(first: 50, after: $cursor, sortKey: CREATED_AT, reverse: true) {
+            pageInfo { hasNextPage endCursor }
+            nodes {
+              id
+              legacyResourceId
+              name
+              createdAt
+              processedAt
+              currentTotalPriceSet { shopMoney { amount currencyCode } }
+              displayFinancialStatus
+              displayFulfillmentStatus
+              lineItems(first: 10) { nodes { title quantity image { url altText } } }
             }
           }
-        }`,
-        { customerAccessToken, cursor }
-      );
-      const connection = nextPage.customer?.orders;
-      allOrders.push(...(connection?.nodes || []));
-      cursor = connection?.pageInfo?.endCursor;
-      hasNextPage = Boolean(connection?.pageInfo?.hasNextPage);
-    }
-    customer.orders.nodes = allOrders;
-    return customer;
-  };
+        }
+      }`,
+      { id: shopifyCustomerId, cursor }
+    );
+    const connection = nextPage.customer?.orders;
+    allOrders.push(...(connection?.nodes || []));
+    cursor = connection?.pageInfo?.endCursor;
+    hasNextPage = Boolean(connection?.pageInfo?.hasNextPage);
+  }
+  customer.orders.nodes = allOrders;
+  return normalizeAdminCustomer(customer);
+};
 
-const findOrderByTrackingId = async (trackingId) => {
+const findOrderByTrackingId = async (trackingId, shopifyCustomerId) => {
+  if (!shopifyCustomerId) return null;
   const normalizedTrackingId = String(trackingId || "").trim();
   if (!normalizedTrackingId) return null;
   const orderNumber = normalizedTrackingId.replace(/^#/, "");
@@ -2556,6 +2445,7 @@ const findOrderByTrackingId = async (trackingId) => {
           id
           legacyResourceId
           name
+          customer { id }
           processedAt
           currentTotalPriceSet {
             shopMoney {
@@ -2594,7 +2484,7 @@ const findOrderByTrackingId = async (trackingId) => {
           fulfillment.trackingInfo?.some((tracking) => tracking.number === normalizedTrackingId)
         )
       );
-  if (!order) return null;
+  if (!order || order.customer?.id !== shopifyCustomerId) return null;
 
   return {
     id: order.id,
@@ -2614,61 +2504,21 @@ const findOrderByTrackingId = async (trackingId) => {
    UPDATE CUSTOMER
 ========================================================= */
 
-const updateCustomer =
-  async (
-    customerAccessToken,
-    input
-  ) => {
-    const data =
-      await storefrontGraphql(
-        `mutation CustomerUpdate(
-          $customerAccessToken: String!
-          $customer: CustomerUpdateInput!
-        ) {
-          customerUpdate(
-            customerAccessToken:
-              $customerAccessToken
-
-            customer: $customer
-          ) {
-            customer {
-              ${customerFields}
-            }
-
-            customerUserErrors {
-              field
-              message
-              code
-            }
-          }
-        }`,
-        {
-          customerAccessToken,
-
-          customer: input,
-        }
-      );
-
-    const result =
-      data.customerUpdate;
-
-    const errors =
-      result.customerUserErrors ||
-      [];
-
-    if (errors.length) {
-      throw new Error(
-        errors
-          .map(
-            (error) =>
-              error.message
-          )
-          .join(", ")
-      );
-    }
-
-    return result.customer;
-  };
+const updateCustomer = async (shopifyCustomerId, input) => {
+  const data = await adminGraphql(
+    `mutation CustomerUpdate($input: CustomerInput!) {
+      customerUpdate(input: $input) {
+        customer { id email firstName lastName phone }
+        userErrors { field message }
+      }
+    }`,
+    { input: { id: shopifyCustomerId, ...input } }
+  );
+  const result = data.customerUpdate;
+  const errors = result.userErrors || [];
+  if (errors.length) throw new Error(errors.map((error) => error.message).join(", "));
+  return result.customer;
+};
 
 /* =========================================================
    EXPORTS
@@ -2712,7 +2562,6 @@ module.exports = {
 
   getCustomerOrderIdMap,
 
-  validateCustomerAccessToken,
 
   updateCartDeliveryAddress,
 
@@ -2729,12 +2578,12 @@ module.exports = {
 
   registerCustomer,
 
-  loginCustomer,
   findCustomerByEmail,
 
   fetchCustomer,
 
   findOrderByTrackingId,
+
 
   updateCustomer,
 

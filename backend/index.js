@@ -1,5 +1,7 @@
 const dotenv = require('dotenv');
 
+const connectDB = require("./config/db");
+
 // Load environment variables before importing modules that read them at startup.
 dotenv.config();
 
@@ -14,6 +16,7 @@ const start = async () => {
   }
 
   try {
+    await connectDB();
     await checkShopifyConnection();
     console.log('[shopify] Connected successfully');
   } catch (error) {

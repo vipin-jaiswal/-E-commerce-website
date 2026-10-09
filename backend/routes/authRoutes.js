@@ -1,29 +1,18 @@
 const express = require('express');
-const { loginCustomer, registerCustomer, findCustomerByEmail, fetchCustomer, updateCustomer } = require('../services/shopifyService');
+const { registerCustomer, findCustomerByEmail, fetchCustomer, updateCustomer } = require('../services/shopifyService');
 const { sendEmailOtp } = require('../services/msg91EmailService');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const Customer = require('../models/Customer');
+const LoginHistory = require('../models/LoginHistory');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 const getUserErrorMessages = (errors = []) =>
   errors.map((error) => error.message).filter(Boolean);
 
-const handleShopifyError = (res, error, message) => {
-  console.error(`[auth] ${message}:`, error);
-  const isConfigurationError = error.message?.includes('SHOPIFY_STOREFRONT_TOKEN');
-  const isPermissionError = error.message?.includes('Access denied');
-  return res.status(isConfigurationError ? 503 : isPermissionError ? 403 : 502).json({
-    success: false,
-    message: isConfigurationError
-      ? 'Shopify customer authentication is not configured. Add SHOPIFY_STOREFRONT_TOKEN to backend/.env.'
-      : isPermissionError
-        ? 'Shopify customer registration is missing the unauthenticated_write_customers scope.'
-      : message,
-    errors: [error.message].filter(Boolean),
-  });
-};
-
-const getCustomerToken = (request) => request.headers.authorization?.replace(/^Bearer\s+/i, '');
 const recoveryAttempts = new Map();
 
 const canAttemptRecovery = (key) => {
@@ -51,17 +40,29 @@ const normalizePhone = (phone) => {
   return null;
 };
 
+const safeCustomer = (customer, extra = {}) => ({
+  id: customer._id.toString(),
+  name: customer.name,
+  email: customer.email,
+  phone: customer.phone || null,
+  shopifyCustomerId: customer.shopifyCustomerId || null,
+  emailVerified: Boolean(customer.emailVerified),
+  lastLoginAt: customer.lastLoginAt || null,
+  ...extra,
+});
+
 router.post('/register/send-otp', async (req, res) => {
   const name = String(req.body?.name || '').trim();
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   const existing = pendingRegistrations.get(email);
-  if (!name || !EMAIL_REGEX.test(email) || (!existing && password.length < 8)) {
-    return res.status(400).json({ success: false, message: 'Name, a valid email, and a password of at least 8 characters are required.' });
+  const phone = normalizePhone(req.body?.phone) || existing?.phone || null;
+  if (!name || !EMAIL_REGEX.test(email) || !phone || (!existing && password.length < 8)) {
+    return res.status(400).json({ success: false, message: 'Name, a valid email, phone number, and a password of at least 8 characters are required.' });
   }
   if (!existing) {
     try {
-      if (await findCustomerByEmail(email)) {
+      if (await Customer.exists({ email })) {
         return res.status(409).json({ success: false, message: 'An account with this email already exists. Please sign in.' });
       }
     } catch (error) {
@@ -76,7 +77,8 @@ router.post('/register/send-otp', async (req, res) => {
   try {
     await sendEmailOtp({ email, otp });
     const otpHash = crypto.createHash('sha256').update(`${email}:${otp}`).digest('hex');
-    pendingRegistrations.set(email, { name, otpHash, expiresAt: now + OTP_TTL_MS, attempts: 0 });
+    pendingRegistrations.set(email, { name, phone, otpHash, expiresAt: now + OTP_TTL_MS, attempts: 0 });
+    console.log("[auth] Registration OTP state stored for:", email);
     otpRequestTimes.set(`${req.ip || 'ip'}:${email}`, now);
     return res.json({ success: true, message: 'Verification code sent. It expires in 10 minutes.' });
   } catch (error) {
@@ -101,6 +103,7 @@ router.post('/register/verify-code', async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const otp = String(req.body?.otp || '').trim();
   const registration = pendingRegistrations.get(email);
+  console.log("[auth] Registration OTP state found:", Boolean(registration));
   if (!registration) return res.status(400).json({ success: false, message: 'Request a verification code to continue.' });
   if (Date.now() > registration.expiresAt) {
     pendingRegistrations.delete(email);
@@ -117,68 +120,81 @@ router.post('/register/verify-code', async (req, res) => {
   return res.json({ success: true, verified: true, message: 'Email verified.' });
 });
 
-router.post('/register/complete', async (req, res) => {
-  const email = String(req.body?.email || '').trim().toLowerCase();
-  const password = String(req.body?.password || '');
-  const phone = null;
-  const registration = pendingRegistrations.get(email);
-  if (!registration || !registration.verifiedAt || Date.now() > registration.expiresAt) {
-    return res.status(400).json({ success: false, message: 'Verify your email before creating your account.' });
-  }
-  if (password.length < 8) return res.status(400).json({ success: false, message: 'A password of at least 8 characters is required.' });
-  const [firstName, ...lastNameParts] = registration.name.split(/\s+/);
-  try {
-    const created = await registerCustomer({ firstName, lastName: lastNameParts.join(' '), email, password, phone });
-    const createErrors = getUserErrorMessages(created.customerUserErrors);
-    if (createErrors.length || !created.customer) return res.status(400).json({ success: false, message: createErrors[0] || 'Unable to create your account.', errors: createErrors });
-    const login = await loginCustomer({ email, password });
-    const loginErrors = getUserErrorMessages(login.customerUserErrors);
-    if (loginErrors.length || !login.customerAccessToken) return res.status(502).json({ success: false, message: 'Account created, but automatic sign-in failed. Please sign in.' });
-    pendingRegistrations.delete(email);
-    return res.status(201).json({ success: true, token: login.customerAccessToken.accessToken, expiresAt: login.customerAccessToken.expiresAt, data: { customer: created.customer } });
-  } catch (error) {
-    return handleShopifyError(res, error, 'Shopify customer registration failed');
-  }
-});
-
-router.post('/register/verify-otp', async (req, res) => {
+const completeRegistration = async (req, res, { requireOtp = false } = {}) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const otp = String(req.body?.otp || '').trim();
   const password = String(req.body?.password || '');
-  const phone = null;
-  if (password.length < 8) return res.status(400).json({ success: false, message: 'Your password is required to finish creating the account.' });
+  if (!EMAIL_REGEX.test(email) || password.length < 8 || (requireOtp && !/^\d{6}$/.test(otp))) {
+    return res.status(400).json({ success: false, message: 'A valid email, verified email address, and password of at least 8 characters are required.' });
+  }
   const registration = pendingRegistrations.get(email);
+  console.log("[auth] Registration OTP state found:", Boolean(registration));
   if (!registration) return res.status(400).json({ success: false, message: 'Request a verification code to continue.' });
   if (Date.now() > registration.expiresAt) {
     pendingRegistrations.delete(email);
     return res.status(400).json({ success: false, message: 'Verification code expired. Request a new one.' });
   }
-  registration.attempts += 1;
-  const suppliedHash = crypto.createHash('sha256').update(`${email}:${otp}`).digest();
-  const storedHash = Buffer.from(registration.otpHash, 'hex');
-  if (!/^\d{6}$/.test(otp) || !crypto.timingSafeEqual(suppliedHash, storedHash)) {
-    if (registration.attempts >= OTP_MAX_ATTEMPTS) pendingRegistrations.delete(email);
-    return res.status(400).json({ success: false, message: registration.attempts >= OTP_MAX_ATTEMPTS ? 'Too many incorrect codes. Request a new code.' : 'Invalid verification code.' });
+  if (requireOtp) {
+    const suppliedHash = crypto.createHash('sha256').update(`${email}:${otp}`).digest();
+    const storedHash = Buffer.from(registration.otpHash, 'hex');
+    if (!crypto.timingSafeEqual(suppliedHash, storedHash)) {
+      registration.attempts += 1;
+      if (registration.attempts >= OTP_MAX_ATTEMPTS) pendingRegistrations.delete(email);
+      return res.status(400).json({ success: false, message: registration.attempts >= OTP_MAX_ATTEMPTS ? 'Too many incorrect codes. Request a new code.' : 'Invalid verification code.' });
+    }
+  } else if (!registration.verifiedAt) {
+    return res.status(400).json({ success: false, message: 'Verify your email before creating your account.' });
+  }
+  if (!process.env.JWT_SECRET) {
+    return res.status(503).json({ success: false, message: 'Authentication is not configured right now.' });
   }
 
   const [firstName, ...lastNameParts] = registration.name.split(/\s+/);
   try {
-    if (await findCustomerByEmail(email)) {
+    const existingLocalCustomer = await Customer.findOne({ email });
+    if (existingLocalCustomer) {
       pendingRegistrations.delete(email);
       return res.status(409).json({ success: false, message: 'An account with this email already exists. Please sign in.' });
     }
-    const created = await registerCustomer({ firstName, lastName: lastNameParts.join(' '), email, password, phone });
-    const createErrors = getUserErrorMessages(created.customerUserErrors);
-    if (createErrors.length || !created.customer) return res.status(400).json({ success: false, message: createErrors[0] || 'Unable to create your account.', errors: createErrors });
-    const login = await loginCustomer({ email, password });
-    const loginErrors = getUserErrorMessages(login.customerUserErrors);
-    if (loginErrors.length || !login.customerAccessToken) return res.status(502).json({ success: false, message: 'Account created, but automatic sign-in failed. Please sign in.' });
+    let shopifyCustomer = await findCustomerByEmail(email);
+    if (!shopifyCustomer) {
+      const result = await registerCustomer({ firstName, lastName: lastNameParts.join(' '), email, phone: registration.phone });
+      const createErrors = getUserErrorMessages(result.customerUserErrors);
+      if (createErrors.length || !result.customer) {
+        return res.status(400).json({ success: false, message: createErrors[0] || 'Unable to create your account.' });
+      }
+      shopifyCustomer = result.customer;
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    const customer = await Customer.create({
+      name: registration.name,
+      email,
+      phone: registration.phone,
+      password: passwordHash,
+      shopifyCustomerId: shopifyCustomer.id,
+      emailVerified: true,
+    });
+    const token = jwt.sign(
+      { customerId: customer._id.toString() },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     pendingRegistrations.delete(email);
-    return res.status(201).json({ success: true, token: login.customerAccessToken.accessToken, expiresAt: login.customerAccessToken.expiresAt, data: { customer: created.customer } });
+    return res.status(201).json({
+      success: true,
+      token,
+      data: { customer: safeCustomer(customer) },
+    });
   } catch (error) {
-    return handleShopifyError(res, error, 'Shopify customer registration failed');
+    if (error.code === 11000) return res.status(409).json({ success: false, message: 'An account with this email already exists. Please sign in.' });
+    console.error('[auth] Registration failed:', error.message);
+    return res.status(503).json({ success: false, message: 'Unable to complete registration right now. Please try again.' });
   }
-});
+};
+
+router.post('/register/complete', (req, res) => completeRegistration(req, res));
+router.post('/register/verify-otp', (req, res) => completeRegistration(req, res, { requireOtp: true }));
 
 router.post('/forgot-password', async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
@@ -199,7 +215,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 
   try {
-    if (!await findCustomerByEmail(email)) {
+    if (!await Customer.exists({ email })) {
       return res.status(404).json({ success: false, message: 'No account found with this email.' });
     }
     const otp = String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
@@ -211,7 +227,7 @@ router.post('/forgot-password', async (req, res) => {
     });
     return res.json({ success: true, otpRequired: true, message: 'Verification code sent. It expires in 10 minutes.' });
   } catch (error) {
-    console.error(`[auth] Forgot password OTP failed for ${email}:`, error.message);
+    console.error('[auth] Forgot password OTP failed:', error.message);
     return res.status(503).json({ success: false, message: 'Something went wrong. Please try again.' });
   }
 });
@@ -239,86 +255,115 @@ router.post('/forgot-password/verify-otp', async (req, res) => {
 
 router.post('/forgot-password/update-password', async (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
-  const password = String(req.body?.password || '');
-  if (password.length < 8) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+  const newPassword = String(req.body?.newPassword || '');
+  const confirmPassword = String(req.body?.confirmPassword || '');
   const challenge = recoveryChallenges.get(email);
   if (!challenge?.verifiedAt || Date.now() > challenge.expiresAt) {
     recoveryChallenges.delete(email);
     return res.status(400).json({ success: false, message: 'Verification expired. Please start again.' });
   }
-  return res.status(501).json({
-    success: false,
-    message: 'Direct password updates are not available for Shopify legacy customer accounts.',
-  });
-});
-
-router.get('/me', async (req, res) => {
-  const token = getCustomerToken(req);
-  if (!token) return res.status(401).json({ success: false, message: 'Please sign in.' });
+  if (newPassword.length < 8) return res.status(400).json({ success: false, message: 'A password of at least 8 characters is required.' });
+  if (newPassword !== confirmPassword) return res.status(400).json({ success: false, message: 'Passwords do not match.' });
   try {
-    const customer = await fetchCustomer(token);
-    if (!customer) return res.status(401).json({ success: false, message: 'Your session has expired. Please sign in again.' });
-    return res.json({ success: true, data: { customer } });
+    const customer = await Customer.findOne({ email });
+    if (!customer) {
+      recoveryChallenges.delete(email);
+      return res.status(404).json({ success: false, message: 'No account found with this email.' });
+    }
+    customer.password = await bcrypt.hash(newPassword, 12);
+    await customer.save();
+    recoveryChallenges.delete(email);
+    recoveryAttempts.delete(`${req.ip || 'ip'}:${email}`);
+    return res.json({ success: true, message: 'Your password has been reset successfully.' });
   } catch (error) {
-    return handleShopifyError(res, error, 'Unable to load your account');
+    console.error('[auth] Password reset failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Unable to reset your password right now. Please try again.' });
   }
 });
 
-router.patch('/profile', async (req, res) => {
-  const token = getCustomerToken(req);
+router.get('/me', authMiddleware, async (req, res) => {
+  const [firstName = '', ...lastNameParts] = String(req.user.name || '').trim().split(/\s+/);
+  let shopifyProfile = null;
+  if (req.user.shopifyCustomerId) {
+    try {
+      shopifyProfile = await fetchCustomer(req.user.shopifyCustomerId);
+    } catch (error) {
+      console.warn('[auth] Shopify profile details unavailable:', error.message);
+    }
+  }
+  const extra = {
+    firstName: shopifyProfile?.firstName || firstName,
+    lastName: shopifyProfile?.lastName || lastNameParts.join(' '),
+    addresses: shopifyProfile?.addresses || { nodes: [] },
+    defaultAddress: shopifyProfile?.defaultAddress || null,
+    orders: shopifyProfile?.orders || { nodes: [] },
+  };
+  return res.json({ success: true, data: { customer: safeCustomer(req.user, extra) } });
+});
+
+router.patch('/profile', authMiddleware, async (req, res) => {
   const { name = '', phone = '' } = req.body || {};
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
-  if (!token) return res.status(401).json({ success: false, message: 'Please sign in.' });
   if (!parts.length) return res.status(400).json({ success: false, message: 'Full name is required.' });
+  const normalizedPhone = normalizePhone(phone);
+  if (String(phone).trim() && !normalizedPhone) return res.status(400).json({ success: false, message: 'A valid phone number is required.' });
   try {
-    const customer = await updateCustomer(token, { firstName: parts[0], lastName: parts.slice(1).join(' '), phone: String(phone).trim() || null });
-    return res.json({ success: true, data: { customer } });
+    let shopifyCustomer = null;
+    if (req.user.shopifyCustomerId) {
+      shopifyCustomer = await updateCustomer(req.user.shopifyCustomerId, {
+        firstName: parts[0], lastName: parts.slice(1).join(' '), phone: normalizedPhone,
+      });
+    }
+    req.user.name = parts.join(' ');
+    req.user.phone = normalizedPhone;
+    await req.user.save();
+    return res.json({ success: true, data: { customer: safeCustomer(req.user, {
+      firstName: shopifyCustomer?.firstName || parts[0],
+      lastName: shopifyCustomer?.lastName || parts.slice(1).join(' '),
+    }) } });
   } catch (error) {
-    return handleShopifyError(res, error, 'Unable to update your profile');
+    console.error('[auth] Profile update failed:', error.message);
+    return res.status(502).json({ success: false, message: 'Unable to update your profile right now. Please try again.' });
   }
 });
 
 router.post('/register', async (req, res) => {
-  return res.status(410).json({ success: false, message: 'Email verification is required. Request a verification code first.' });
+  return completeRegistration(req, res, { requireOtp: true });
 });
 
 router.post('/login', async (req, res) => {
   const { email = '', password = '' } = req.body || {};
-  const trimmedEmail = String(email).trim().toLowerCase();
-
-  if (!trimmedEmail || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Email and password are required.',
-      errors: [],
-    });
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const normalizedPassword = String(password);
+  if (!EMAIL_REGEX.test(normalizedEmail) || !normalizedPassword) {
+    return res.status(400).json({ success: false, message: 'A valid email and password are required.' });
+  }
+  if (!process.env.JWT_SECRET) {
+    return res.status(503).json({ success: false, message: 'Authentication is not configured right now.' });
   }
 
   try {
-    const result = await loginCustomer({ email: trimmedEmail, password });
-    if (result.customerUserErrors?.length || !result.customerAccessToken) {
-      const shopifyErrorCode = result.customerUserErrors?.[0]?.code;
-      // Shopify can return an error code without a useful message. Keep the
-      // failure explicit for clients while avoiding logging credentials.
-      console.warn('[auth] Shopify rejected customer sign-in:', JSON.stringify(
-        (result.customerUserErrors || []).map(({ code, field }) => ({ code, field }))
-      ));
-      return res.status(401).json({
-        success: false,
-        code: shopifyErrorCode || 'INVALID_CREDENTIALS',
-        message: shopifyErrorCode === 'UNIDENTIFIED_CUSTOMER'
-          ? 'No account found with this email.'
-          : 'Incorrect email or password.',
-      });
+    const customer = await Customer.findOne({ email: normalizedEmail }).select('+password');
+    if (!customer || !await bcrypt.compare(normalizedPassword, customer.password)) {
+      if (customer) {
+        await LoginHistory.create({ customerId: customer._id, ipAddress: req.ip, userAgent: req.get('user-agent'), success: false });
+      }
+      return res.status(401).json({ success: false, code: 'INVALID_CREDENTIALS', message: 'Incorrect email or password.' });
     }
+
+    customer.lastLoginAt = new Date();
+    await customer.save();
+    await LoginHistory.create({ customerId: customer._id, ipAddress: req.ip, userAgent: req.get('user-agent'), success: true });
+    const token = jwt.sign({ customerId: customer._id.toString() }, process.env.JWT_SECRET, { expiresIn: '7d' });
     return res.json({
       success: true,
-      token: result.customerAccessToken.accessToken,
-      expiresAt: result.customerAccessToken.expiresAt,
-      account: { email: trimmedEmail },
+      token,
+      data: { customer: safeCustomer(customer) },
+      account: { email: normalizedEmail },
     });
   } catch (error) {
-    return handleShopifyError(res, error, 'Shopify customer login failed');
+    console.error('[auth] MongoDB login failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Unable to sign in right now. Please try again.' });
   }
 });
 

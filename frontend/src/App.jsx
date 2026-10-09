@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Navigate, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
@@ -13,26 +13,35 @@ import Footer from './components/layout/Footer';
 import AnnouncementBar from './components/layout/AnnouncementBar';
 import BottomNavigation from './components/layout/BottomNavigation';
 
-// Pages
-import Home from './pages/Home';
-import Products from './pages/Products';
-import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import Wishlist from './pages/Wishlist';
-import ShippingReturns from './pages/ShippingReturns';
-import FAQ from './pages/FAQ';
-import TrackOrder from './pages/TrackOrder';
-import Contact from './pages/Contact';
-import About from './pages/About';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import Terms from './pages/Terms';
-import AllConcernsPage from './pages/AllConcernsPage';
-import Account from './pages/Account';
-import { Login, Register } from './pages/AuthPages';
-import { ForgotPassword } from './pages/AuthRecovery';
-import OrderSuccess from './pages/OrderSuccess';
-import OrderDetails from './pages/OrderDetails';
+import api from './services/api';
+
+// Load page code only when its route is visited.
+const Home = lazy(() => import('./pages/Home'));
+const Products = lazy(() => import('./pages/Products'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
+const ShippingReturns = lazy(() => import('./pages/ShippingReturns'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const TrackOrder = lazy(() => import('./pages/TrackOrder'));
+const Contact = lazy(() => import('./pages/Contact'));
+const About = lazy(() => import('./pages/About'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const Terms = lazy(() => import('./pages/Terms'));
+const AllConcernsPage = lazy(() => import('./pages/AllConcernsPage'));
+const Account = lazy(() => import('./pages/Account'));
+const Login = lazy(() => import('./pages/AuthPages').then((module) => ({ default: module.Login })));
+const Register = lazy(() => import('./pages/AuthPages').then((module) => ({ default: module.Register })));
+const ForgotPassword = lazy(() => import('./pages/AuthRecovery').then((module) => ({ default: module.ForgotPassword })));
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
+const OrderDetails = lazy(() => import('./pages/OrderDetails'));
+
+const PageLoading = () => (
+  <div className="flex min-h-[50vh] items-center justify-center text-sm text-gray-500" role="status">
+    Loading page...
+  </div>
+);
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -58,9 +67,31 @@ const AppLayout = () => (
 
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
-  return localStorage.getItem('token')
-    ? children
-    : <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname)}`} replace />;
+  const token = localStorage.getItem('token');
+  const [validatedToken, setValidatedToken] = useState(null);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    let active = true;
+    api.get('/auth/me')
+      .then(({ data }) => {
+        if (active && data?.data?.customer) setValidatedToken(token);
+      })
+      .catch((error) => {
+        // Keep a saved session during network/server outages; the API interceptor
+        // clears and redirects when the backend explicitly rejects the JWT.
+        if (active && error.response?.status !== 401 && localStorage.getItem('token') === token) {
+          setValidatedToken(token);
+        }
+      });
+    return () => { active = false; };
+  }, [token]);
+
+  if (!token) return <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname)}`} replace />;
+  if (validatedToken !== token) {
+    return <div className="flex min-h-[50vh] items-center justify-center text-sm text-gray-500">Checking your session...</div>;
+  }
+  return children;
 };
 
 function App() {
@@ -72,6 +103,7 @@ function App() {
         <WishlistProvider>
           <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
           <ScrollToTop />
+          <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -100,6 +132,7 @@ function App() {
               <Route path="/orders" element={<ProtectedRoute><Account /></ProtectedRoute>} />
             </Route>
           </Routes>
+          </Suspense>
         </WishlistProvider>
       </CartProvider>
           </ReviewStatsProvider>

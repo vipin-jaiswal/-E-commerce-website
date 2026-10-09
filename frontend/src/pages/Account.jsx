@@ -195,18 +195,9 @@ export default function Account() {
         }
       })
       .catch((err) => {
-        const msg =
-          err.response?.data?.message ||
-          err.message ||
-          "Session expired";
+        const msg = err.response?.data?.message || "Unable to load your account right now. Please try again.";
 
         setError(msg);
-        clearCustomerScopedState();
-        localStorage.removeItem("token");
-
-        navigate("/login?returnTo=/account", {
-          replace: true,
-        });
       })
       .finally(() => setLoading(false));
   }, [navigate]);
@@ -465,10 +456,10 @@ export default function Account() {
         </p>
 
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => window.location.reload()}
           className="mt-6 rounded-xl bg-[#F52B87] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#ff3d93]"
         >
-          Sign In
+          Try Again
         </button>
       </div>
     );

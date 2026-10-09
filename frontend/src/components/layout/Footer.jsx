@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin } from "lucide-react";
-import TrackOrder from "../../pages/TrackOrder";
+
+const TrackOrder = lazy(() => import("../../pages/TrackOrder"));
 
 const FOOTER_LINKS = {
   Shop: [
@@ -115,7 +116,7 @@ export default function Footer() {
         <div className="fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-7xl flex-col items-center gap-2 border-t border-gray-200 bg-gray-50 px-2  text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:border-gray-800 dark:bg-[#0F0F0F] dark:text-gray-400 sm:static sm:mt-10 sm:flex-row sm:justify-between sm:gap-4 sm:border-t sm:px-0 sm:py-6 sm:text-sm sm:shadow-none">
         </div>
       </div>
-      {trackingOpen && <TrackOrder modal onClose={() => setTrackingOpen(false)} />}
+      {trackingOpen && <Suspense fallback={null}><TrackOrder modal onClose={() => setTrackingOpen(false)} /></Suspense>}
     </footer>
     
   );
