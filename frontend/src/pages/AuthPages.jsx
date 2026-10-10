@@ -60,7 +60,7 @@ export function Login() {
     <div className="hidden sm:block">
     <AuthShell panelSide="right" panelTitle="New to DYVA?" panelCopy="Create an account to save your favourites and keep every order close at hand." panelCtaLabel="Create account" panelCtaTo={returnTo?.startsWith('/') ? `/register?returnTo=${encodeURIComponent(returnTo)}` : '/register'}>
       <div>
-        <Link to="/" aria-label="DYVA home" className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-2xl font-bold tracking-[0.22em]"><span className="text-[#e92c87]">DY</span><span className="text-black">VA</span></Link>
+        <Link to="/" aria-label="DYVA home" className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-2xl font-bold tracking-[0.22em]"><span className="text-[#e92c87]">DY</span><span className="text-white">VA</span></Link>
         <h1 className="mt-8 text-4xl font-semibold tracking-tight text-slate-950">Welcome back</h1>
         <p className="mt-3 text-sm leading-6 text-slate-500">Sign in to continue your beauty ritual.</p>
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
