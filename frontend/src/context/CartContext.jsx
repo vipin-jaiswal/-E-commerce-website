@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useEffect, useMemo, useRef, useState } from 'react';
 import { cartService } from '../services/cartService';
 
 export const CartContext = createContext(null);
@@ -24,21 +24,28 @@ export const CartProvider = ({ children }) => {
     return isShopifyCartId(storedCartId) ? storedCartId : null;
   });
   const [cart, setCart] = useState({ items: [], subtotalPrice: 0, totalPrice: 0, currencyCode: 'INR' });
+  const cartRevisionRef = useRef(0);
 
   useEffect(() => {
     if (!cartId) return;
+    const requestedRevision = cartRevisionRef.current;
+    let active = true;
     cartService.get(cartId)
-      .then(setCart)
+      .then((nextCart) => {
+        if (active && cartRevisionRef.current === requestedRevision) setCart(nextCart);
+      })
       .catch((error) => {
-        if (error.response?.status === 404) {
+        if (active && error.response?.status === 404 && cartRevisionRef.current === requestedRevision) {
           localStorage.removeItem(CART_ID_KEY);
           setCartId(null);
           setCart({ items: [], subtotalPrice: 0, totalPrice: 0, currencyCode: 'INR' });
         }
       });
+    return () => { active = false; };
   }, [cartId]);
 
   const rememberCart = (nextCart) => {
+    cartRevisionRef.current += 1;
     setCart(nextCart);
     const nextCartId = nextCart?.cartId || nextCart?.id;
     if (isShopifyCartId(nextCartId)) {
@@ -79,7 +86,35 @@ export const CartProvider = ({ children }) => {
   const updateQty = async (lineId, quantity) => {
     if (quantity < 1) return removeFromCart(lineId);
     if (!cartId) return;
-    return rememberCart(await cartService.update(cartId, lineId, quantity));
+
+    const previousCart = cart;
+    const requestedRevision = cartRevisionRef.current + 1;
+    cartRevisionRef.current = requestedRevision;
+    const optimisticItems = cart.items.map((item) => {
+      if ((item.cartItemId || item.id) !== lineId) return item;
+      const unitPrice = Number(item.price || 0);
+      return { ...item, quantity, qty: quantity, lineTotal: unitPrice * quantity };
+    });
+    const optimisticSubtotal = optimisticItems.reduce((sum, item) => sum + Number(item.lineTotal ?? (item.price || 0) * (item.quantity || item.qty || 1)), 0);
+    setCart((current) => ({
+      ...current,
+      items: optimisticItems,
+      subtotalPrice: optimisticSubtotal,
+      merchandiseTotalPrice: optimisticSubtotal,
+      totalPrice: optimisticSubtotal,
+    }));
+
+    try {
+      const updatedCart = await cartService.update(cartId, lineId, quantity);
+      if (cartRevisionRef.current === requestedRevision) return rememberCart(updatedCart);
+      return updatedCart;
+    } catch (error) {
+      if (cartRevisionRef.current === requestedRevision) {
+        cartRevisionRef.current += 1;
+        setCart(previousCart);
+      }
+      throw error;
+    }
   };
 
   const applyDiscountCode = async (code) => {

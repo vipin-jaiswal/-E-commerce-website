@@ -51,6 +51,8 @@ html.dark {
 
 @layer base {
   button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  button:not(:disabled) { transition-property: filter; transition-duration: 120ms; }
+  button:not(:disabled):active { filter: brightness(.88); }
   input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
   ::selection { background: var(--color-primary-soft); color: var(--color-text); }
   * { scrollbar-color: var(--color-primary) var(--color-bg); scrollbar-width: thin; }
@@ -71,6 +73,7 @@ html.dark {
   .ui-card { @apply rounded-2xl border transition-all duration-300; background-color: #fff0f6; border-color: #f5c6d9; box-shadow: var(--color-shadow); }
   .dark .ui-card { background-color: #1d1419; }
   .ui-card:hover { @apply -translate-y-1 shadow-lg; }
+  .product-card.ui-card:hover { @apply translate-y-0 shadow-md; }
 }
 
 /* Account dashboard colors are scoped to Account.jsx and follow ThemeContext. */

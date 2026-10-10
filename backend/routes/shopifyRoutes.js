@@ -253,7 +253,9 @@ router.patch("/cart/items", async (req, res) => {
     const item = currentCart.items.find((cartItem) => cartItem.cartItemId === lineId);
     if (!item) return res.status(404).json({ success: false, message: "Cart item not found", errors: [] });
     const available = await getVariantInventory(item.variantId);
-    if (available !== null && Number(quantity) > available) {
+    // Always allow reducing an existing cart line, even when current inventory
+    // has since fallen below the quantity already in the cart.
+    if (available !== null && Number(quantity) > Number(item.quantity) && Number(quantity) > available) {
       return res.status(409).json({
         success: false,
         message: available <= 0 ? "This product is out of stock." : `Only ${available} item(s) are available.`,

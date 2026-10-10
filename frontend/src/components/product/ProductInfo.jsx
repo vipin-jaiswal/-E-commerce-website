@@ -13,6 +13,7 @@ export default function ProductInfo({ product, reviews = [] }) {
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
   const reviewStats = useReviewStats(product?.handle);
+  const [cartButtonState, setCartButtonState] = useState('idle');
 
   const variants = Array.isArray(product?.variants) && product.variants.length > 0 ? product.variants : [];
   const [selectedVariantId, setSelectedVariantId] = useState(() => variants[0]?.id || null);
@@ -44,9 +45,13 @@ export default function ProductInfo({ product, reviews = [] }) {
   const handleAddToCart = async () => {
     if (isComingSoon || isOutOfStock) return;
     try {
+      setCartButtonState('adding');
       await addToCart(product, selectedVariant?.title);
+      setCartButtonState('added');
+      window.setTimeout(() => setCartButtonState('idle'), 1300);
       toast.success('Added to cart');
     } catch (error) {
+      setCartButtonState('idle');
       toast.error(error.response?.data?.message || error.message || 'Could not add item');
     }
   };
@@ -176,10 +181,11 @@ export default function ProductInfo({ product, reviews = [] }) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="ui-primary inline-flex items-center gap-2 rounded-pill px-4 py-2.5 text-xs sm:px-6 sm:py-3 sm:text-sm"
+            disabled={cartButtonState === 'adding'}
+            className={`ui-primary inline-flex items-center gap-2 rounded-pill px-4 py-2.5 text-xs transition duration-300 active:scale-95 sm:px-6 sm:py-3 sm:text-sm ${cartButtonState === 'added' ? 'scale-[1.03] ring-2 ring-pink-300/70' : ''}`}
           >
             <ShoppingBag size={15} />
-            Add to cart
+            {cartButtonState === 'adding' ? 'Adding...' : cartButtonState === 'added' ? 'Added ✓' : 'Add to cart'}
           </button>
         )}
         {!isComingSoon && !isOutOfStock && (

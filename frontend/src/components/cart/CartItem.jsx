@@ -173,7 +173,7 @@ export default function CartItem({ item }) {
                   qty - 1
                 )
               }
-              className="flex h-full w-12 items-center justify-center text-lg font-bold text-[#ff2f8a] transition hover:bg-[#ff2f8a]/10"
+              className="flex h-full w-12 items-center justify-center text-lg font-bold text-[#ff2f8a] transition active:bg-[#ff2f8a]/20 focus:outline-none sm:hover:bg-[#ff2f8a]/10"
             >
               −
             </button>
@@ -190,7 +190,7 @@ export default function CartItem({ item }) {
                   qty + 1
                 )
               }
-              className="flex h-full w-12 items-center justify-center text-lg font-bold text-[#ff2f8a] transition hover:bg-[#ff2f8a]/10"
+              className="flex h-full w-12 items-center justify-center text-lg font-bold text-[#ff2f8a] transition active:bg-[#ff2f8a]/20 focus:outline-none sm:hover:bg-[#ff2f8a]/10"
             >
               +
             </button>

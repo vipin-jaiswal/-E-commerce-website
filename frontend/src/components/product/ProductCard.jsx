@@ -10,6 +10,7 @@ import { useReviewStats } from "../../context/ReviewStatsContext";
 
 export default function ProductCard({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [cartButtonState, setCartButtonState] = useState('idle');
   const { addToCart } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
 
@@ -35,9 +36,13 @@ export default function ProductCard({ product }) {
     e.stopPropagation();
 
     try {
+      setCartButtonState('adding');
       await addToCart({ ...product, id: productId });
+      setCartButtonState('added');
+      window.setTimeout(() => setCartButtonState('idle'), 1300);
       toast.success("Added to cart");
     } catch (error) {
+      setCartButtonState('idle');
       toast.error(error.response?.data?.message || error.message || "Could not add item");
     }
   };
@@ -67,7 +72,7 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <article className="ui-card group mx-auto flex h-[248px] w-full flex-col overflow-hidden sm:block sm:h-auto sm:max-w-[18rem]">
+    <article className="product-card ui-card group mx-auto flex h-[248px] w-full flex-col overflow-hidden sm:block sm:h-auto sm:max-w-[18rem]">
       <div className="relative overflow-hidden bg-[#fff5f9] dark:bg-[#191216]">
         <Link to={`/products/${productId}`}>
           {image ? (
@@ -166,16 +171,16 @@ export default function ProductCard({ product }) {
 
         <button
           onClick={handleAddToCart}
-          disabled={isComingSoon || isOutOfStock}
-          className={`mt-auto w-full rounded-full py-1.5 text-[10px] font-medium transition duration-300 sm:mt-4 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base ${
+          disabled={isComingSoon || isOutOfStock || cartButtonState === 'adding'}
+          className={`mt-auto w-full rounded-full py-1.5 text-[10px] font-medium transition duration-300 hover:-translate-y-1 active:scale-95 sm:mt-4 sm:rounded-xl sm:px-5 sm:py-3 sm:text-base ${
             isComingSoon
               ? "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 cursor-not-allowed border border-amber-200 dark:border-amber-800/40"
               : isOutOfStock
               ? "bg-gray-200 text-gray-500 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed"
-              : "ui-primary"
+              : `ui-primary ${cartButtonState === 'added' ? '-translate-y-0.5 ring-2 ring-pink-300/70' : ''}`
           }`}
         >
-          {isComingSoon ? "Coming Soon" : isOutOfStock ? "Out of Stock" : "Add To Cart"}
+          {isComingSoon ? "Coming Soon" : isOutOfStock ? "Out of Stock" : cartButtonState === 'adding' ? 'Adding...' : cartButtonState === 'added' ? 'Added ✓' : "Add To Cart"}
         </button>
       </div>
     </article>
