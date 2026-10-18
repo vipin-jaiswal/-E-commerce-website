@@ -1,9 +1,10 @@
 const dotenv = require('dotenv');
+const path = require('path');
 
 const connectDB = require("./config/db");
 
 // Load environment variables before importing modules that read them at startup.
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const { checkShopifyConnection } = require('./services/shopifyService');
 
@@ -14,7 +15,6 @@ const start = async () => {
   if (!process.env.SHOPIFY_STOREFRONT_TOKEN) {
     console.warn('[shopify] SHOPIFY_STOREFRONT_TOKEN is missing; cart and checkout requests will be unavailable');
   }
-
   try {
     await connectDB();
     await checkShopifyConnection();

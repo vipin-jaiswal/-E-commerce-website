@@ -38,6 +38,11 @@ const normalizeShopDomain = (value) =>
     .replace(/\/.*$/, "")
     .toLowerCase();
 
+const splitCustomerName = (name) => {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  return { firstName: parts.shift() || "", lastName: parts.join(" ") };
+};
+
 const shopDomain = normalizeShopDomain(SHOPIFY_STORE_DOMAIN);
 
 /* =========================================================
@@ -1913,11 +1918,11 @@ const updateCartDeliveryAddress =
   ) => {
     const data =
       await storefrontGraphql(
-        `mutation CartDeliveryAddressesAdd(
+        `mutation CartDeliveryAddressesReplace(
           $cartId: ID!
           $addresses: [CartSelectableAddressInput!]!
         ) {
-          cartDeliveryAddressesAdd(
+          cartDeliveryAddressesReplace(
             cartId: $cartId
             addresses: $addresses
           ) {
@@ -1956,7 +1961,10 @@ const updateCartDeliveryAddress =
                     "IN",
 
                   firstName:
-                    address.name,
+                    splitCustomerName(address.name).firstName,
+
+                  lastName:
+                    splitCustomerName(address.name).lastName,
 
                   phone:
                     address.phone,
@@ -1974,13 +1982,13 @@ const updateCartDeliveryAddress =
       );
 
     const result =
-      data.cartDeliveryAddressesAdd;
+      data.cartDeliveryAddressesReplace;
 
     const errors =
       result.userErrors || [];
 
     logCartDiagnostics(
-      "cartDeliveryAddressesAdd",
+      "cartDeliveryAddressesReplace",
       result.cart,
       errors
     );
@@ -2557,7 +2565,6 @@ module.exports = {
   getVariantInventory,
 
   createCodOrder,
-
   getCustomerOrder,
 
   getCustomerOrderIdMap,

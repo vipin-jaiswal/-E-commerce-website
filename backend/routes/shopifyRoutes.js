@@ -39,6 +39,36 @@ const decodeValue = (value) => {
 const getCartId = (request) => decodeValue(request.query.cartId || request.body?.cartId);
 const getLineId = (request) => decodeValue(request.query.lineId || request.body?.lineId);
 
+const normalizeIndianPhone = (phone) => {
+  const value = String(phone || "").trim().replace(/[^\d+]/g, "");
+  if (/^\+91[6-9]\d{9}$/.test(value)) return value;
+  if (/^91[6-9]\d{9}$/.test(value)) return `+${value}`;
+  if (/^0[6-9]\d{9}$/.test(value)) return `+91${value.slice(1)}`;
+  if (/^[6-9]\d{9}$/.test(value)) return `+91${value}`;
+  return null;
+};
+
+const splitCustomerName = (name) => {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  return { firstName: parts.shift() || "", lastName: parts.join(" ") };
+};
+
+const validateCheckoutAddress = (address) => {
+  const errors = [];
+  const name = splitCustomerName(address?.name);
+  const phone = normalizeIndianPhone(address?.phone);
+  if (!name.firstName || String(address.name).trim().length > 100) errors.push("Please enter a valid full name.");
+  if (!phone) errors.push("Please enter a valid 10-digit Indian mobile number.");
+  for (const [field, label, max] of [["address1", "House / Flat / Building", 200], ["address2", "Street / Area", 200], ["city", "City", 100], ["state", "State", 100], ["pincode", "Pincode", 20]]) {
+    const value = String(address?.[field] || "").trim();
+    if (!value || value.length > max) errors.push(`${label} is required and must be ${max} characters or fewer.`);
+  }
+  if (!/^[1-9]\d{5}$/.test(String(address?.pincode || "").trim())) errors.push("Enter a valid 6-digit Indian pincode.");
+  if (address?.landmark && String(address.landmark).length > 150) errors.push("Landmark is too long.");
+  if (address?.alternativePhone && !normalizeIndianPhone(address.alternativePhone)) errors.push("Please enter a valid alternative mobile number.");
+  return { errors, name, phone };
+};
+
 const isCartNotFoundError = (error) =>
   /cart.*(not found|does not exist|invalid)|invalid.*cart/i.test(error.message || "");
 
@@ -301,14 +331,25 @@ router.post("/checkout", authMiddleware, async (req, res) => {
   try {
     const { cartId, address } = req.body || {};
     if (!cartId || !address) return res.status(400).json({ success: false, message: "A cart and delivery address are required.", errors: [] });
+    const validation = validateCheckoutAddress(address);
+    if (validation.errors.length) return res.status(400).json({ success: false, message: validation.errors[0], errors: validation.errors });
     if (!await CartOwnership.isOwnedBy(cartId, req.user._id)) {
       return res.status(403).json({ success: false, message: "This cart is not available to this account." });
     }
     const inventory = await validateCartInventory(cartId);
     if (!inventory.cart) return res.status(404).json({ success: false, message: "Shopify cart not found", errors: [] });
     if (inventory.issues.length) return res.status(409).json({ success: false, message: "Some products are unavailable in the requested quantity.", issues: inventory.issues });
-    await updateCartBuyerIdentity(cartId, req.user);
-    await updateCartDeliveryAddress(cartId, address);
+    await updateCartBuyerIdentity(cartId, { ...req.user.toObject(), phone: validation.phone });
+    const address2 = [address.address2, address.landmark].map((value) => String(value || "").trim()).filter(Boolean).join(", ");
+    await updateCartDeliveryAddress(cartId, {
+      name: address.name,
+      address1: String(address.address1).trim(),
+      address2,
+      city: String(address.city).trim(),
+      state: String(address.state).trim(),
+      pincode: String(address.pincode).trim(),
+      phone: validation.phone,
+    });
 
     // Fetch Shopify's current cart URL after all cart updates, immediately before redirect.
     const cart = await fetchCart(cartId);

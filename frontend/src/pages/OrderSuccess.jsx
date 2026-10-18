@@ -34,7 +34,7 @@ export default function OrderSuccess() {
       <section className="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-[#111111]">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">DYVA</p>
         <h1 className="mt-4 text-3xl font-bold dark:text-white">Order Confirmed!</h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-300">Your Cash on Delivery order has been placed.</p>
+        <p className="mt-2 text-gray-600 dark:text-gray-300">{paymentMethod === "Cash on Delivery (COD)" ? "Your Cash on Delivery order has been placed." : "Your payment was successful and your order has been placed."}</p>
         <dl className="mt-8 grid gap-5 border-y border-gray-100 py-6 text-sm dark:border-white/10 sm:grid-cols-2">
           <div><dt className="text-gray-500">Order ID</dt><dd className="mt-1 font-semibold dark:text-white">{order.orderId}</dd></div>
           <div><dt className="text-gray-500">Total amount</dt><dd className="mt-1 font-semibold dark:text-white">{amountText}</dd></div>

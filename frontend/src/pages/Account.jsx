@@ -156,14 +156,15 @@ export default function Account() {
         }
         localStorage.setItem('dyvaAddressOwner', owner);
         let savedRecord = null;
-        try { savedRecord = JSON.parse(localStorage.getItem(ADDRESS_KEY) || 'null'); } catch { localStorage.removeItem(ADDRESS_KEY); }
+        localStorage.removeItem(ADDRESS_KEY);
+        try { savedRecord = JSON.parse(sessionStorage.getItem(ADDRESS_KEY) || 'null'); } catch { sessionStorage.removeItem(ADDRESS_KEY); }
         const savedLocal = Array.isArray(savedRecord)
           ? []
           : savedRecord?.owner === owner && Array.isArray(savedRecord.addresses)
             ? savedRecord.addresses
             : [];
         if (savedRecord && savedRecord.owner !== owner) {
-          localStorage.removeItem(ADDRESS_KEY);
+          sessionStorage.removeItem(ADDRESS_KEY);
         }
         if (savedLocal.length) {
           setAddresses(savedLocal);
@@ -188,10 +189,10 @@ export default function Account() {
           );
 
           setAddresses(shopifyAddresses);
-          localStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: shopifyAddresses }));
+          sessionStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: shopifyAddresses }));
         } else {
           setAddresses([]);
-          localStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: [] }));
+          sessionStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: [] }));
         }
       })
       .catch((err) => {
@@ -206,7 +207,7 @@ export default function Account() {
     setAddresses(nextAddresses);
     const owner = String(customer?.id || customer?.email || '').toLowerCase();
     localStorage.setItem('dyvaAddressOwner', owner);
-    localStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: nextAddresses }));
+    sessionStorage.setItem(ADDRESS_KEY, JSON.stringify({ owner, addresses: nextAddresses }));
   };
 
   const handleProfileSubmit = async (e) => {

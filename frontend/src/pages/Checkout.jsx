@@ -18,7 +18,8 @@ const getSessionAddress = () => {
 };
 const getSavedDefaultAddress = () => {
   let record = null;
-  try { record = JSON.parse(localStorage.getItem("dyvaSavedAddresses") || "null"); } catch { localStorage.removeItem("dyvaSavedAddresses"); }
+  localStorage.removeItem("dyvaSavedAddresses");
+  try { record = JSON.parse(sessionStorage.getItem("dyvaSavedAddresses") || "null"); } catch { sessionStorage.removeItem("dyvaSavedAddresses"); }
   const owner = String(localStorage.getItem("dyvaAddressOwner") || "").toLowerCase();
   return record?.owner === owner ? record.addresses.find((savedAddress) => savedAddress.default) || initialAddress : initialAddress;
 };
@@ -59,7 +60,7 @@ export default function Checkout() {
         }));
         if (mappedAddresses.length) {
           const addressRecord = { owner, addresses: mappedAddresses };
-          localStorage.setItem("dyvaSavedAddresses", JSON.stringify(addressRecord));
+          sessionStorage.setItem("dyvaSavedAddresses", JSON.stringify(addressRecord));
           setAddress(mappedAddresses.find((item) => item.default) || mappedAddresses[0]);
         } else {
           setAddress(initialAddress);
@@ -111,6 +112,13 @@ export default function Checkout() {
   const startCheckout = async () => {
     if (loading) return;
     setCodError("");
+    const addressErrors = validateAddressForm(address);
+    if (Object.keys(addressErrors).length) {
+      setErrors(addressErrors);
+      setStep("address");
+      toast.error("Please complete your delivery address before continuing.");
+      return;
+    }
     const activeCartId = getActiveCartId();
     if (payment === "cod" && !isValidCartId(activeCartId)) {
       console.info(`[COD][frontend] cartId: ${activeCartId || null}`);
@@ -194,6 +202,7 @@ export default function Checkout() {
         throw new Error("Shopify returned a checkout URL that does not use HTTPS");
       }
       window.location.assign(checkoutUrl);
+      return;
     } catch (error) {
       const message = error.response?.data?.message || error.message || "Unable to place your order. Please try again.";
       if (payment === "cod") setCodError(message);

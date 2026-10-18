@@ -87,7 +87,11 @@ const run = async () => {
   }`, { cartId, lineIds: [lineId] });
   assertNoUserErrors(removed.cartLinesRemove, 'REMOVE LINE');
   console.log('REMOVE LINE: SUCCESS');
-  console.log(`CHECKOUT URL: ${removed.cartLinesRemove.cart.checkoutUrl}`);
+  const checkoutUrl = removed.cartLinesRemove.cart.checkoutUrl;
+  if (!checkoutUrl || new URL(checkoutUrl).protocol !== 'https:') {
+    throw new Error('Shopify did not return an HTTPS checkout URL');
+  }
+  console.log(`CHECKOUT URL: HTTPS checkout URL returned for ${new URL(checkoutUrl).host}`);
 };
 
 run().catch((error) => {

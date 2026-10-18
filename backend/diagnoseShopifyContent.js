@@ -110,8 +110,6 @@ const main = async () => {
   console.log(`STORE_DOMAIN: ${STORE_DOMAIN || '(missing)'}`);
   console.log(`API_VERSION: ${API_VERSION}`);
   console.log(`STOREFRONT_TOKEN_EXISTS: ${Boolean(STOREFRONT_TOKEN)}`);
-  console.log(`STOREFRONT_TOKEN_LENGTH: ${STOREFRONT_TOKEN.length}`);
-  console.log(`STOREFRONT_TOKEN_PREFIX_6: ${STOREFRONT_TOKEN.slice(0, 6)}`);
 
   let storefrontResult = null;
   if (!STORE_DOMAIN || !STOREFRONT_TOKEN) {
