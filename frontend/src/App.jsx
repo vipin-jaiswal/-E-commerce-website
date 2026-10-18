@@ -40,12 +40,16 @@ const OrderDetails = lazy(() => import('./pages/OrderDetails'));
 const LoginInvitation = () => {
   const location = useLocation();
   const [visible, setVisible] = useState(false);
+  const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname);
 
   useEffect(() => {
-    if (localStorage.getItem('token')) return undefined;
+    if (isAuthPage || localStorage.getItem('token')) {
+      setVisible(false);
+      return undefined;
+    }
     const timer = window.setTimeout(() => setVisible(true), 7000);
     return () => window.clearTimeout(timer);
-  }, [location.pathname]);
+  }, [isAuthPage, location.pathname]);
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -56,7 +60,7 @@ const LoginInvitation = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [visible]);
 
-  if (!visible || localStorage.getItem('token')) return null;
+  if (isAuthPage || !visible || localStorage.getItem('token')) return null;
   const returnTo = `${location.pathname}${location.search}${location.hash}`;
 
   return (
