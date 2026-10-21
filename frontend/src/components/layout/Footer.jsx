@@ -31,7 +31,7 @@ export default function Footer() {
   const [trackingOpen, setTrackingOpen] = useState(false);
 
   return (
-    <footer className="mt-0 bg-gray-50 text-gray-600 dark:bg-[#0F0F0F] dark:text-gray-400">
+    <footer className="mt-0 bg-pink-50 text-black dark:bg-[#1f1118] dark:text-white">
       <div className="mx-auto max-w-7xl px-4 pb-24 pt-10 sm:px-6 sm:py-10 lg:px-8">
 
         {/* Top Section */}
@@ -43,15 +43,15 @@ export default function Footer() {
               to="/"
               className="text-3xl font-bold"
             >
-              <span className="text-gray-900 dark:text-white">DY</span><span className="text-primary">VA</span>
+              <span className="text-black dark:text-white">DY</span><span className="text-pink-500">VA</span>
             </Link>
 
-            <p className="mt-4 max-w-sm text-sm leading-6 text-gray-600 dark:text-gray-400">
+            <p className="mt-4 max-w-sm text-sm leading-6 text-black dark:text-white md:text-base lg:text-lg">
               Premium skincare and beauty products crafted for healthy,
               glowing skin and beautiful hair.
             </p>
 
-            <div className="mt-5 space-y-3 text-sm">
+            <div className="mt-5 space-y-3 text-sm md:text-base lg:text-lg">
               <div className="flex items-center gap-3">
                 <Mail size={16} className="shrink-0" />
                 <span>support@dyva.com</span>
@@ -78,7 +78,7 @@ export default function Footer() {
                   key={title}
                   className="min-w-0"
                 >
-                  <h3 className="mb-2 text-base font-semibold text-gray-900 dark:text-white sm:mb-4 sm:text-lg">
+                  <h3 className="mb-2 text-base font-semibold text-black dark:text-white sm:mb-4 sm:text-lg md:text-xl lg:text-2xl">
                     {title}
                   </h3>
 
@@ -89,14 +89,14 @@ export default function Footer() {
                           <button
                             type="button"
                             onClick={() => setTrackingOpen(true)}
-                            className="text-left text-xs text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary sm:text-sm"
+                            className="text-left text-xs text-black transition hover:text-pink-500 dark:text-white dark:hover:text-pink-300 sm:text-sm md:text-base lg:text-lg"
                           >
                             {link.label}
                           </button>
                         ) : (
                           <Link
                             to={link.href}
-                            className="text-xs text-gray-500 transition hover:text-primary dark:text-gray-400 dark:hover:text-primary sm:text-sm"
+                            className="text-xs text-black transition hover:text-pink-500 dark:text-white dark:hover:text-pink-300 sm:text-sm md:text-base lg:text-lg"
                           >
                             {link.label}
                           </Link>
@@ -113,7 +113,7 @@ export default function Footer() {
         </div>
 
         {/* Legal links remain fixed above mobile navigation on small screens. */}
-        <div className="fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-7xl flex-col items-center gap-2 border-t border-gray-200 bg-gray-50 px-2  text-xs text-gray-500 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:border-gray-800 dark:bg-[#0F0F0F] dark:text-gray-400 sm:static sm:mt-10 sm:flex-row sm:justify-between sm:gap-4 sm:border-t sm:px-0 sm:py-6 sm:text-sm sm:shadow-none">
+        <div className="fixed inset-x-0 bottom-16 z-30 mx-auto flex w-full max-w-7xl flex-col items-center gap-2 border-t border-pink-200 bg-pink-50 px-2 text-xs text-black shadow-[0_-4px_16px_rgba(0,0,0,0.06)] dark:border-pink-900 dark:bg-[#1f1118] dark:text-white sm:static sm:mt-10 sm:flex-row sm:justify-between sm:gap-4 sm:border-t sm:px-0 sm:py-6 sm:text-sm sm:shadow-none">
         </div>
       </div>
       {trackingOpen && <Suspense fallback={null}><TrackOrder modal onClose={() => setTrackingOpen(false)} /></Suspense>}

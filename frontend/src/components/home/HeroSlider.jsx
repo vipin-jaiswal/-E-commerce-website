@@ -41,8 +41,8 @@ const HeroSlider = () => {
 
   if (banners.length === 0) {
     return (
-      <section className="mx-auto max-w-[1500px] px-4 -mt-4">
-        <div className="flex aspect-[2/1] flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white px-5 text-center dark:border-white/10 dark:bg-[#151015] sm:aspect-[3/1] lg:aspect-[4/1]">
+      <section className="mx-auto max-w-[1500px] px-4 -mt-4 md:-mt-14 lg:-mt-14">
+        <div className="flex aspect-[2/1] flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white px-5 text-center dark:border-white/10 dark:bg-[#151015] sm:aspect-[3/1] md:aspect-[10/3] lg:aspect-[10/3]">
           {!contentLoaded ? (
             <>
               <span className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
@@ -61,7 +61,7 @@ const HeroSlider = () => {
   }
 
   return (
-    <section className="mx-auto max-w-[1500px] px-4 -mt-4">
+    <section className="mx-auto max-w-[1500px] px-4 -mt-4 md:-mt-14 lg:-mt-14">
       <Swiper
         modules={[Navigation, Autoplay]}
         navigation
@@ -71,7 +71,7 @@ const HeroSlider = () => {
           pauseOnMouseEnter: true,
         }}
         loop={banners.length > 1}
-        className="aspect-[2/1] overflow-hidden rounded-3xl shadow-lg sm:aspect-[3/1] lg:aspect-[4/1] bg-card"
+        className="aspect-[2/1] overflow-hidden rounded-3xl shadow-lg sm:aspect-[3/1] md:aspect-[10/3] lg:aspect-[10/3] bg-card"
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner.id} className="h-full">

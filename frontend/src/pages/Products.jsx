@@ -22,7 +22,7 @@ export default function Products() {
     : "All Products";
 
   const { products, loading } = useProducts(params);
-  const isCategoryComingSoon = Boolean(selectedCategory && selectedCategory !== "hair-care");
+  const isCategoryComingSoon = Boolean(selectedCategory && selectedCategory !== "hair-care" && products.length === 0);
 
   const setParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -51,7 +51,7 @@ export default function Products() {
   };
 
   return (
-    <div className="max-w-[1500px] mx-auto px-4 py-4 sm:px-6 sm:py-10 lg:px-8">
+    <div className="mx-auto w-full max-w-[1360px] px-4 py-4 sm:px-6 sm:py-8 lg:px-8">
       <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold dark:text-slate-100">{pageTitle}</h1>

@@ -12,12 +12,12 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 function CategorySlider({ category }) {
-  const isComingSoon = ["skin-care", "makeup"].includes(category.key);
   const { products, loading } = useProducts({
     category: category.key,
     limit: 8,
-    enabled: !isComingSoon,
+    enabled: true,
   });
+  const isComingSoon = ["skin-care", "makeup"].includes(category.key) && products.length === 0;
   const [swiper, setSwiper] = useState(null);
 
   return (
@@ -95,7 +95,7 @@ function CategorySlider({ category }) {
               ))
             : products.map((product) => (
                 <SwiperSlide key={product.id}>
-                  <div className="mx-auto w-full max-w-[10.5rem] px-1 sm:max-w-[18rem] sm:px-0">
+                  <div className="mx-auto w-full max-w-[10.5rem] px-1 sm:max-w-[17rem] sm:px-0 lg:max-w-[18rem]">
                     <ProductCard product={product} />
                   </div>
                 </SwiperSlide>

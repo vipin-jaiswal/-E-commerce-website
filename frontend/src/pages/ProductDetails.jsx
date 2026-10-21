@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import ProductGallery from "../components/product/ProductGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import ProductSlider from "../components/product/ProductSlider";
@@ -9,6 +9,7 @@ import api from "../services/api";
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { product, loading } = useProduct(id);
   const [reviews, setReviews] = useState([]);
 
@@ -52,7 +53,7 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[1400px] bg-[var(--color-bg)] px-4 py-4 text-[var(--color-text)] sm:px-6 sm:py-6 lg:py-8">
+    <div className="mx-auto min-h-screen w-full max-w-[1360px] bg-[var(--color-bg)] px-4 py-4 text-[var(--color-text)] sm:px-6 sm:py-6 lg:py-8">
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-10">
         <ProductGallery images={product.images} />
 
@@ -72,7 +73,9 @@ export default function ProductDetails() {
         </div>
       )}
 
-      <ReviewSection productHandle={product.handle} reviews={product.reviews || []} />
+      <div id="reviews">
+        <ReviewSection productHandle={product.handle} reviews={product.reviews || []} autoOpen={searchParams.get("writeReview") === "1"} />
+      </div>
 
     </div>
   );

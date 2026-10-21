@@ -187,9 +187,10 @@ const ensureReviewDefinition = async ({ createIfMissing = true } = {}) => {
     const present = new Map(
       (definition.fieldDefinitions || []).map((field) => [field.key, field])
     );
+    const missingFields = REVIEW_FIELDS.filter((expected) => !present.has(expected.key));
     const mismatches = REVIEW_FIELDS.flatMap((expected) => {
       const actual = present.get(expected.key);
-      if (!actual) return [`${expected.key} (missing; expected ${expected.type})`];
+      if (!actual) return [];
       const problems = [];
       if (actual.type?.name !== expected.type) {
         problems.push(`${expected.key} type is ${actual.type?.name || "unknown"}; expected ${expected.type}`);
@@ -208,7 +209,29 @@ const ensureReviewDefinition = async ({ createIfMissing = true } = {}) => {
       );
     }
 
-    console.log("Review definition already exists.");
+    if (missingFields.length) {
+      const updated = await request(
+        `mutation AddReviewDefinitionFields($id: ID!, $definition: MetaobjectDefinitionUpdateInput!) {
+          metaobjectDefinitionUpdate(id: $id, definition: $definition) {
+            metaobjectDefinition { id fieldDefinitions { key type { name } } }
+            userErrors { field message code }
+          }
+        }`,
+        {
+          id: definition.id,
+          definition: {
+            fieldDefinitions: missingFields.map((field) => ({ create: field })),
+          },
+        }
+      );
+      const result = updated.metaobjectDefinitionUpdate;
+      if (result?.userErrors?.length) {
+        throw new Error(result.userErrors.map((error) => error.message).join(", "));
+      }
+      console.log(`Added missing review field(s): ${missingFields.map((field) => field.key).join(", ")}.`);
+    }
+
+    console.log("Review definition is ready.");
 
     return {
       status: "already exists",

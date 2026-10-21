@@ -3,6 +3,7 @@ import { CheckCircle2, Clock3, Mail, MessageCircle, Send } from 'lucide-react';
 import api from '../services/api';
 
 const SUPPORT_EMAIL = 'support@dyva.com';
+const INSTAGRAM_URL = 'DYAVA Instagram link coming soon';
 const SUBJECT_OPTIONS = [
   'Product enquiry',
   'Order or tracking help',
@@ -51,7 +52,10 @@ export default function Contact() {
         <p className="text-xs font-semibold uppercase tracking-[.2em] text-pink-600 dark:text-primary">We’re here to help</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Contact us</h1>
         <p className="mt-4 leading-7 text-gray-600 dark:text-gray-400">Send our team the details of your question and we’ll help you as quickly as possible.</p>
-        <a className="mt-6 inline-flex items-center gap-3 text-sm text-gray-600 hover:text-primary dark:text-gray-300" href={`mailto:${SUPPORT_EMAIL}`}><Mail size={18}/>{SUPPORT_EMAIL}</a>
+        <div className="mt-6 flex flex-col items-start gap-4">
+          <a aria-label={`Email DYVA support at ${SUPPORT_EMAIL}`} title={SUPPORT_EMAIL} className="inline-flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-base font-medium text-gray-700 transition hover:bg-pink-100 hover:text-pink-600 dark:text-gray-300 dark:hover:bg-pink-950/40 dark:hover:text-pink-400" href={`mailto:${SUPPORT_EMAIL}`}><Mail size={28} strokeWidth={1.8} className="shrink-0 text-pink-500"/><span>Email us: {SUPPORT_EMAIL}</span></a>
+          <a aria-label="Instagram link will be added later" title="Instagram link coming soon" className="inline-flex min-h-12 cursor-default items-center gap-3 rounded-xl px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300" href={INSTAGRAM_URL} onClick={(event) => event.preventDefault()}><svg aria-hidden="true" viewBox="0 0 24 24" className="h-7 w-7 shrink-0 fill-none stroke-pink-500" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".75" className="fill-pink-500 stroke-none"/></svg><span>Follow us on Instagram</span></a>
+        </div>
         <div className="mt-8 space-y-4 border-t border-gray-200 pt-6 dark:border-white/10">
           <div className="flex items-start gap-3"><Clock3 size={19} className="mt-0.5 shrink-0 text-primary"/><div><p className="text-sm font-semibold text-gray-900 dark:text-white">Quick response</p><p className="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-400">Our support team usually replies within 1 business day.</p></div></div>
           <div className="flex items-start gap-3"><MessageCircle size={19} className="mt-0.5 shrink-0 text-primary"/><div><p className="text-sm font-semibold text-gray-900 dark:text-white">How we can help</p><p className="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-400">Ask us about products, orders, shipping, returns, payments, or your account.</p></div></div>

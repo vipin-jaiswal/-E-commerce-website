@@ -1,5 +1,5 @@
 const express = require("express");
-const { createProductReview, listProductReviews } = require("../services/reviewService");
+const { createProductReview, listProductReviews, uploadReviewMedia } = require("../services/reviewService");
 
 const router = express.Router();
 const recentSubmissions = new Map();
@@ -27,6 +27,9 @@ router.post("/", async (req, res) => {
   const title = String(req.body?.title || "").trim();
   const body = String(req.body?.body || "").trim();
   const rating = Number(req.body?.rating);
+  const mediaItems = Array.isArray(req.body?.media)
+    ? req.body.media
+    : req.body?.media ? [{ data: req.body.media, filename: req.body?.mediaFilename }] : [];
 
   if (!HANDLE_PATTERN.test(productHandle)) {
     return res.status(400).json({ success: false, message: "A valid product is required." });
@@ -51,12 +54,20 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const review = await createProductReview({ productHandle, author, rating, title, body });
+    if (mediaItems.length > 5) return res.status(400).json({ success: false, message: "Attach up to 5 review files." });
+    const mediaUrls = [];
+    for (const media of mediaItems) {
+      mediaUrls.push(await uploadReviewMedia({ dataUrl: media.data, filename: media.filename }));
+    }
+    const review = await createProductReview({ productHandle, author, rating, title, body, mediaUrls });
     recentSubmissions.set(clientKey, Date.now());
     return res.status(201).json({ success: true, data: review });
   } catch (error) {
     console.error("Unable to save product review:", error.message);
-    const message = process.env.NODE_ENV === "production"
+    const missingFileScope = /access denied for stagedUploadsCreate|write_files|access scope/i.test(error.message);
+    const message = missingFileScope
+      ? "Shopify media upload permission is missing. Add the read_files and write_files scopes, then reauthorize the app."
+      : process.env.NODE_ENV === "production"
       ? "Unable to save your review right now."
       : `Unable to save your review right now: ${error.message}`;
     return res.status(500).json({ success: false, message });

@@ -267,6 +267,7 @@ const storefrontProductFields = `
   id
   handle
   title
+  createdAt
   description
   descriptionHtml
   vendor
@@ -309,6 +310,7 @@ const adminProductFields = `
   id
   handle
   title
+  createdAt
   descriptionHtml
   vendor
   productType
@@ -427,14 +429,9 @@ const normalizeProduct = (product) => {
     product.handle || ""
   );
 
-  const isHairCare =
-    /hair/i.test(productType) ||
-    productTags.some((tag) =>
-      /hair/i.test(tag)
-    ) ||
-    /hair/i.test(productHandle);
-
-  const comingSoon = !isHairCare;
+  const comingSoon = productTags.some((tag) =>
+    /^coming[\s_-]*soon$/i.test(String(tag).trim())
+  );
 
   const hasSpecificQuantities =
     normalizedVariants.some(
@@ -464,6 +461,7 @@ const normalizeProduct = (product) => {
 
     name: product.title,
     title: product.title,
+    createdAt: product.createdAt || null,
 
     description:
       product.description ||

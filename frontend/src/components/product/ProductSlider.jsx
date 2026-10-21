@@ -8,7 +8,7 @@ export default function ProductSlider({ products = [], loading = false }) {
   const [atStart, setAtStart] = useState(true);
   const [atEnd,   setAtEnd]   = useState(false);
 
-  const CARD_W = 240; // approximate card width + gap
+  const CARD_W = 288; // approximate card width + gap
 
   const scroll = (dir) => {
     const el = trackRef.current;
@@ -47,10 +47,10 @@ export default function ProductSlider({ products = [], loading = false }) {
       >
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-56"><ProductCardSkeleton /></div>
+              <div key={i} className="w-64 flex-shrink-0 sm:w-72"><ProductCardSkeleton /></div>
             ))
           : products.map((p) => (
-              <div key={p.id} className="flex-shrink-0 w-56">
+              <div key={p.id} className="w-64 flex-shrink-0 sm:w-72">
                 <ProductCard product={p} />
               </div>
             ))

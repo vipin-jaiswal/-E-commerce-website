@@ -5,6 +5,7 @@ import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ReviewStatsProvider } from './context/ReviewStatsContext';
+import ReviewSection from './components/review/ReviewSection';
 import { SearchOverlayProvider } from './context/SearchOverlayContext';
 
 // Layout components
@@ -149,6 +150,7 @@ function App() {
           <Toaster position="top-center" reverseOrder={false} toastOptions={{ duration: 3000 }} />
           <ScrollToTop />
           <LoginInvitation />
+          <ProductReviewModalHost />
           <Suspense fallback={<PageLoading />}>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -185,6 +187,22 @@ function App() {
           </SearchOverlayProvider>
     </ThemeProvider>
   );
+}
+
+function ProductReviewModalHost() {
+  const [request, setRequest] = React.useState(null);
+
+  React.useEffect(() => {
+    const openReview = (event) => {
+      const productHandle = event.detail?.productHandle;
+      if (productHandle) setRequest((current) => ({ productHandle, key: (current?.key || 0) + 1 }));
+    };
+    window.addEventListener('dyva:open-review', openReview);
+    return () => window.removeEventListener('dyva:open-review', openReview);
+  }, []);
+
+  if (!request) return null;
+  return <ReviewSection key={request.key} productHandle={request.productHandle} autoOpen modalOnly />;
 }
 
 export default App;

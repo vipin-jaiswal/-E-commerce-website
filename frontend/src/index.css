@@ -76,6 +76,11 @@ html.dark {
   .product-card.ui-card:hover { @apply translate-y-0 shadow-md; }
 }
 
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
+
 /* Account dashboard colors are scoped to Account.jsx and follow ThemeContext. */
 .account-dashboard {
   --account-page: #090909;

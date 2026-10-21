@@ -9,6 +9,8 @@ const REVIEW_FIELDS = [
   { key: "rating", name: "Star rating", type: "number_integer", required: true },
   { key: "title", name: "Review title", type: "single_line_text_field", required: false },
   { key: "body", name: "Review", type: "multi_line_text_field", required: true },
+  { key: "media_url", name: "Review photo or video URL", type: "single_line_text_field", required: false },
+  { key: "media_urls", name: "Review photo or video URLs", type: "json", required: false },
   { key: "created_at", name: "Submitted at", type: "date_time", required: true },
 ];
 

@@ -19,10 +19,11 @@ import { useSearchOverlay } from "../../context/SearchOverlayContext";
 
 const NAV_LINKS = [
   { label: "Shop", to: "/products" },
+   { label: "Best Sellers", to: "/products?sort=best_seller" },
   { label: "Hair Care", to: "/products/category/hair-care" },
-  { label: "Skin Care", to: "/products/category/skin-care" },
-  { label: "Makeup", to: "/products/category/makeup" },
-  { label: "Best Sellers", to: "/products?sort=best_seller" },
+  { label: "Skin Care", to: "/products/category/skin-care", comingSoon: true },
+  { label: "Makeup", to: "/products/category/makeup", comingSoon: true },
+ 
 ];
 
 const Header = () => {
@@ -118,7 +119,7 @@ const Header = () => {
                   duration-300
                 "
               >
-                {link.label}
+                <span className="inline-flex items-center gap-2">{link.label}{link.comingSoon && <span className="inline-flex min-w-12 flex-col items-center rounded-md border border-pink-200 bg-pink-50 px-1.5 py-1 text-[7px] font-bold uppercase leading-[8px] tracking-[0.08em] text-pink-700 shadow-sm dark:border-pink-800 dark:bg-pink-950/50 dark:text-pink-200"><span>Coming</span><span>Soon</span></span>}</span>
               </Link>
             ))}
           </nav>

@@ -103,8 +103,7 @@ export default function AuthShell({
 
   return (
     <motion.div
-      className="relative h-screen w-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(217,70,130,0.16),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(26,26,46,0.14),_transparent_25%),linear-gradient(180deg,_#faf8f5_0%,_#f2f5fb_100%)]"
-      variants={reduceMotion ? undefined : shellVariants}
+       className="relative h-screen w-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(217,70,130,0.16),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(26,26,46,0.14),_transparent_25%),linear-gradient(180deg,_#faf8f5_0%,_#f2f5fb_100%)]"     variants={reduceMotion ? undefined : shellVariants}
       initial={reduceMotion ? false : 'initial'}
       animate={reduceMotion ? undefined : 'animate'}
       exit={reduceMotion ? undefined : 'exit'}
@@ -144,26 +143,26 @@ export default function AuthShell({
         ))}
       </div>
 
-      <div className="flex h-full w-full items-center justify-center p-4 sm:p-6">
+        <div className="flex h-full w-full items-center justify-center p-4 sm:p-6">
         <motion.div
-          className="relative h-[92vh] w-[96vw] overflow-hidden rounded-[2rem] bg-white/90 shadow-[0_20px_70px_rgba(26,26,46,0.18)] backdrop-blur-md lg:max-w-7xl"
+            className="relative h-[92vh] w-[96vw] overflow-hidden rounded-[2rem] bg-white/90 shadow-[0_20px_70px_rgba(26,26,46,0.18)] backdrop-blur-md lg:max-w-7xl"
           style={{ perspective: '1200px' }}
         >
           <div
-            className={`flex h-full flex-col lg:flex-row ${
+                 className={`flex h-full flex-col lg:flex-row ${
               panelFirst ? '' : 'lg:flex-row-reverse'
             }`}
           >
             {/* Form Section */}
             <motion.section
-              className="relative flex h-full flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:px-12"
+               className="relative flex h-full flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:px-12"
               variants={reduceMotion ? undefined : columnVariants}
               custom={contentDirection}
               initial={reduceMotion ? false : 'initial'}
               animate={reduceMotion ? undefined : 'animate'}
               exit={reduceMotion ? undefined : 'exit'}
             >
-              <div className="w-full max-w-md">
+      <div className="w-full max-w-md">
                 {children}
               </div>
             </motion.section>

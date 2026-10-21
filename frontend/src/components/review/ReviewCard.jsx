@@ -29,7 +29,7 @@ export default function ReviewCard({ review }) {
       className="
         group
         flex
-        h-[166px]
+        min-h-[166px]
         w-full
         shrink-0
         flex-col
@@ -48,9 +48,9 @@ export default function ReviewCard({ review }) {
         dark:border-[#292929]
         dark:bg-[#111111]
         dark:hover:border-pink-500
-        sm:h-[166px]
+        sm:min-h-[166px]
         sm:w-full
-        lg:h-[260px]
+        lg:min-h-[260px]
         lg:w-[320px]
         sm:p-5
       "
@@ -126,25 +126,28 @@ export default function ReviewCard({ review }) {
         </h4>
       )}
 
-      {/* Review body */}
-      <p
-        className="
-          mt-2
-          line-clamp-2
-          flex-1
-          overflow-hidden
-          text-[10px]
-          leading-4
-          text-gray-600
-          dark:text-gray-300
-          sm:mt-3
-          sm:line-clamp-5
-          sm:text-sm
-          sm:leading-6
-        "
-      >
-        {reviewText}
-      </p>
+      {(() => {
+        const mediaUrls = review?.mediaUrls || (review?.mediaUrl ? [review.mediaUrl] : []);
+        return (
+          <div className={`mt-2 flex min-h-0 flex-1 gap-2 sm:mt-3 sm:gap-3 ${mediaUrls.length ? "items-stretch" : ""}`}>
+            <p className={`min-w-0 overflow-hidden text-[10px] leading-4 text-gray-600 dark:text-gray-300 sm:text-sm sm:leading-6 ${mediaUrls.length ? "line-clamp-5 flex-1" : "line-clamp-2 flex-1 sm:line-clamp-5"}`}>
+              {reviewText}
+            </p>
+            {mediaUrls.length > 0 && (
+              <div className="flex w-24 shrink-0 flex-col gap-1.5 overflow-y-auto sm:w-32">
+                {mediaUrls.map((url, index) => (
+                  <div key={`${url}-${index}`} className="h-20 w-full shrink-0 overflow-hidden rounded-xl border border-pink-200/70 bg-pink-50/50 dark:border-pink-900/50 dark:bg-pink-950/20 sm:h-24">
+                    {/\.(mp4|webm|mov|m4v)(?:\?|$)/i.test(url)
+                      ? <video src={url} controls className="h-full w-full object-cover" aria-label={`Customer review video ${index + 1}`} />
+                      : <img src={url} alt={`Customer review attachment ${index + 1}`} className="h-full w-full object-cover" loading="lazy" />}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
 
       {/* Bottom */}
       <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-1.5 dark:border-[#292929] sm:mt-4 sm:pt-3">

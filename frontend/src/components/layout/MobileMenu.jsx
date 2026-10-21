@@ -58,7 +58,7 @@ export default function MobileMenu({ open, onClose, links }) {
                 onClick={onClose}
                 className="block border-b border-gray-200/70 py-3 text-sm font-medium text-charcoal transition-colors hover:text-primary dark:border-white/10 dark:text-gray-100 dark:hover:text-pink-300"
               >
-                {link.label}
+                <span className="inline-flex items-center gap-2">{link.label}{link.comingSoon && <span className="inline-flex min-w-14 flex-col items-center rounded-md border border-pink-200 bg-pink-50 px-2 py-1 text-[8px] font-bold uppercase leading-[9px] tracking-[0.08em] text-pink-700 shadow-sm dark:border-pink-800 dark:bg-pink-950/50 dark:text-pink-200"><span>Coming</span><span>Soon</span></span>}</span>
               </Link>
             ) : (
               <a

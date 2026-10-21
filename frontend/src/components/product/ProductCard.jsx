@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, MessageSquareText } from "lucide-react";
 import Rating from "../common/Rating";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../hooks/useWishlist";
@@ -26,6 +26,9 @@ export default function ProductCard({ product }) {
       ? Number(product.price ?? 0)
       : null;
   const isComingSoon = Boolean(product.comingSoon);
+  const createdAt = product.createdAt ? new Date(product.createdAt).getTime() : 0;
+  const isPopular = (product.tags || []).some((tag) => /^(popular|best[ -]?seller|bestsellers)$/i.test(String(tag).trim()));
+  const isNewest = !isPopular && (product.tags || []).some((tag) => /^new(est)?$/i.test(String(tag).trim()));
   const variants = Array.isArray(product.variants) && product.variants.length > 0 ? product.variants : [];
   const hasAvailableVariant = variants.some((variant) => variant.availableForSale === true);
   const isOutOfStock = !isComingSoon && (variants.length > 0 ? !hasAvailableVariant : product.availableForSale === false);
@@ -79,10 +82,10 @@ export default function ProductCard({ product }) {
             <img
               src={image}
               alt={product.name}
-              className="h-[104px] w-full object-contain bg-[#fff5f9] transition duration-500 group-hover:scale-[1.025] dark:bg-[#191216] sm:h-60"
+              className="h-[120px] w-full object-contain bg-[#fff5f9] transition duration-500 group-hover:scale-[1.025] dark:bg-[#191216] sm:h-72"
             />
           ) : (
-            <div className="flex h-[104px] w-full items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:h-56 sm:text-xs sm:tracking-[0.25em]">
+            <div className="flex h-[120px] w-full items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 text-[10px] uppercase tracking-[0.2em] text-slate-400 sm:h-72 sm:text-xs sm:tracking-[0.25em]">
               No Image
             </div>
           )}
@@ -120,9 +123,31 @@ export default function ProductCard({ product }) {
           />
         </button>
 
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent("dyva:open-review", { detail: { productHandle: product.handle } }))}
+          aria-label={`Review ${product.name}`}
+          title="Reviews"
+          className="absolute bottom-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-pink-900 bg-white text-pink-900 shadow-md transition hover:bg-pink-100 sm:bottom-3 sm:right-3 sm:h-9 sm:w-9"
+        >
+          <MessageSquareText size={16} aria-hidden="true" />
+        </button>
+
         {product.salePrice && product.salePrice < product.price && (
-          <span className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[9px] font-semibold text-white sm:left-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs">
+          <span className={`absolute left-2 ${isNewest ? "top-9" : "top-2"} rounded-full bg-primary px-2 py-0.5 text-[9px] font-semibold text-white sm:left-3 sm:px-3 sm:py-1 sm:text-xs ${isNewest ? "sm:top-12" : "sm:top-3"}`}>
             SALE
+          </span>
+        )}
+
+        {isNewest && (
+          <span className="absolute left-2 top-2 rounded-full bg-pink-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm sm:left-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs">
+            Newest
+          </span>
+        )}
+
+        {isPopular && (
+          <span className={`absolute left-2 ${isNewest ? "top-9" : "top-2"} rounded-full bg-rose-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm sm:left-3 sm:px-3 sm:py-1 sm:text-xs ${isNewest ? "sm:top-12" : "sm:top-3"}`}>
+            Popular
           </span>
         )}
 

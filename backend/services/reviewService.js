@@ -90,6 +90,14 @@ const mapReview = (node) => {
     rating: Number(fields.rating) || 0,
     title: fields.title || "",
     body: fields.body || "",
+    mediaUrls: (() => {
+      try {
+        const urls = JSON.parse(fields.media_urls || "[]");
+        return Array.isArray(urls) && urls.length ? urls : fields.media_url ? [fields.media_url] : [];
+      } catch {
+        return fields.media_url ? [fields.media_url] : [];
+      }
+    })(),
     date: fields.created_at || node.updatedAt || node.createdAt || "",
   };
 };
@@ -110,7 +118,70 @@ const listProductReviews = async (handle) => {
     .slice(0, handle ? 100 : 50);
 };
 
-const createProductReview = async ({ productHandle, author, rating, title, body }) => {
+const uploadReviewMedia = async ({ dataUrl, filename }) => {
+  const match = /^data:(image\/[\w.+-]+|video\/[\w.+-]+);base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ""));
+  if (!match) throw new Error("Choose a valid image or video file.");
+  const [, mimeType, encoded] = match;
+  const buffer = Buffer.from(encoded, "base64");
+  if (!buffer.length || buffer.length > 8 * 1024 * 1024) throw new Error("Review media must be 8 MB or smaller.");
+
+  const staged = await adminGraphql(
+    `mutation StageReviewMedia($input: [StagedUploadInput!]!) {
+      stagedUploadsCreate(input: $input) {
+        stagedTargets { url resourceUrl parameters { name value } }
+        userErrors { message }
+      }
+    }`,
+    { input: [{ resource: mimeType.startsWith("video/") ? "VIDEO" : "IMAGE", filename: String(filename || "review-upload").replace(/[^a-zA-Z0-9._-]/g, "_"), mimeType, httpMethod: "POST", fileSize: String(buffer.length) }] }
+  );
+  const result = staged.stagedUploadsCreate;
+  if (result.userErrors?.length) throw new Error(result.userErrors.map((error) => error.message).join(", "));
+  const target = result.stagedTargets?.[0];
+  if (!target) throw new Error("Shopify could not prepare the review upload.");
+
+  const uploadForm = new FormData();
+  for (const parameter of target.parameters || []) uploadForm.append(parameter.name, parameter.value);
+  uploadForm.append("file", new Blob([buffer], { type: mimeType }), filename || "review-upload");
+  const upload = await fetch(target.url, { method: "POST", body: uploadForm });
+  if (!upload.ok) throw new Error("Unable to upload the review attachment.");
+
+  const fileData = await adminGraphql(
+    `mutation CreateReviewMediaFile($files: [FileCreateInput!]!) {
+      fileCreate(files: $files) {
+        files { id fileStatus ... on MediaImage { image { url } } ... on Video { sources { url } } ... on GenericFile { url } }
+        userErrors { message }
+      }
+    }`,
+    { files: [{ originalSource: target.resourceUrl, contentType: mimeType.startsWith("video/") ? "VIDEO" : "IMAGE", alt: "Customer review attachment" }] }
+  );
+  const createdFile = fileData.fileCreate;
+  if (createdFile.userErrors?.length) throw new Error(createdFile.userErrors.map((error) => error.message).join(", "));
+  let file = createdFile.files?.[0];
+  if (!file?.id) throw new Error("Shopify did not return the uploaded review file.");
+  const getFileUrl = (item) => item?.image?.url || item?.sources?.[0]?.url || item?.url || "";
+
+  // Shopify processes image/video files asynchronously. Poll briefly for its CDN URL.
+  for (let attempt = 0; !getFileUrl(file) && attempt < 12; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const fileData = await adminGraphql(
+      `query ReviewMediaFile($id: ID!) {
+        node(id: $id) {
+          ... on MediaImage { id fileStatus image { url } }
+          ... on Video { id fileStatus sources { url } }
+          ... on GenericFile { id fileStatus url }
+        }
+      }`,
+      { id: file.id }
+    );
+    file = fileData.node;
+  }
+
+  const url = getFileUrl(file);
+  if (!url) throw new Error(`Shopify is still processing the review attachment (status: ${file?.fileStatus || "pending"}). Please try again shortly.`);
+  return url;
+};
+
+const createProductReview = async ({ productHandle, author, rating, title, body, mediaUrls = [] }) => {
   const createdAt = new Date().toISOString();
   const data = await adminGraphql(
     `mutation CreateDyvaProductReview($review: MetaobjectCreateInput!) {
@@ -128,6 +199,10 @@ const createProductReview = async ({ productHandle, author, rating, title, body 
           { key: "rating", value: String(rating) },
           { key: "title", value: title },
           { key: "body", value: body },
+          ...(mediaUrls.length ? [
+            { key: "media_url", value: mediaUrls[0] },
+            { key: "media_urls", value: JSON.stringify(mediaUrls) },
+          ] : []),
           { key: "created_at", value: createdAt },
         ],
       },
@@ -141,4 +216,4 @@ const createProductReview = async ({ productHandle, author, rating, title, body 
   return mapReview(result.metaobject);
 };
 
-module.exports = { listProductReviews, createProductReview };
+module.exports = { listProductReviews, createProductReview, uploadReviewMedia };

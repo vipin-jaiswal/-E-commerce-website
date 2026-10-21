@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Star, X } from "lucide-react";
 import ReviewCard from "./ReviewCard";
 import { API_BASE } from "../../utils/constants";
@@ -8,6 +8,8 @@ import { useRefreshReviewStats } from "../../context/ReviewStatsContext";
 export default function ReviewSection({
   productHandle = "",
   onWriteReview,
+  autoOpen = false,
+  modalOnly = false,
 }) {
   const refreshReviewStats = useRefreshReviewStats();
   const [reviews, setReviews] = useState([]);
@@ -16,6 +18,10 @@ export default function ReviewSection({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [mediaFiles, setMediaFiles] = useState([]);
+  const [mediaPreviews, setMediaPreviews] = useState([]);
+  const reviewTrackRef = useRef(null);
+  const reviewHoverRef = useRef(false);
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [form, setForm] = useState({
@@ -29,8 +35,24 @@ export default function ReviewSection({
   const normalizedHandle = String(productHandle || "").trim();
 
   useEffect(() => {
+    if (autoOpen) setIsFormOpen(true);
+  }, [autoOpen]);
+
+  useEffect(() => {
     setForm((current) => ({ ...current, productHandle: normalizedHandle }));
   }, [normalizedHandle]);
+
+  useEffect(() => {
+    if (loading || error || reviews.length < 2 || modalOnly) return undefined;
+    const timer = window.setInterval(() => {
+      const track = reviewTrackRef.current;
+      if (!track || reviewHoverRef.current || track.scrollWidth <= track.clientWidth + 4) return;
+      const loopWidth = track.scrollWidth / 2;
+      track.scrollLeft += 0.6;
+      if (track.scrollLeft >= loopWidth) track.scrollLeft -= loopWidth;
+    }, 20);
+    return () => window.clearInterval(timer);
+  }, [loading, error, reviews.length, modalOnly]);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,6 +107,12 @@ export default function ReviewSection({
   };
 
   useEffect(() => {
+    const previewUrls = mediaFiles.map((file) => URL.createObjectURL(file));
+    setMediaPreviews(previewUrls);
+    return () => previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  }, [mediaFiles]);
+
+  useEffect(() => {
     if (!isFormOpen || normalizedHandle || products.length) return;
 
     let alive = true;
@@ -113,10 +141,16 @@ export default function ReviewSection({
     setSubmitError("");
 
     try {
+      const media = await Promise.all(mediaFiles.map((file) => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("Could not read the selected file."));
+          reader.readAsDataURL(file);
+        })));
       const response = await fetch(`${API_BASE}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, productHandle: form.productHandle.trim() }),
+        body: JSON.stringify({ ...form, productHandle: form.productHandle.trim(), media: media.map((data, index) => ({ data, filename: mediaFiles[index].name })) }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.success) {
@@ -126,6 +160,7 @@ export default function ReviewSection({
       setReviews((current) => [payload.data, ...current]);
       refreshReviewStats();
       setForm({ productHandle: normalizedHandle, author: "", rating: 5, title: "", body: "" });
+      setMediaFiles([]);
       setIsFormOpen(false);
     } catch (err) {
       setSubmitError(err.message || "Unable to submit your review right now.");
@@ -136,7 +171,7 @@ export default function ReviewSection({
 
   return (
     <section
-      className="
+      className={modalOnly ? "contents" : `
         w-full
         bg-[#fafafa]
         px-3
@@ -145,9 +180,9 @@ export default function ReviewSection({
         sm:pb-6
         sm:pt-16
         dark:bg-[#0b0b0b]
-      "
+      `}
     >
-      <div className="mx-auto max-w-[1280px]">
+      <div className={modalOnly ? "hidden" : "mx-auto max-w-[1280px]"}>
         {/* Header */}
         <div
           className="
@@ -304,30 +339,25 @@ export default function ReviewSection({
           {/* Review cards */}
           {!loading && !error && reviews.length > 0 && (
             <div
+              ref={reviewTrackRef}
+              onMouseEnter={() => { reviewHoverRef.current = true; }}
+              onMouseLeave={() => { reviewHoverRef.current = false; }}
               className="
-                grid
-                max-h-[360px]
-                grid-cols-2
-                gap-2
-                overflow-y-auto
-                pb-1
-                scrollbar-thin
-                scrollbar-thumb-gray-300
-                dark:scrollbar-thumb-gray-700
-                sm:max-h-[220px]
-                sm:grid-cols-3
-                lg:flex
-                lg:max-h-none
+                flex
+                flex-nowrap
+                w-full
+                gap-3
+                overflow-x-auto
+                overflow-y-hidden
+                pb-3
+                no-scrollbar
                 sm:gap-5
-                lg:overflow-x-auto
-                sm:overflow-y-hidden
-                sm:pb-3
               "
             >
-              {reviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={{
+              {[...reviews, ...reviews].map((review, index) => (
+                <div key={`${review.id}-${index}`} aria-hidden={index >= reviews.length ? "true" : undefined} className="w-[66vw] max-w-[230px] shrink-0 sm:w-[260px] sm:max-w-none lg:w-[320px]">
+                  <ReviewCard
+                    review={{
                     ...review,
 
                     // ReviewCard supports these names
@@ -343,10 +373,13 @@ export default function ReviewSection({
 
                     date: review.date || "",
 
+                    mediaUrls: review.mediaUrls || (review.mediaUrl ? [review.mediaUrl] : []),
+
                     rating:
                       Number(review.rating) || 0,
-                  }}
-                />
+                    }}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -355,7 +388,7 @@ export default function ReviewSection({
 
       {isFormOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4"
+               className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setIsFormOpen(false);
           }}
@@ -364,7 +397,8 @@ export default function ReviewSection({
             role="dialog"
             aria-modal="true"
             aria-labelledby="write-review-title"
-            className="my-auto w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#151515] sm:p-8"
+             className="my-auto w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#151515] sm:p-8"
+
           >
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
@@ -407,7 +441,7 @@ export default function ReviewSection({
                   value={form.author}
                   onChange={(event) => setForm({ ...form, author: event.target.value })}
                   autoComplete="name"
-                  className="mt-1 w-full rounded-xl border border-gray-300 bg-transparent px-4 py-3 font-normal outline-none focus:border-pink-500 dark:border-gray-700"
+                  className="mt-1 w-full cursor-text rounded-xl border border-gray-300 bg-transparent px-4 py-3 font-normal outline-none focus:border-pink-500 dark:border-gray-700"
                 />
               </label>
 
@@ -429,8 +463,18 @@ export default function ReviewSection({
                   maxLength={120}
                   value={form.title}
                   onChange={(event) => setForm({ ...form, title: event.target.value })}
-                  className="mt-1 w-full rounded-xl border border-gray-300 bg-transparent px-4 py-3 font-normal outline-none focus:border-pink-500 dark:border-gray-700"
+                  list="review-title-suggestions"
+                  placeholder="Choose a suggestion or write your own"
+                  className="mt-1 w-full cursor-text rounded-xl border border-gray-300 bg-transparent px-4 py-3 font-normal outline-none focus:border-pink-500 dark:border-gray-700"
                 />
+                <datalist id="review-title-suggestions">
+                  <option value="Loved it!" />
+                  <option value="Great product" />
+                  <option value="Works really well" />
+                  <option value="Amazing quality" />
+                  <option value="Would recommend" />
+                  <option value="A new favourite" />
+                </datalist>
               </label>
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -442,9 +486,50 @@ export default function ReviewSection({
                   rows={4}
                   value={form.body}
                   onChange={(event) => setForm({ ...form, body: event.target.value })}
-                  className="mt-1 w-full resize-y rounded-xl border border-gray-300 bg-transparent px-4 py-3 font-normal outline-none focus:border-pink-500 dark:border-gray-700"
+                  className="mt-1 w-full cursor-text resize-y rounded-xl border border-gray-300 bg-transparent px-4 py-3 font-normal outline-none focus:border-pink-500 dark:border-gray-700"
                 />
               </label>
+
+              <div>
+                <label htmlFor="review-media" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Add a photo or video <span className="font-normal text-gray-500 dark:text-gray-400">(optional)</span>
+                </label>
+                <input
+                  id="review-media"
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files || []);
+                    const totalSize = files.reduce((total, file) => total + file.size, 0);
+                    if (files.length > 5) {
+                      setSubmitError("Attach up to 5 images or videos.");
+                      event.target.value = "";
+                      return;
+                    }
+                    if (files.some((file) => file.size > 8 * 1024 * 1024) || totalSize > 10 * 1024 * 1024) {
+                      setSubmitError("Each file must be 8 MB or smaller, with 10 MB total.");
+                      event.target.value = "";
+                      return;
+                    }
+                    setSubmitError("");
+                    setMediaFiles(files);
+                  }}
+                  className="mt-2 block w-full cursor-pointer rounded-xl border border-pink-300 bg-pink-50/60 px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-full file:border-0 file:bg-pink-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-pink-700 dark:text-gray-200"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Up to 5 files; 8 MB each and 10 MB total.</p>
+                {mediaPreviews.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {mediaPreviews.map((preview, index) => (
+                      <div key={`${mediaFiles[index].name}-${index}`} className="w-28 overflow-hidden rounded-xl border border-pink-200">
+                        {mediaFiles[index].type.startsWith("video/")
+                          ? <video src={preview} controls className="h-20 w-full object-cover" />
+                          : <img src={preview} alt={`Review attachment ${index + 1}`} className="h-20 w-full object-cover" />}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {submitError && <p role="alert" className="text-sm text-red-600">{submitError}</p>}
               <button type="submit" disabled={isSubmitting} className="w-full rounded-full bg-pink-600 px-6 py-3 font-medium text-white transition hover:bg-pink-700 disabled:cursor-wait disabled:opacity-60">
